@@ -1,0 +1,10 @@
+# Dependencies - regenerate with npm install
+node_modules/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+~$*

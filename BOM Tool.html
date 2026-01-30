@@ -1,0 +1,4397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOM Tool 2.1</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --gray-900: #0f172a;
+            --gray-800: #1e293b;
+            --gray-700: #334155;
+            --gray-600: #475569;
+            --gray-500: #64748b;
+            --gray-400: #94a3b8;
+            --gray-300: #cbd5e1;
+            --gray-200: #e2e8f0;
+            --gray-100: #f1f5f9;
+            --gray-50: #f8fafc;
+            --green-600: #059669;
+            --green-100: #d1fae5;
+        }
+        
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: #fafafa;
+            background-image: 
+                linear-gradient(rgba(200, 200, 200, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200, 200, 200, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--gray-900);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        header {
+            margin-bottom: 3rem;
+            border-left: 4px solid var(--primary);
+            padding-left: 1.5rem;
+        }
+        
+        h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            color: var(--gray-600);
+            font-weight: 400;
+        }
+        
+        .phase-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+        
+        .card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .upload-zone {
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: var(--gray-50);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(30, 64, 175, 0.05), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(30, 64, 175, 0.02);
+        }
+        
+        .upload-zone:hover::before {
+            left: 100%;
+        }
+        
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(30, 64, 175, 0.05);
+            transform: scale(1.02);
+        }
+        
+        .upload-zone.has-file {
+            border-color: var(--green-600);
+            background: var(--green-100);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .upload-text {
+            font-size: 1.125rem;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+        
+        .upload-hint {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--green-100);
+            border-radius: 6px;
+            border: 1px solid var(--green-600);
+        }
+        
+        .file-info.show {
+            display: flex;
+        }
+        
+        .file-info-icon {
+            font-size: 1.5rem;
+        }
+        
+        .file-info-details {
+            flex: 1;
+        }
+        
+        .file-info-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+        
+        .file-info-meta {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        input[type="number"] {
+            width: 200px;
+            padding: 0.75rem 1rem;
+            background: white;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            color: var(--gray-900);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        button {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        button span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            background: var(--gray-400);
+            color: var(--gray-600);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        #results {
+            display: none;
+        }
+        
+        #results.show {
+            display: block;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 2rem;
+        }
+        
+        table {
+            width: max-content;
+            min-width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        thead {
+            background: var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: left;
+            padding: 1rem;
+            color: var(--gray-900);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--gray-300);
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-900);
+            font-size: 0.875rem;
+            white-space: nowrap;
+            vertical-align: top;
+        }
+        
+        td.description {
+            max-width: 400px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        
+        td.purchase-desc {
+            max-width: 300px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        tr:hover {
+            background: var(--gray-50);
+        }
+        
+        .numeric {
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+        
+        .message.show {
+            display: block;
+        }
+        
+        .message.error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        
+        .message.success {
+            background: var(--green-100);
+            border: 1px solid var(--green-600);
+            color: #065f46;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 1rem;
+            }
+            
+            .card {
+                box-shadow: none;
+            }
+            
+            .button-group,
+            .upload-zone {
+                display: none;
+            }
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: 2rem;
+        }
+        
+        .tab-btn {
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--gray-600);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            bottom: -2px;
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary);
+            background: var(--gray-50);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Upload Grid for Comparison */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        /* Filter Buttons */
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 2px solid var(--gray-300);
+            border-radius: 6px;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        /* Badges for Change Type */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.625rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .badge.added {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge.removed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .badge.changed {
+            background: #fed7aa;
+            color: #92400e;
+        }
+        
+        /* Hide comparison results initially */
+        #compareResults {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        #compareResults.show {
+            display: block;
+        }
+
+        #hierarchyResults {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        #hierarchyResults.show {
+            display: block;
+        }
+
+        /* Hierarchy tree row visibility */
+        tr.child-row.collapsed {
+            display: none;
+        }
+
+        /* Tree toggle box styling */
+        .tree-toggle {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            line-height: 12px;
+            text-align: center;
+            border: 1px solid var(--gray-400);
+            background: white;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-600);
+            user-select: none;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .tree-toggle:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Tree lines */
+        #hierarchyTreeBody .tree-cell {
+            position: relative;
+        }
+
+        /* Container for tree line elements */
+        .tree-lines {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            pointer-events: none;
+        }
+
+        /* Vertical line - full height (for ancestors with more siblings) */
+        .tree-line-vertical {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--gray-300);
+        }
+
+        /* Vertical line - half height for last child (L-shape) */
+        .tree-line-vertical.last-child {
+            bottom: 50%;
+        }
+
+        /* Horizontal line from parent vertical to toggle/item */
+        .tree-line-horizontal {
+            position: absolute;
+            top: 1.5rem;  /* Align with text baseline, not row center */
+            height: 1px;
+            background: var(--gray-300);
+        }
+
+        /* Vertical line extending down from expanded parent toggle to children */
+        #hierarchyTreeBody tr.has-children.expanded .tree-cell::before {
+            content: '';
+            position: absolute;
+            left: calc(1rem + var(--this-depth, 0) * 24px + 7px);
+            top: 1.5rem;  /* From toggle position */
+            bottom: 0;    /* To bottom of row */
+            width: 1px;
+            background: var(--gray-300);
+            z-index: 1;
+        }
+
+        /* Diff Highlighting */
+        .diff-removed {
+            background: #fee2e2;
+            text-decoration: line-through;
+            padding: 0 0.125rem;
+        }
+        
+        .diff-added {
+            background: #d1fae5;
+            padding: 0 0.125rem;
+        }
+        
+        /* Delta Qty Color Coding */
+        .delta-positive {
+            background: #d1fae5;
+            color: #065f46;
+            font-weight: 600;
+            padding: 0.125rem 0.25rem;
+            border-radius: 3px;
+        }
+        
+        .delta-negative {
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: 600;
+            padding: 0.125rem 0.25rem;
+            border-radius: 3px;
+        }
+
+        /* Tree Selection Panel Styles (Scoped Comparison) */
+        .tree-selection-panel {
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            background: white;
+            overflow: hidden;
+        }
+
+        .tree-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: #dcfce7;
+            border-bottom: 1px solid #22c55e;
+        }
+
+        .tree-panel-filename {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .change-file-link {
+            font-size: 0.75rem;
+            color: var(--primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .change-file-link:hover {
+            text-decoration: underline;
+        }
+
+        .tree-selection-hint {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .tree-selection-container {
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .tree-selection-status {
+            padding: 0.75rem 1rem;
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            font-size: 0.8125rem;
+        }
+
+        .selection-label {
+            color: var(--gray-600);
+            margin-right: 0.5rem;
+        }
+
+        .selection-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Tree Selection Row Styles */
+        .tree-select-row {
+            display: flex;
+            align-items: center;
+            padding: 0.375rem 1rem;
+            cursor: default;
+            transition: background 0.15s ease;
+        }
+
+        .tree-select-row.selectable {
+            cursor: pointer;
+        }
+
+        .tree-select-row.selectable:hover {
+            background: var(--gray-50);
+        }
+
+        .tree-select-row.selected {
+            background: rgba(30, 64, 175, 0.1);
+            border-left: 3px solid var(--primary);
+            padding-left: calc(1rem - 3px);
+        }
+
+        .tree-select-row.child-row.collapsed {
+            display: none;
+        }
+
+        .tree-select-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: 3px;
+            background: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--gray-500);
+            cursor: pointer;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .tree-select-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tree-select-spacer {
+            display: inline-block;
+            width: 16px;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .tree-select-part {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            color: var(--gray-900);
+            margin-right: 0.75rem;
+        }
+
+        .tree-select-type {
+            font-size: 0.6875rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .tree-select-type.assembly {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tree-select-desc {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin-left: 0.5rem;
+        }
+
+        /* Hierarchy Table Styles */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>BOM Tool</h1>
+            <p class="subtitle">flatten hierarchical boms and compare revisions</p>
+        </header>
+        
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="flatten">Flat BOM</button>
+            <button class="tab-btn" data-tab="compare">BOM Comparison</button>
+            <button class="tab-btn" data-tab="hierarchy">Hierarchy View</button>
+        </div>
+        
+        <!-- Tab 1: Flat BOM Content -->
+        <div class="tab-content active" id="flattenTab">
+        
+        <div class="card">
+            <h2 class="card-title">Input File</h2>
+            <p style="color: var(--gray-600); font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">Upload a hierarchical BOM (CSV or XML) to flatten and aggregate quantities</p>
+            
+            <div class="input-group">
+                <input type="file" id="csvFile" accept=".csv,.xml">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click or drag file here</div>
+                    <div class="upload-hint">Supports CSV (UTF-16) or XML hierarchical BOM</div>
+                </div>
+                <div class="file-info" id="fileInfo">
+                    <div class="file-info-icon">✓</div>
+                    <div class="file-info-details">
+                        <div class="file-info-name" id="fileName"></div>
+                        <div class="file-info-meta" id="fileMeta"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="unitQty">Unit Quantity (Multiplier)</label>
+                <input type="number" id="unitQty" min="1" value="1" step="1">
+            </div>
+            
+            <div id="message" class="message"></div>
+            
+            <div class="button-group">
+                <button class="btn-primary" id="flattenBtn" disabled>
+                    <span>⚙ Flatten BOM</span>
+                </button>
+                <button class="btn-secondary" id="exportExcelBtn" style="display: none;">
+                    <span>📊 Export Excel</span>
+                </button>
+                <button class="btn-secondary" id="exportHtmlBtn" style="display: none;">
+                    <span>📄 Export HTML</span>
+                </button>
+                <button class="btn-secondary" id="resetBtn">
+                    <span>↻ Start Over</span>
+                </button>
+            </div>
+        </div>
+        
+        <div id="results">
+            <div class="card">
+                <h2 class="card-title">Flattened BOM Results</h2>
+                
+                <div class="assembly-info" id="assemblyInfo" style="background: var(--gray-100); padding: 1rem; border-radius: 6px; margin-bottom: 2rem; border-left: 4px solid var(--primary);">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: var(--gray-600); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">Assembly</div>
+                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--gray-900);" id="assemblyFilenameDisplay"></div>
+                    <div style="font-size: 0.875rem; color: var(--gray-700); margin-top: 0.25rem;" id="assemblyPartNumDesc"></div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--gray-600); margin-top: 0.5rem;">Revision: <span id="assemblyRev"></span></div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card" style="grid-column: span 2;">
+                        <div style="display: flex; align-items: center; gap: 2rem;">
+                            <div style="flex-shrink: 0;">
+                                <div class="stat-value" id="totalItems">0</div>
+                                <div class="stat-label">Unique Items</div>
+                            </div>
+                            <div id="componentBreakdown" style="border-left: 2px solid var(--gray-300); padding-left: 2rem; display: none; flex: 1;">
+                                <div style="display: flex; gap: 2rem; font-size: 0.8125rem;">
+                                    <div id="manufacturedBreakdown" style="display: none;">
+                                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 600; color: var(--gray-900);" id="manufacturedCount">0</div>
+                                        <div style="color: var(--gray-600); margin-top: 0.125rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem;">Manufactured</div>
+                                    </div>
+                                    <div id="purchasedBreakdown" style="display: none;">
+                                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 600; color: var(--gray-900);" id="purchasedCount">0</div>
+                                        <div style="color: var(--gray-600); margin-top: 0.125rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem;">Purchased</div>
+                                    </div>
+                                    <div id="rawStockBreakdown" style="display: none;">
+                                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 600; color: var(--gray-900);" id="rawStockCount">0</div>
+                                        <div style="color: var(--gray-600); margin-top: 0.125rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem;">Raw Stock</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="unitQtyDisplay">1</div>
+                        <div class="stat-label">Unit Qty</div>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th class="numeric">Qty</th>
+                                <th>Part Number</th>
+                                <th>Component Type</th>
+                                <th>Description</th>
+                                <th class="numeric">Length (Decimal)</th>
+                                <th>Length (Fractional)</th>
+                                <th>UofM</th>
+                                <th>Purchase Description</th>
+                                <th>State</th>
+                                <th>Revision</th>
+                                <th>NS Item Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        <!-- End Tab 1: Flat BOM -->
+        
+        <!-- Tab 2: BOM Comparison -->
+        <div class="tab-content" id="compareTab">
+            <div class="card">
+                <h2 class="card-title">BOM Comparison</h2>
+                <p style="color: var(--gray-600); font-size: 0.875rem; margin-top: 0.5rem;">Upload two hierarchical BOMs to compare (CSV or XML). Both will be flattened automatically before comparison.</p>
+                
+                <div class="upload-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                    <!-- Old BOM Upload -->
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">Old BOM (Baseline)</label>
+                        <input type="file" id="oldBomFile" accept=".csv,.xml" style="display: none;">
+                        <div class="upload-zone" id="oldBomZone">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Click or drag file here</div>
+                            <div class="upload-hint">CSV or XML</div>
+                        </div>
+                        <!-- Tree Selection Panel (shown after upload) -->
+                        <div class="tree-selection-panel" id="oldBomTreePanel" style="display: none;">
+                            <div class="tree-panel-header">
+                                <div class="tree-panel-filename" id="oldBomPanelName"></div>
+                                <a class="change-file-link" id="oldBomChangeFile">Change File</a>
+                            </div>
+                            <div class="tree-selection-hint">Click any item to scope comparison, or leave unselected for full GA</div>
+                            <div class="tree-selection-container" id="oldBomTreeContainer"></div>
+                            <div class="tree-selection-status">
+                                <span class="selection-label">Scope:</span>
+                                <span class="selection-value" id="oldBomSelectedDisplay">Full Assembly</span>
+                            </div>
+                        </div>
+                        <div class="file-info" id="oldBomInfo">
+                            <div class="file-info-icon">✓</div>
+                            <div class="file-info-details">
+                                <div class="file-info-name" id="oldBomName"></div>
+                                <div class="file-info-meta" id="oldBomMeta"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- New BOM Upload -->
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">New BOM (Revision)</label>
+                        <input type="file" id="newBomFile" accept=".csv,.xml" style="display: none;">
+                        <div class="upload-zone" id="newBomZone">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Click or drag file here</div>
+                            <div class="upload-hint">CSV or XML</div>
+                        </div>
+                        <!-- Tree Selection Panel (shown after upload) -->
+                        <div class="tree-selection-panel" id="newBomTreePanel" style="display: none;">
+                            <div class="tree-panel-header">
+                                <div class="tree-panel-filename" id="newBomPanelName"></div>
+                                <a class="change-file-link" id="newBomChangeFile">Change File</a>
+                            </div>
+                            <div class="tree-selection-hint">Click any item to scope comparison, or leave unselected for full GA</div>
+                            <div class="tree-selection-container" id="newBomTreeContainer"></div>
+                            <div class="tree-selection-status">
+                                <span class="selection-label">Scope:</span>
+                                <span class="selection-value" id="newBomSelectedDisplay">Full Assembly</span>
+                            </div>
+                        </div>
+                        <div class="file-info" id="newBomInfo">
+                            <div class="file-info-icon">✓</div>
+                            <div class="file-info-details">
+                                <div class="file-info-name" id="newBomName"></div>
+                                <div class="file-info-meta" id="newBomMeta"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="compareMessage" class="message"></div>
+                
+                <div class="button-group" style="margin-top: 2rem;">
+                    <button class="btn-primary" id="compareBtn" disabled>
+                        <span>⚖ Compare BOMs</span>
+                    </button>
+                    <button class="btn-secondary" id="resetScopeBtn" style="display: none;">
+                        <span>↻ Reset Comparison</span>
+                    </button>
+                    <button class="btn-secondary" id="exportCompareExcelBtn" style="display: none;">
+                        <span>📊 Export Excel</span>
+                    </button>
+                    <button class="btn-secondary" id="exportCompareHtmlBtn" style="display: none;">
+                        <span>📄 Export HTML</span>
+                    </button>
+                    <button class="btn-secondary" id="resetCompareBtn">
+                        <span>↻ Start Over</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Comparison Results -->
+            <div id="compareResults">
+                <div class="card">
+                    <h2 class="card-title">Comparison Results</h2>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                        <div style="background: var(--gray-100); padding: 1rem; border-radius: 6px; border-left: 4px solid #10b981;">
+                            <div style="font-size: 0.75rem; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Old BOM</div>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--gray-900);" id="oldBomFilenameDisplay"></div>
+                            <div style="font-size: 0.875rem; color: var(--gray-700); margin-top: 0.25rem;" id="oldBomAssembly"></div>
+                            <div style="font-size: 0.75rem; color: var(--gray-600); margin-top: 0.25rem;">Revision: <span id="oldBomRev"></span> | <span id="oldBomScopeDisplay"></span></div>
+                        </div>
+                        <div style="background: var(--gray-100); padding: 1rem; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                            <div style="font-size: 0.75rem; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">New BOM</div>
+                            <div style="font-size: 1.125rem; font-weight: 600; color: var(--gray-900);" id="newBomFilenameDisplay"></div>
+                            <div style="font-size: 0.875rem; color: var(--gray-700); margin-top: 0.25rem;" id="newBomAssembly"></div>
+                            <div style="font-size: 0.75rem; color: var(--gray-600); margin-top: 0.25rem;">Revision: <span id="newBomRev"></span> | <span id="newBomScopeDisplay"></span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="stat-card" style="border-left: 4px solid #10b981;">
+                            <div class="stat-value" style="color: #10b981;" id="addedCount">0</div>
+                            <div class="stat-label">Added</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #ef4444;">
+                            <div class="stat-value" style="color: #ef4444;" id="removedCount">0</div>
+                            <div class="stat-label">Removed</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #f59e0b;">
+                            <div class="stat-value" style="color: #f59e0b;" id="changedCount">0</div>
+                            <div class="stat-label">Changed</div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-buttons" style="display: flex; gap: 0.5rem; margin: 2rem 0 1rem 0;">
+                        <button class="filter-btn active" data-filter="all">All Changes</button>
+                        <button class="filter-btn" data-filter="Added">Added Only</button>
+                        <button class="filter-btn" data-filter="Removed">Removed Only</button>
+                        <button class="filter-btn" data-filter="Changed">Changed Only</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="compareTable">
+                            <thead>
+                                <tr>
+                                    <th>Change</th>
+                                    <th>Part Number</th>
+                                    <th>Component Type</th>
+                                    <th>Old Description</th>
+                                    <th>New Description</th>
+                                    <th>Length (Dec)</th>
+                                    <th>Length (Frac)</th>
+                                    <th>Old Qty</th>
+                                    <th>New Qty</th>
+                                    <th>Δ Qty</th>
+                                    <th>Old Purchase Description</th>
+                                    <th>New Purchase Description</th>
+                                    <th>Changes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compareBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Tab 2: BOM Comparison -->
+
+        <!-- Tab 3: Hierarchy View -->
+        <div class="tab-content" id="hierarchyTab">
+
+        <div class="card">
+            <h2 class="card-title">Input File</h2>
+            <p style="color: var(--gray-600); font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">Upload a hierarchical BOM (CSV or XML) to view its structure</p>
+
+            <div class="input-group">
+                <input type="file" id="hierarchyFile" accept=".csv,.xml">
+                <div class="upload-zone" id="hierarchyUploadZone">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click or drag file here</div>
+                    <div class="upload-hint">Supports CSV (UTF-16) or XML hierarchical BOM</div>
+                </div>
+                <div class="file-info" id="hierarchyFileInfo">
+                    <div class="file-info-icon">✓</div>
+                    <div class="file-info-details">
+                        <div class="file-info-name" id="hierarchyFileName"></div>
+                        <div class="file-info-meta" id="hierarchyFileMeta"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hierarchyMessage" class="message"></div>
+
+            <div class="input-group">
+                <label for="hierarchyUnitQty">Unit Quantity (Multiplier)</label>
+                <input type="number" id="hierarchyUnitQty" min="1" value="1" step="1">
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" id="viewHierarchyBtn" disabled>
+                    <span>🌳 View Hierarchy</span>
+                </button>
+                <button class="btn-secondary" id="resetHierarchyBtn">
+                    <span>↻ Start Over</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="hierarchyResults">
+            <div class="card">
+                <h2 class="card-title">BOM Structure</h2>
+
+                <div class="assembly-info" id="hierarchyAssemblyInfo" style="background: var(--gray-100); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: var(--gray-600); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">Assembly</div>
+                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--gray-900);" id="hierarchyFilenameDisplay"></div>
+                    <div style="font-size: 0.875rem; color: var(--gray-700); margin-top: 0.25rem;" id="hierarchyAssemblyPartNumDesc"></div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--gray-600); margin-top: 0.5rem;">Revision: <span id="hierarchyAssemblyRev"></span> | Unit Qty: <span id="hierarchyUnitQtyDisplay">1</span></div>
+                </div>
+
+                <div class="button-group" style="margin-bottom: 1.5rem;">
+                    <button class="btn-secondary" id="hierarchyExpandAllBtn">
+                        <span>⊞ Expand All</span>
+                    </button>
+                    <button class="btn-secondary" id="hierarchyCollapseAllBtn">
+                        <span>⊟ Collapse All</span>
+                    </button>
+                    <button class="btn-secondary" id="exportHierarchyExcelBtn" style="display: none;">
+                        <span>📊 Export Excel</span>
+                    </button>
+                    <button class="btn-secondary" id="exportHierarchyHtmlBtn" style="display: none;">
+                        <span>📄 Export HTML</span>
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table id="hierarchyTable">
+                        <thead>
+                            <tr>
+                                <th>Part Number</th>
+                                <th class="numeric">Qty</th>
+                                <th>Component Type</th>
+                                <th>Description</th>
+                                <th>Length (Fractional)</th>
+                                <th>UofM</th>
+                                <th>Purchase Description</th>
+                                <th>Revision</th>
+                                <th>NS Item Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hierarchyTreeBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        </div>
+        <!-- End Tab 3: Hierarchy View -->
+
+    </div>
+    
+    <script>
+        // Global state
+        let csvData = null;
+        let flattenedBOM = null;
+        let treeRoot = null;  // NEW: Preserve tree structure for hierarchy view
+        let rootPartNumber = null;
+        let rootRevision = null;
+        let rootDescription = null;
+        let uploadedFilename = null;  // Store uploaded filename for exports
+        
+        // DOM elements
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('csvFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileNameDisplay = document.getElementById('fileName');
+        const fileMeta = document.getElementById('fileMeta');
+        const unitQtyInput = document.getElementById('unitQty');
+        const flattenBtn = document.getElementById('flattenBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const message = document.getElementById('message');
+        const results = document.getElementById('results');
+        const resultsBody = document.getElementById('resultsBody');
+        const totalItems = document.getElementById('totalItems');
+        const unitQtyDisplay = document.getElementById('unitQtyDisplay');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+        
+        // File upload handlers
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            const fileName = file ? file.name.toLowerCase() : '';
+            if (file && (fileName.endsWith('.csv') || fileName.endsWith('.xml'))) {
+                handleFile(file);
+            } else {
+                showMessage('Please upload a CSV or XML file', 'error');
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+        
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    // Detect file type
+                    const fileName = file.name.toLowerCase();
+                    const isXML = fileName.endsWith('.xml');
+                    
+                    console.log(`File type detected: ${isXML ? 'XML' : 'CSV'}`);
+                    
+                    if (isXML) {
+                        // Parse XML
+                        const decoder = new TextDecoder('utf-8');
+                        const xmlText = decoder.decode(e.target.result);
+                        csvData = parseXML(xmlText);
+                        
+                        console.log(`XML parsed: ${csvData.length} data rows`);
+                        console.log('First 5 rows:', csvData.slice(0, 5).map(r => r.Level + ': ' + r['Part Number']).join(', '));
+                        console.log('Root assembly:', csvData[0]);
+                        
+                        // Store filename for exports
+                        uploadedFilename = file.name;
+
+                        // Update UI
+                        uploadZone.classList.add('has-file');
+                        fileNameDisplay.textContent = file.name;
+                        fileMeta.textContent = `${csvData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                        fileInfo.classList.add('show');
+                        flattenBtn.disabled = false;
+                        showMessage(`XML loaded successfully: ${csvData.length} rows`, 'success');
+                    } else {
+                        // Parse CSV
+                        // Decode UTF-16 first
+                        const decoder = new TextDecoder('utf-16le');
+                        let csvText = decoder.decode(e.target.result);
+                        
+                        // Remove BOM if present
+                        if (csvText.charCodeAt(0) === 0xFEFF) {
+                            csvText = csvText.substring(1);
+                        }
+                        
+                        // Use XLSX to parse CSV text (it handles quotes correctly)
+                        const workbook = XLSX.read(csvText, { 
+                            type: 'string',
+                            raw: true,        // Keep raw values - don't parse dates/numbers
+                            cellText: true,   // Treat everything as text
+                            cellDates: false  // Don't convert to dates
+                        });
+                        
+                        // Get first sheet
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        
+                        // Convert to JSON (array of objects)
+                        csvData = XLSX.utils.sheet_to_json(worksheet, { 
+                            raw: true,       // Keep raw values
+                            defval: ''       // Empty cells = empty string
+                        });
+                        
+                        console.log(`CSV parsed: ${csvData.length} data rows`);
+                        console.log('First 5 rows:', csvData.slice(0, 5).map(r => r.Level + ': ' + r['Part Number']).join(', '));
+
+                        // Store filename for exports
+                        uploadedFilename = file.name;
+
+                        // Update UI
+                        uploadZone.classList.add('has-file');
+                        fileNameDisplay.textContent = file.name;
+                        fileMeta.textContent = `${csvData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                        fileInfo.classList.add('show');
+                        flattenBtn.disabled = false;
+                        showMessage(`CSV loaded successfully: ${csvData.length} rows`, 'success');
+                    }
+                } catch (error) {
+                    showMessage(`Error parsing file: ${error.message}`, 'error');
+                    console.error('Parse error:', error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Parse XML to array of row objects (same structure as CSV)
+        function parseXML(xmlText) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+            
+            // Check for parsing errors
+            const parserError = xmlDoc.querySelector('parsererror');
+            if (parserError) {
+                throw new Error('Invalid XML format');
+            }
+            
+            const rows = [];
+            
+            // Get root document (the main assembly)
+            const rootDoc = xmlDoc.querySelector('transaction > document');
+            if (!rootDoc) {
+                throw new Error('No root document found in XML');
+            }
+            
+            console.log('Root document ID:', rootDoc.getAttribute('id'));
+            
+            // Recursive function to traverse XML hierarchy
+            function traverseDocument(docElement, level, startIndex, isRoot = false) {
+                // Get ALL configurations (each config = one unique part)
+                const configs = docElement.querySelectorAll(':scope > configuration');
+                if (configs.length === 0) {
+                    console.warn(`No configurations found for document at level ${level}`);
+                    return startIndex;
+                }
+                
+                console.log(`Document has ${configs.length} configuration(s), starting at index ${startIndex}`);
+                
+                let childIndex = startIndex;
+                
+                // Process each configuration as a separate part
+                configs.forEach((config, configIdx) => {
+                    // Root level is just "1", all others use level.index format
+                    const currentLevel = isRoot && configIdx === 0 ? level : level + '.' + childIndex;
+                    
+                    // Extract attributes from this configuration
+                    const attributes = {};
+                    config.querySelectorAll(':scope > attribute').forEach(attr => {
+                        const name = attr.getAttribute('name');
+                        const value = attr.getAttribute('value');
+                        attributes[name] = value;
+                    });
+                    
+                    console.log(`Processing Level ${currentLevel}: Part=${attributes['Part Number']}, Config=${config.getAttribute('name')}, Desc=${attributes['Description']?.substring(0, 40)}`);
+                    
+                    // Create row object matching CSV structure
+                    const row = {
+                        'Level': currentLevel,
+                        'Part Number': attributes['Part Number'] || '',
+                        'Component Type': attributes['Component-Type'] || '',
+                        'Description': attributes['Description'] || '',
+                        'Material': attributes['Material'] || '',
+                        'Qty': attributes['Reference Count (BOM Quantity disregarded)'] || '1',
+                        'Length': attributes['Length'] || '',
+                        'UofM': attributes['Unit of Measure'] || '',
+                        'State': attributes['State'] || '',
+                        'Purchase Description': attributes['Purchase Description'] || '',
+                        'NS Item Type': attributes['NS Item Type'] || '',
+                        'Revision': attributes['Revision'] || ''
+                    };
+                    
+                    rows.push(row);
+                    
+                    // Only increment if not the first config of root
+                    if (!isRoot || configIdx > 0) {
+                        childIndex++;
+                    }
+                    
+                    // Process children (references) for THIS configuration
+                    const references = config.querySelector(':scope > references');
+                    if (references) {
+                        const childDocs = references.querySelectorAll(':scope > document');
+                        console.log(`  Found ${childDocs.length} child document(s) for config at level ${currentLevel}`);
+                        childDocs.forEach((childDoc) => {
+                            // Pass current childIndex and get back the next available index
+                            childIndex = traverseDocument(childDoc, currentLevel, childIndex, false);
+                        });
+                    }
+                });
+                
+                return childIndex;
+            }
+            
+            // Start traversal from root with level "1", index 1, and mark as root
+            traverseDocument(rootDoc, '1', 1, true);
+            
+            console.log(`XML parsing complete: ${rows.length} rows`);
+            console.log('First row (root):', rows[0]);
+            
+            return rows;
+        }
+        
+        // Tree Node Class
+        class BOMNode {
+            constructor(rowData) {
+                this.level = rowData.Level;
+                this.partNumber = rowData['Part Number'].trim();
+                this.componentType = rowData['Component Type'];
+                this.description = rowData.Description;
+                this.material = rowData.Material;
+                this.qty = parseInt(rowData.Qty) || 0;
+                this.length = parseLength(rowData.Length);
+                this.uofm = rowData.UofM;
+                this.state = rowData.State;
+                this.purchaseDescription = rowData['Purchase Description'];
+                this.nsItemType = rowData['NS Item Type'];
+                this.revision = rowData.Revision;
+                this.children = [];
+            }
+        }
+        
+        // Parse length (null for empty, "-", or non-numeric)
+        function parseLength(lengthStr) {
+            // Handle numeric input (from extractSubtree cloning)
+            if (typeof lengthStr === 'number') {
+                return isNaN(lengthStr) ? null : lengthStr;
+            }
+            if (!lengthStr || lengthStr.trim() === '' || lengthStr === '-') {
+                return null;
+            }
+            const num = parseFloat(lengthStr);
+            return isNaN(num) ? null : num;
+        }
+        
+        // Get parent level from level string
+        function getParentLevel(level) {
+            const parts = level.split('.');
+            if (parts.length === 1) return null;
+            return parts.slice(0, -1).join('.');
+        }
+        
+        // Build tree from CSV data
+        function buildTree(rows) {
+            const nodes = new Map();
+            
+            // Pass 1: Create all nodes
+            rows.forEach((row, index) => {
+                const node = new BOMNode(row);
+                console.log(`Row ${index + 1}: Level="${node.level}" PartNumber="${node.partNumber}"`);
+                nodes.set(node.level, node);
+            });
+            
+            console.log(`Total nodes created: ${nodes.size}`);
+            console.log('All levels:', Array.from(nodes.keys()).join(', '));
+            
+            // Pass 2: Link children to parents
+            nodes.forEach((node, level) => {
+                const parentLevel = getParentLevel(level);
+                if (parentLevel !== null) {
+                    const parent = nodes.get(parentLevel);
+                    if (!parent) {
+                        console.error(`ERROR: Looking for parent "${parentLevel}" for child "${level}"`);
+                        console.error('Available levels:', Array.from(nodes.keys()).join(', '));
+                        throw new Error(`Parent ${parentLevel} not found for ${level}. Available levels: ${Array.from(nodes.keys()).join(', ')}`);
+                    }
+                    parent.children.push(node);
+                }
+            });
+            
+            // Get root
+            const root = nodes.get('1');
+            if (!root) {
+                throw new Error("No root node (Level '1') found in CSV");
+            }
+
+            // Pass 3: Sort all children recursively
+            function sortChildren(node) {
+                if (node.children.length > 0) {
+                    // Sort by: Component Type → Description → Length (decimal)
+                    node.children.sort((a, b) => {
+                        // Primary: Component Type (alphabetical: Assembly, Manufactured, Purchased, Raw Stock)
+                        if (a.componentType !== b.componentType) {
+                            return a.componentType.localeCompare(b.componentType);
+                        }
+
+                        // Secondary: Description
+                        if (a.description !== b.description) {
+                            return a.description.localeCompare(b.description, undefined, {
+                                numeric: true,
+                                sensitivity: 'base'
+                            });
+                        }
+
+                        // Tertiary: Length (decimal, nulls last)
+                        if (a.length === null && b.length === null) return 0;
+                        if (a.length === null) return 1;
+                        if (b.length === null) return -1;
+                        return a.length - b.length;
+                    });
+
+                    // Recursively sort grandchildren
+                    node.children.forEach(child => sortChildren(child));
+                }
+            }
+
+            sortChildren(root);
+
+            // Capture root info for file naming and display
+            rootPartNumber = root.partNumber;
+            rootRevision = root.revision;
+            rootDescription = root.description;
+
+            return root;
+        }
+        
+        // Generate composite key
+        function getCompositeKey(partNumber, length) {
+            if (length === null) {
+                return partNumber;
+            }
+            return `${partNumber}|${length}`;
+        }
+        
+        // Flatten BOM with recursive aggregation
+        function flattenBOM(rootNode, unitQty) {
+            const aggregatedItems = new Map();
+            
+            function traverse(node, multiplier) {
+                const effectiveQty = node.qty * multiplier;
+                
+                console.log(`Processing: Level=${node.level}, PN=${node.partNumber}, Type=${node.componentType}, Qty=${node.qty}, Multiplier=${multiplier}, Effective=${effectiveQty}`);
+                
+                // Only add non-assembly items to output
+                // Assemblies are containers - not purchasable items
+                if (node.componentType !== 'Assembly') {
+                    const compositeKey = getCompositeKey(node.partNumber, node.length);
+                    
+                    if (aggregatedItems.has(compositeKey)) {
+                        console.log(`  → Aggregating: ${compositeKey} (was ${aggregatedItems.get(compositeKey).qty}, adding ${effectiveQty})`);
+                        aggregatedItems.get(compositeKey).qty += effectiveQty;
+                    } else {
+                        console.log(`  → Adding new: ${compositeKey} with qty ${effectiveQty}`);
+                        
+                        // Concatenate Description + Material (if material is not empty or hyphen)
+                        let finalDescription = node.description;
+                        if (node.material && node.material.trim() !== '' && node.material.trim() !== '-') {
+                            finalDescription = node.description + ', ' + node.material;
+                        }
+                        
+                        aggregatedItems.set(compositeKey, {
+                            partNumber: node.partNumber,
+                            componentType: node.componentType,
+                            description: finalDescription,  // Concatenated description
+                            material: node.material,        // Keep original for reference (not displayed)
+                            qty: effectiveQty,
+                            lengthDecimal: node.length,
+                            lengthFractional: decimalToFractional(node.length),
+                            uofm: node.uofm,
+                            state: node.state,
+                            purchaseDescription: node.purchaseDescription,
+                            nsItemType: node.nsItemType,
+                            revision: node.revision
+                        });
+                    }
+                } else {
+                    console.log(`  → Skipping (Assembly)`);
+                }
+                
+                // Always traverse children regardless of component type
+                node.children.forEach(child => {
+                    traverse(child, effectiveQty);
+                });
+            }
+            
+            traverse(rootNode, unitQty);
+            
+            console.log(`Final aggregated items: ${aggregatedItems.size}`);
+            aggregatedItems.forEach((item, key) => {
+                console.log(`  ${key}: Qty=${item.qty}`);
+            });
+            
+            return Array.from(aggregatedItems.values());
+        }
+        
+        // Convert decimal to fractional (1/16" increments with reduction)
+        function decimalToFractional(decimal) {
+            if (decimal === null) return '';
+            
+            // Round to nearest 1/16"
+            const sixteenths = Math.round(decimal * 16);
+            const wholePart = Math.floor(sixteenths / 16);
+            const fractionalPart = sixteenths % 16;
+            
+            // No fraction
+            if (fractionalPart === 0) {
+                return wholePart + '"';
+            }
+            
+            // Reduce fraction using GCD
+            const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            const divisor = gcd(fractionalPart, 16);
+            const numerator = fractionalPart / divisor;
+            const denominator = 16 / divisor;
+            
+            // Format
+            if (wholePart === 0) {
+                return `${numerator}/${denominator}"`;
+            } else {
+                return `${wholePart}-${numerator}/${denominator}"`;
+            }
+        }
+        
+        // Sort BOM (Component Type → Description → Length)
+        function sortBOM(items) {
+            return items.sort((a, b) => {
+                // Primary: Component Type
+                if (a.componentType !== b.componentType) {
+                    return a.componentType.localeCompare(b.componentType);
+                }
+                
+                // Secondary: Description (natural sort - handles numbers in strings)
+                if (a.description !== b.description) {
+                    return a.description.localeCompare(b.description, undefined, {
+                        numeric: true,
+                        sensitivity: 'base'
+                    });
+                }
+                
+                // Tertiary: Length (numeric, nulls last)
+                if (a.lengthDecimal === null && b.lengthDecimal === null) return 0;
+                if (a.lengthDecimal === null) return 1;
+                if (b.lengthDecimal === null) return -1;
+                return a.lengthDecimal - b.lengthDecimal;
+            });
+        }
+        
+        // Flatten button handler
+        flattenBtn.addEventListener('click', () => {
+            try {
+                const unitQty = parseInt(unitQtyInput.value);
+                if (unitQty < 1) {
+                    showMessage('Unit Quantity must be at least 1', 'error');
+                    return;
+                }
+                
+                // Build tree and preserve it
+                treeRoot = buildTree(csvData);
+
+                // Flatten and aggregate
+                const items = flattenBOM(treeRoot, unitQty);
+                
+                // Sort
+                flattenedBOM = sortBOM(items);
+                
+                // Display results
+                displayResults(flattenedBOM, unitQty);
+                
+                showMessage('BOM flattened successfully!', 'success');
+            } catch (error) {
+                showMessage(`Error flattening BOM: ${error.message}`, 'error');
+                console.error(error);
+            }
+        });
+        
+        // Display results
+        function displayResults(items, unitQty) {
+            // Update stats
+            totalItems.textContent = items.length;
+            unitQtyDisplay.textContent = unitQty;
+            
+            // Calculate component type counts (number of unique items, not quantities)
+            const counts = {
+                'Manufactured': 0,
+                'Purchased': 0,
+                'Raw Stock': 0
+            };
+            
+            items.forEach(item => {
+                if (counts.hasOwnProperty(item.componentType)) {
+                    counts[item.componentType]++;
+                }
+            });
+            
+            // Update component type breakdown
+            const breakdown = document.getElementById('componentBreakdown');
+            const manufacturedBreakdown = document.getElementById('manufacturedBreakdown');
+            const purchasedBreakdown = document.getElementById('purchasedBreakdown');
+            const rawStockBreakdown = document.getElementById('rawStockBreakdown');
+            
+            let hasBreakdown = false;
+            
+            if (counts['Manufactured'] > 0) {
+                document.getElementById('manufacturedCount').textContent = counts['Manufactured'];
+                manufacturedBreakdown.style.display = '';
+                hasBreakdown = true;
+            } else {
+                manufacturedBreakdown.style.display = 'none';
+            }
+            
+            if (counts['Purchased'] > 0) {
+                document.getElementById('purchasedCount').textContent = counts['Purchased'];
+                purchasedBreakdown.style.display = '';
+                hasBreakdown = true;
+            } else {
+                purchasedBreakdown.style.display = 'none';
+            }
+            
+            if (counts['Raw Stock'] > 0) {
+                document.getElementById('rawStockCount').textContent = counts['Raw Stock'];
+                rawStockBreakdown.style.display = '';
+                hasBreakdown = true;
+            } else {
+                rawStockBreakdown.style.display = 'none';
+            }
+            
+            // Show breakdown section if any component types exist
+            breakdown.style.display = hasBreakdown ? '' : 'none';
+            
+            // Update assembly info - filename is primary, PN/description is secondary
+            document.getElementById('assemblyFilenameDisplay').textContent = uploadedFilename || 'N/A';
+            document.getElementById('assemblyPartNumDesc').textContent = `${rootPartNumber} - ${rootDescription || ''}`;
+            document.getElementById('assemblyRev').textContent = rootRevision;
+            
+            // Show export buttons
+            exportExcelBtn.style.display = '';
+            exportHtmlBtn.style.display = '';
+            
+            // Build table with natural text wrapping (no expand/collapse)
+            resultsBody.innerHTML = items.map((item, index) => {
+                // Purchase description preserves native line breaks
+                const purDesc = item.purchaseDescription || '';
+                
+                return `
+                <tr>
+                    <td class="numeric">${item.qty}</td>
+                    <td>${item.partNumber}</td>
+                    <td>${item.componentType}</td>
+                    <td class="description">${item.description}</td>
+                    <td class="numeric">${item.lengthDecimal !== null ? item.lengthDecimal : ''}</td>
+                    <td>${item.lengthFractional}</td>
+                    <td>${item.uofm}</td>
+                    <td class="purchase-desc">${purDesc}</td>
+                    <td>${item.state}</td>
+                    <td>${item.revision}</td>
+                    <td>${item.nsItemType}</td>
+                </tr>
+            `}).join('');
+            
+            // Show results
+            results.classList.add('show');
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Export to Excel
+        exportExcelBtn.addEventListener('click', () => {
+            if (!flattenedBOM) return;
+            
+            // Prepare data for Excel with new column order
+            const excelData = flattenedBOM.map(item => ({
+                'Qty': item.qty,
+                'Part Number': item.partNumber,
+                'Component Type': item.componentType,
+                'Description': item.description,
+                'Length (Decimal)': item.lengthDecimal !== null ? item.lengthDecimal : '',
+                'Length (Fractional)': item.lengthFractional,
+                'UofM': item.uofm,
+                'Purchase Description': item.purchaseDescription || '',
+                'State': item.state,
+                'Revision': item.revision,
+                'NS Item Type': item.nsItemType
+            }));
+            
+            // Create workbook
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Flat BOM');
+            
+            // Generate filename using uploaded filename
+            const today = new Date();
+            const dateStr = today.getFullYear() +
+                          String(today.getMonth() + 1).padStart(2, '0') +
+                          String(today.getDate()).padStart(2, '0');
+
+            // Use uploaded filename (strip extension) or fall back to part number
+            const baseFilename = uploadedFilename
+                ? uploadedFilename.replace(/\.(csv|xml)$/i, '')
+                : `${rootPartNumber}-Rev${rootRevision}`;
+            const filename = `${baseFilename}-Flat BOM-${dateStr}.xlsx`;
+            
+            // Download
+            XLSX.writeFile(wb, filename);
+        });
+        
+        // Export to HTML
+        exportHtmlBtn.addEventListener('click', () => {
+            if (!flattenedBOM) return;
+            
+            const unitQty = parseInt(unitQtyInput.value);
+            const today = new Date();
+            const dateStr = today.getFullYear() + 
+                          String(today.getMonth() + 1).padStart(2, '0') + 
+                          String(today.getDate()).padStart(2, '0');
+            
+            // Format date as YYYY-MM-DD HH:MM:SS
+            const generatedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`;
+            
+            // Calculate component breakdown
+            const counts = { 'Manufactured': 0, 'Purchased': 0, 'Raw Stock': 0 };
+            flattenedBOM.forEach(item => {
+                if (counts.hasOwnProperty(item.componentType)) {
+                    counts[item.componentType]++;
+                }
+            });
+            
+            // Build breakdown HTML
+            let breakdownHTML = '';
+            if (counts['Manufactured'] > 0) {
+                breakdownHTML += `
+                    <div style="text-align: center;">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 600; color: #0f172a;">${counts['Manufactured']}</div>
+                        <div style="color: #64748b; margin-top: 0.125rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem;">Manufactured</div>
+                    </div>`;
+            }
+            if (counts['Purchased'] > 0) {
+                breakdownHTML += `
+                    <div style="text-align: center;">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 600; color: #0f172a;">${counts['Purchased']}</div>
+                        <div style="color: #64748b; margin-top: 0.125rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem;">Purchased</div>
+                    </div>`;
+            }
+            if (counts['Raw Stock'] > 0) {
+                breakdownHTML += `
+                    <div style="text-align: center;">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 600; color: #0f172a;">${counts['Raw Stock']}</div>
+                        <div style="color: #64748b; margin-top: 0.125rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem;">Raw Stock</div>
+                    </div>`;
+            }
+            
+            // Create HTML report
+            const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Flat BOM - ${rootPartNumber} Rev${rootRevision}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fafafa;
+            background-image: 
+                linear-gradient(rgba(200, 200, 200, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200, 200, 200, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #0f172a;
+            padding: 2rem;
+        }
+        .container { max-width: 100%; }
+        .header {
+            margin-bottom: 3rem;
+            border-left: 4px solid #1e40af;
+            padding-left: 1.5rem;
+        }
+        h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .subtitle {
+            color: #475569;
+            font-size: 0.875rem;
+        }
+        .assembly-info {
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #1e40af;
+        }
+        .assembly-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .assembly-part {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+        .assembly-desc {
+            font-size: 0.875rem;
+            color: #334155;
+        }
+        .assembly-rev {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+        .stats-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        .stats-grid {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        .stat-main {
+            flex-shrink: 0;
+            text-align: center;
+        }
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1e40af;
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.5rem;
+        }
+        .breakdown {
+            border-left: 2px solid #cbd5e1;
+            padding-left: 2rem;
+            display: flex;
+            gap: 2rem;
+            flex: 1;
+        }
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            overflow-y: visible;
+        }
+        table {
+            width: max-content;
+            min-width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: #0f172a;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #cbd5e1;
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #0f172a;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            vertical-align: top;
+        }
+        tr:hover {
+            background: #f8fafc;
+        }
+        .numeric {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        .description {
+            max-width: 400px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .purchase-desc {
+            max-width: 300px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        @media print {
+            body { background: white; }
+            .stats-section, .table-container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Flat BOM</h1>
+            <div class="subtitle">Generated: ${generatedDate}</div>
+        </div>
+        
+        <div class="assembly-info">
+            <div class="assembly-label">Assembly</div>
+            <div class="assembly-part">${uploadedFilename || 'N/A'}</div>
+            <div class="assembly-desc">${rootPartNumber} - ${rootDescription || ''}</div>
+            <div class="assembly-rev">Revision: ${rootRevision}</div>
+        </div>
+        
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-main">
+                    <div class="stat-value">${flattenedBOM.length}</div>
+                    <div class="stat-label">Unique Items</div>
+                </div>
+                ${breakdownHTML ? `<div class="breakdown">${breakdownHTML}</div>` : ''}
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Qty</th>
+                        <th>Part Number</th>
+                        <th>Component Type</th>
+                        <th>Description</th>
+                        <th>Length (Decimal)</th>
+                        <th>Length (Fractional)</th>
+                        <th>UofM</th>
+                        <th>Purchase Description</th>
+                        <th>State</th>
+                        <th>Revision</th>
+                        <th>NS Item Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${flattenedBOM.map(item => `
+                        <tr>
+                            <td class="numeric">${item.qty}</td>
+                            <td>${item.partNumber}</td>
+                            <td>${item.componentType}</td>
+                            <td class="description">${item.description}</td>
+                            <td class="numeric">${item.lengthDecimal !== null ? item.lengthDecimal : ''}</td>
+                            <td>${item.lengthFractional}</td>
+                            <td>${item.uofm}</td>
+                            <td class="purchase-desc">${item.purchaseDescription ? item.purchaseDescription.replace(/\n/g, '<br>') : ''}</td>
+                            <td>${item.state}</td>
+                            <td>${item.revision}</td>
+                            <td>${item.nsItemType}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+            `;
+
+            // Generate filename using uploaded filename
+            const baseFilename = uploadedFilename
+                ? uploadedFilename.replace(/\.(csv|xml)$/i, '')
+                : `${rootPartNumber}-Rev${rootRevision}`;
+            const filename = `${baseFilename}-Flat BOM-${dateStr}.html`;
+            
+            // Download
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+        
+        // Reset button
+        resetBtn.addEventListener('click', () => {
+            csvData = null;
+            flattenedBOM = null;
+            treeRoot = null;
+            rootPartNumber = null;
+            rootRevision = null;
+            rootDescription = null;
+            uploadedFilename = null;
+            fileInput.value = '';
+            uploadZone.classList.remove('has-file');
+            fileInfo.classList.remove('show');
+            flattenBtn.disabled = true;
+            results.classList.remove('show');
+            message.classList.remove('show');
+            unitQtyInput.value = 1;
+            exportExcelBtn.style.display = 'none';
+            exportHtmlBtn.style.display = 'none';
+        });
+        
+        // Show message helper
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type} show`;
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 5000);
+        }
+        
+        // ========================================
+        // TAB SYSTEM
+        // ========================================
+        
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+                
+                // Update button states
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Show target tab content
+                tabContents.forEach(content => {
+                    if (content.id === targetTab + 'Tab') {
+                        content.classList.add('active');
+                    } else {
+                        content.classList.remove('active');
+                    }
+                });
+            });
+        });
+        
+        // ========================================
+        // BOM COMPARISON - STATE & DOM ELEMENTS
+        // ========================================
+        
+        let oldBomData = null;
+        let oldBomFlattened = null;
+        let oldBomInfo = { partNumber: '', revision: '', description: '' };
+        let oldBomFilename = null;  // Store old BOM filename
+        let oldBomTree = null;      // Preserved tree for scoped comparison
+        let oldSelectedNode = null; // Selected node for scoped comparison (null = full GA)
+
+        let newBomData = null;
+        let newBomFlattened = null;
+        let newBomInfo = { partNumber: '', revision: '', description: '' };
+        let newBomFilename = null;  // Store new BOM filename
+        let newBomTree = null;      // Preserved tree for scoped comparison
+        let newSelectedNode = null; // Selected node for scoped comparison (null = full GA)
+
+        let comparisonResults = [];
+        let currentFilter = 'all';
+        
+        const oldBomZone = document.getElementById('oldBomZone');
+        const oldBomInput = document.getElementById('oldBomFile');
+        const oldBomFileInfo = document.getElementById('oldBomInfo');
+        const oldBomFileName = document.getElementById('oldBomName');
+        const oldBomFileMeta = document.getElementById('oldBomMeta');
+        
+        const newBomZone = document.getElementById('newBomZone');
+        const newBomInput = document.getElementById('newBomFile');
+        const newBomFileInfo = document.getElementById('newBomInfo');
+        const newBomFileName = document.getElementById('newBomName');
+        const newBomFileMeta = document.getElementById('newBomMeta');
+        
+        const compareBtn = document.getElementById('compareBtn');
+        const resetCompareBtn = document.getElementById('resetCompareBtn');
+        const resetScopeBtn = document.getElementById('resetScopeBtn');
+        const compareMessage = document.getElementById('compareMessage');
+        const compareResults = document.getElementById('compareResults');
+        const compareBody = document.getElementById('compareBody');
+        const exportCompareExcelBtn = document.getElementById('exportCompareExcelBtn');
+        const exportCompareHtmlBtn = document.getElementById('exportCompareHtmlBtn');
+
+        // Tree selection panel elements
+        const oldBomTreePanel = document.getElementById('oldBomTreePanel');
+        const oldBomPanelName = document.getElementById('oldBomPanelName');
+        const oldBomTreeContainer = document.getElementById('oldBomTreeContainer');
+        const oldBomSelectedDisplay = document.getElementById('oldBomSelectedDisplay');
+        const oldBomChangeFile = document.getElementById('oldBomChangeFile');
+        const oldBomScopeDisplay = document.getElementById('oldBomScopeDisplay');
+
+        const newBomTreePanel = document.getElementById('newBomTreePanel');
+        const newBomPanelName = document.getElementById('newBomPanelName');
+        const newBomTreeContainer = document.getElementById('newBomTreeContainer');
+        const newBomSelectedDisplay = document.getElementById('newBomSelectedDisplay');
+        const newBomChangeFile = document.getElementById('newBomChangeFile');
+        const newBomScopeDisplay = document.getElementById('newBomScopeDisplay');
+
+        // ========================================
+        // SCOPED COMPARISON - TREE SELECTION FUNCTIONS
+        // ========================================
+
+        // Render selection tree for a BOM
+        function renderSelectionTree(tree, type) {
+            const container = type === 'old' ? oldBomTreeContainer : newBomTreeContainer;
+            container.innerHTML = '';
+            renderSelectionNode(tree, container, type, 0);
+        }
+
+        // Recursive function to render a tree node for selection
+        function renderSelectionNode(node, container, type, depth = 0) {
+            const row = document.createElement('div');
+            row.className = 'tree-select-row';
+            row.dataset.level = node.level;
+            row.dataset.depth = depth;
+
+            const hasChildren = node.children.length > 0;
+            const isAssembly = node.componentType === 'Assembly';
+            const indent = depth * 20;
+
+            // Make all items selectable for scoped comparison
+            row.classList.add('selectable');
+            row.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tree-select-toggle')) return;
+                handleNodeSelection(node, type);
+            });
+
+            // Indent
+            row.style.paddingLeft = `${1 + indent / 16}rem`;
+
+            // Toggle or spacer
+            if (hasChildren) {
+                const toggle = document.createElement('span');
+                toggle.className = 'tree-select-toggle';
+                toggle.textContent = '+';
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleSelectionChildren(row, type);
+                });
+                row.appendChild(toggle);
+            } else {
+                const spacer = document.createElement('span');
+                spacer.className = 'tree-select-spacer';
+                row.appendChild(spacer);
+            }
+
+            // Part Number
+            const partSpan = document.createElement('span');
+            partSpan.className = 'tree-select-part';
+            partSpan.textContent = node.partNumber;
+            row.appendChild(partSpan);
+
+            // Component Type badge
+            const typeSpan = document.createElement('span');
+            typeSpan.className = 'tree-select-type';
+            if (isAssembly) typeSpan.classList.add('assembly');
+            typeSpan.textContent = node.componentType;
+            row.appendChild(typeSpan);
+
+            // Description (truncated)
+            const descSpan = document.createElement('span');
+            descSpan.className = 'tree-select-desc';
+            descSpan.textContent = node.description || '';
+            descSpan.title = node.description || '';  // Full text on hover
+            row.appendChild(descSpan);
+
+            container.appendChild(row);
+
+            // Render children (collapsed by default)
+            if (hasChildren) {
+                node.children.forEach((child) => {
+                    const childRow = renderSelectionNode(child, container, type, depth + 1);
+                    childRow.classList.add('child-row', 'collapsed');
+                    childRow.dataset.parentLevel = node.level;
+                });
+            }
+
+            return row;
+        }
+
+        // Toggle children visibility in selection tree
+        function toggleSelectionChildren(parentRow, type) {
+            const toggle = parentRow.querySelector('.tree-select-toggle');
+            const parentLevel = parentRow.dataset.level;
+            const parentDepth = parseInt(parentRow.dataset.depth);
+            const container = type === 'old' ? oldBomTreeContainer : newBomTreeContainer;
+
+            const allRows = container.querySelectorAll('.tree-select-row');
+            let foundParent = false;
+
+            allRows.forEach(row => {
+                if (row === parentRow) {
+                    foundParent = true;
+                    return;
+                }
+                if (!foundParent) return;
+
+                const rowDepth = parseInt(row.dataset.depth);
+                if (rowDepth <= parentDepth) return;
+
+                // Only toggle direct children
+                if (row.dataset.parentLevel === parentLevel) {
+                    const isCollapsed = toggle.textContent === '+';
+                    if (isCollapsed) {
+                        row.classList.remove('collapsed');
+                    } else {
+                        row.classList.add('collapsed');
+                        // Collapse grandchildren too
+                        const childToggle = row.querySelector('.tree-select-toggle');
+                        if (childToggle && childToggle.textContent === '-') {
+                            toggleSelectionChildren(row, type);
+                        }
+                    }
+                }
+            });
+
+            toggle.textContent = toggle.textContent === '+' ? '-' : '+';
+        }
+
+        // Handle node selection click
+        function handleNodeSelection(node, type) {
+            const container = type === 'old' ? oldBomTreeContainer : newBomTreeContainer;
+            const currentNode = type === 'old' ? oldSelectedNode : newSelectedNode;
+
+            // Toggle selection
+            if (currentNode === node) {
+                // Deselect
+                if (type === 'old') {
+                    oldSelectedNode = null;
+                } else {
+                    newSelectedNode = null;
+                }
+            } else {
+                // Select
+                if (type === 'old') {
+                    oldSelectedNode = node;
+                } else {
+                    newSelectedNode = node;
+                }
+            }
+
+            // Update visual selection
+            const selectedNode = type === 'old' ? oldSelectedNode : newSelectedNode;
+            container.querySelectorAll('.tree-select-row').forEach(row => {
+                if (selectedNode && row.dataset.level === selectedNode.level) {
+                    row.classList.add('selected');
+                } else {
+                    row.classList.remove('selected');
+                }
+            });
+
+            // Update status display
+            updateSelectionDisplay(type);
+        }
+
+        // Update the selection status display
+        function updateSelectionDisplay(type) {
+            const displayEl = type === 'old' ? oldBomSelectedDisplay : newBomSelectedDisplay;
+            const selectedNode = type === 'old' ? oldSelectedNode : newSelectedNode;
+            const tree = type === 'old' ? oldBomTree : newBomTree;
+
+            if (selectedNode && selectedNode !== tree) {
+                displayEl.textContent = selectedNode.partNumber;
+            } else {
+                displayEl.textContent = 'Full Assembly';
+            }
+        }
+
+        // Extract a subtree for scoped comparison (clone with Qty 1 at root)
+        function extractSubtree(node) {
+            function cloneNode(n, isRoot = false) {
+                const clone = new BOMNode({
+                    Level: n.level,
+                    'Part Number': n.partNumber,
+                    'Component Type': n.componentType,
+                    Description: n.description,
+                    Material: n.material,
+                    Qty: isRoot ? 1 : n.qty,
+                    Length: n.length,
+                    UofM: n.uofm,
+                    State: n.state,
+                    'Purchase Description': n.purchaseDescription,
+                    'NS Item Type': n.nsItemType,
+                    Revision: n.revision
+                });
+                clone.children = n.children.map(child => cloneNode(child, false));
+                return clone;
+            }
+            return cloneNode(node, true);
+        }
+
+        // ========================================
+        // BOM COMPARISON - FILE UPLOAD HANDLERS
+        // ========================================
+        
+        // Old BOM upload
+        oldBomZone.addEventListener('click', () => oldBomInput.click());
+        
+        oldBomZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            oldBomZone.classList.add('dragover');
+        });
+        
+        oldBomZone.addEventListener('dragleave', () => {
+            oldBomZone.classList.remove('dragover');
+        });
+        
+        oldBomZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            oldBomZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            const fileName = file ? file.name.toLowerCase() : '';
+            if (file && (fileName.endsWith('.csv') || fileName.endsWith('.xml'))) {
+                handleCompareFile('old', file);
+            } else {
+                showCompareMessage('Please upload a CSV or XML file', 'error');
+            }
+        });
+        
+        oldBomInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleCompareFile('old', file);
+            }
+        });
+        
+        // New BOM upload
+        newBomZone.addEventListener('click', () => newBomInput.click());
+        
+        newBomZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            newBomZone.classList.add('dragover');
+        });
+        
+        newBomZone.addEventListener('dragleave', () => {
+            newBomZone.classList.remove('dragover');
+        });
+        
+        newBomZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            newBomZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            const fileName = file ? file.name.toLowerCase() : '';
+            if (file && (fileName.endsWith('.csv') || fileName.endsWith('.xml'))) {
+                handleCompareFile('new', file);
+            } else {
+                showCompareMessage('Please upload a CSV or XML file', 'error');
+            }
+        });
+        
+        newBomInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleCompareFile('new', file);
+            }
+        });
+        
+        function handleCompareFile(type, file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const fileName = file.name.toLowerCase();
+                    const isXML = fileName.endsWith('.xml');
+                    
+                    console.log(`Loading ${type} BOM: ${file.name} (${isXML ? 'XML' : 'CSV'})`);
+                    
+                    if (isXML) {
+                        const decoder = new TextDecoder('utf-8');
+                        const xmlText = decoder.decode(e.target.result);
+                        const parsed = parseXML(xmlText);
+
+                        if (type === 'old') {
+                            oldBomData = parsed;
+                            oldBomFilename = file.name;  // Store filename
+                        } else {
+                            newBomData = parsed;
+                            newBomFilename = file.name;  // Store filename
+                        }
+                    } else {
+                        const decoder = new TextDecoder('utf-16le');
+                        let csvText = decoder.decode(e.target.result);
+                        
+                        if (csvText.charCodeAt(0) === 0xFEFF) {
+                            csvText = csvText.substring(1);
+                        }
+                        
+                        const workbook = XLSX.read(csvText, {
+                            type: 'string',
+                            raw: true,
+                            cellText: true,
+                            cellDates: false
+                        });
+                        
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const parsed = XLSX.utils.sheet_to_json(worksheet, {
+                            raw: true,
+                            defval: ''
+                        });
+
+                        if (type === 'old') {
+                            oldBomData = parsed;
+                            oldBomFilename = file.name;  // Store filename
+                        } else {
+                            newBomData = parsed;
+                            newBomFilename = file.name;  // Store filename
+                        }
+                    }
+                    
+                    console.log(`${type} BOM loaded: ${type === 'old' ? oldBomData.length : newBomData.length} rows`);
+
+                    // Build tree immediately for scoped comparison UI
+                    const rawData = type === 'old' ? oldBomData : newBomData;
+                    let tree;
+                    try {
+                        tree = buildTree(rawData);
+                    } catch (treeError) {
+                        showCompareMessage(`Error building tree for ${type} BOM: ${treeError.message}`, 'error');
+                        console.error(`Tree build error for ${type} BOM:`, treeError);
+                        return;
+                    }
+
+                    // Store tree globally and reset selection
+                    if (type === 'old') {
+                        oldBomTree = tree;
+                        oldSelectedNode = null;
+                    } else {
+                        newBomTree = tree;
+                        newSelectedNode = null;
+                    }
+
+                    // Update UI: Hide drop zone, show tree selection panel
+                    if (type === 'old') {
+                        oldBomZone.style.display = 'none';
+                        oldBomTreePanel.style.display = 'block';
+                        oldBomPanelName.textContent = file.name;
+                        renderSelectionTree(oldBomTree, 'old');
+                        updateSelectionDisplay('old');
+                        // Keep file info for reference
+                        oldBomFileName.textContent = file.name;
+                        oldBomFileMeta.textContent = `${oldBomData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                    } else {
+                        newBomZone.style.display = 'none';
+                        newBomTreePanel.style.display = 'block';
+                        newBomPanelName.textContent = file.name;
+                        renderSelectionTree(newBomTree, 'new');
+                        updateSelectionDisplay('new');
+                        // Keep file info for reference
+                        newBomFileName.textContent = file.name;
+                        newBomFileMeta.textContent = `${newBomData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                    }
+
+                    // Enable compare button if both files loaded
+                    if (oldBomData && newBomData) {
+                        compareBtn.disabled = false;
+                        showCompareMessage('Both BOMs loaded. Select scope and compare.', 'success');
+                    }
+                } catch (error) {
+                    showCompareMessage(`Error loading ${type} BOM: ${error.message}`, 'error');
+                    console.error(`Error loading ${type} BOM:`, error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function showCompareMessage(text, type) {
+            compareMessage.textContent = text;
+            compareMessage.className = `message ${type} show`;
+            setTimeout(() => {
+                compareMessage.classList.remove('show');
+            }, 5000);
+        }
+        
+        // ========================================
+        // BOM COMPARISON - FLATTEN AND COMPARE
+        // ========================================
+        
+        compareBtn.addEventListener('click', () => {
+            try {
+                console.log('Starting BOM comparison...');
+
+                // Determine scope for each BOM (selected node or full tree)
+                const oldScope = oldSelectedNode || oldBomTree;
+                const newScope = newSelectedNode || newBomTree;
+
+                console.log(`Old scope: ${oldScope.partNumber} (Level: ${oldScope.level})`);
+                console.log(`New scope: ${newScope.partNumber} (Level: ${newScope.level})`);
+
+                // Extract subtrees (clones with Qty 1 at root)
+                const oldSubtree = extractSubtree(oldScope);
+                const newSubtree = extractSubtree(newScope);
+
+                // Flatten scoped subtrees
+                console.log('Flattening old BOM scope...');
+                oldBomFlattened = flattenBOM(oldSubtree, 1);
+
+                // Store info for display (full GA info + scope info)
+                oldBomInfo.partNumber = oldBomTree.partNumber;
+                oldBomInfo.revision = oldBomTree.revision;
+                oldBomInfo.description = oldBomTree.description;
+                oldBomInfo.scopedPartNumber = oldScope.partNumber;
+                oldBomInfo.isScoped = oldSelectedNode !== null;
+
+                console.log('Flattening new BOM scope...');
+                newBomFlattened = flattenBOM(newSubtree, 1);
+
+                newBomInfo.partNumber = newBomTree.partNumber;
+                newBomInfo.revision = newBomTree.revision;
+                newBomInfo.description = newBomTree.description;
+                newBomInfo.scopedPartNumber = newScope.partNumber;
+                newBomInfo.isScoped = newSelectedNode !== null;
+
+                console.log(`Old BOM flattened: ${oldBomFlattened.length} items`);
+                console.log(`New BOM flattened: ${newBomFlattened.length} items`);
+
+                // Compare
+                console.log('Comparing BOMs...');
+                compareBOMs();
+
+                // Display results
+                displayComparisonResults();
+
+                // Show reset comparison button
+                resetScopeBtn.style.display = '';
+
+            } catch (error) {
+                showCompareMessage(`Comparison error: ${error.message}`, 'error');
+                console.error('Comparison error:', error);
+            }
+        });
+        
+        function compareBOMs() {
+            const oldMap = new Map();
+            const newMap = new Map();
+            
+            // Build maps with composite keys
+            oldBomFlattened.forEach(item => {
+                const key = createCompositeKey(item.partNumber, item.lengthDecimal);
+                oldMap.set(key, item);
+            });
+            
+            newBomFlattened.forEach(item => {
+                const key = createCompositeKey(item.partNumber, item.lengthDecimal);
+                newMap.set(key, item);
+            });
+            
+            comparisonResults = [];
+            
+            // Find added and changed items
+            newMap.forEach((newItem, key) => {
+                if (!oldMap.has(key)) {
+                    // Added
+                    comparisonResults.push({
+                        changeType: 'Added',
+                        partNumber: newItem.partNumber,
+                        componentType: newItem.componentType,
+                        oldDescription: null,
+                        newDescription: newItem.description,
+                        lengthDecimal: newItem.lengthDecimal,
+                        lengthFractional: newItem.lengthFractional,
+                        oldQty: null,
+                        newQty: newItem.qty,
+                        deltaQty: null,
+                        oldPurchaseDescription: null,
+                        newPurchaseDescription: newItem.purchaseDescription,
+                        attributesChanged: []
+                    });
+                } else {
+                    // Exists in both - check for changes
+                    const oldItem = oldMap.get(key);
+                    const changedAttrs = [];
+                    
+                    if (oldItem.qty !== newItem.qty) {
+                        changedAttrs.push('Qty');
+                    }
+                    
+                    if (oldItem.description !== newItem.description) {
+                        changedAttrs.push('Description');
+                    }
+                    
+                    if (oldItem.purchaseDescription !== newItem.purchaseDescription) {
+                        changedAttrs.push('Purchase Desc');
+                    }
+                    
+                    if (changedAttrs.length > 0) {
+                        comparisonResults.push({
+                            changeType: 'Changed',
+                            partNumber: newItem.partNumber,
+                            componentType: newItem.componentType,
+                            oldDescription: oldItem.description,
+                            newDescription: newItem.description,
+                            lengthDecimal: newItem.lengthDecimal,
+                            lengthFractional: newItem.lengthFractional,
+                            oldQty: oldItem.qty,
+                            newQty: newItem.qty,
+                            deltaQty: newItem.qty - oldItem.qty,
+                            oldPurchaseDescription: oldItem.purchaseDescription,
+                            newPurchaseDescription: newItem.purchaseDescription,
+                            attributesChanged: changedAttrs
+                        });
+                    }
+                }
+            });
+            
+            // Find removed items
+            oldMap.forEach((oldItem, key) => {
+                if (!newMap.has(key)) {
+                    comparisonResults.push({
+                        changeType: 'Removed',
+                        partNumber: oldItem.partNumber,
+                        componentType: oldItem.componentType,
+                        oldDescription: oldItem.description,
+                        newDescription: null,
+                        lengthDecimal: oldItem.lengthDecimal,
+                        lengthFractional: oldItem.lengthFractional,
+                        oldQty: oldItem.qty,
+                        newQty: null,
+                        deltaQty: null,
+                        oldPurchaseDescription: oldItem.purchaseDescription,
+                        newPurchaseDescription: null,
+                        attributesChanged: []
+                    });
+                }
+            });
+            
+            console.log(`Comparison complete: ${comparisonResults.length} changes`);
+        }
+        
+        function createCompositeKey(partNumber, length) {
+            if (length !== null && length !== undefined && length !== '') {
+                return `${partNumber}|${length}`;
+            }
+            return `${partNumber}|`;
+        }
+        
+        function displayComparisonResults() {
+            // Update assembly info - filename is primary, PN/description is secondary
+            document.getElementById('oldBomFilenameDisplay').textContent = oldBomFilename || 'N/A';
+            document.getElementById('oldBomAssembly').textContent = `${oldBomInfo.partNumber} - ${oldBomInfo.description}`;
+            document.getElementById('oldBomRev').textContent = oldBomInfo.revision || '-';
+            document.getElementById('newBomFilenameDisplay').textContent = newBomFilename || 'N/A';
+            document.getElementById('newBomAssembly').textContent = `${newBomInfo.partNumber} - ${newBomInfo.description}`;
+            document.getElementById('newBomRev').textContent = newBomInfo.revision || '-';
+
+            // Show scope info
+            if (oldBomInfo.isScoped) {
+                oldBomScopeDisplay.textContent = `Scope: ${oldBomInfo.scopedPartNumber}`;
+            } else {
+                oldBomScopeDisplay.textContent = 'Scope: Full Assembly';
+            }
+            if (newBomInfo.isScoped) {
+                newBomScopeDisplay.textContent = `Scope: ${newBomInfo.scopedPartNumber}`;
+            } else {
+                newBomScopeDisplay.textContent = 'Scope: Full Assembly';
+            }
+            
+            // Update stats
+            const added = comparisonResults.filter(r => r.changeType === 'Added').length;
+            const removed = comparisonResults.filter(r => r.changeType === 'Removed').length;
+            const changed = comparisonResults.filter(r => r.changeType === 'Changed').length;
+            
+            document.getElementById('addedCount').textContent = added;
+            document.getElementById('removedCount').textContent = removed;
+            document.getElementById('changedCount').textContent = changed;
+            
+            // Show results section
+            compareResults.classList.add('show');
+            
+            // Render table
+            renderComparisonTable();
+            
+            // Show export buttons
+            exportCompareExcelBtn.style.display = '';
+            exportCompareHtmlBtn.style.display = '';
+            
+            // Scroll to results
+            compareResults.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function sortComparisonResults(results) {
+            return results.sort((a, b) => {
+                // Sort by: Component Type → Description → Length
+                if (a.componentType !== b.componentType) {
+                    return a.componentType.localeCompare(b.componentType);
+                }
+                
+                const descA = a.newDescription || a.oldDescription || '';
+                const descB = b.newDescription || b.oldDescription || '';
+                if (descA !== descB) {
+                    return descA.localeCompare(descB, undefined, { numeric: true, sensitivity: 'base' });
+                }
+                
+                const lengthA = a.lengthDecimal === null ? -Infinity : a.lengthDecimal;
+                const lengthB = b.lengthDecimal === null ? -Infinity : b.lengthDecimal;
+                return lengthA - lengthB;
+            });
+        }
+        
+        // Create word-level diff highlighting
+        function createDiff(oldText, newText) {
+            if (!oldText && !newText) return { old: '-', new: '-' };
+            if (!oldText) return { old: '-', new: newText };
+            if (!newText) return { old: oldText, new: '-' };
+            if (oldText === newText) return { old: oldText, new: newText };
+            
+            // Split into words
+            const oldWords = oldText.split(/\s+/);
+            const newWords = newText.split(/\s+/);
+            
+            // Find common and different words
+            const oldSet = new Set(oldWords);
+            const newSet = new Set(newWords);
+            
+            // Build highlighted versions
+            let oldHtml = oldWords.map(word => {
+                if (!newSet.has(word)) {
+                    return `<span class="diff-removed">${word}</span>`;
+                }
+                return word;
+            }).join(' ');
+            
+            let newHtml = newWords.map(word => {
+                if (!oldSet.has(word)) {
+                    return `<span class="diff-added">${word}</span>`;
+                }
+                return word;
+            }).join(' ');
+            
+            return { old: oldHtml, new: newHtml };
+        }
+        
+        function renderComparisonTable() {
+            compareBody.innerHTML = '';
+            
+            // Filter results
+            const filtered = currentFilter === 'all'
+                ? comparisonResults
+                : comparisonResults.filter(r => r.changeType === currentFilter);
+            
+            // Sort results
+            const sorted = sortComparisonResults(filtered);
+            
+            // Render rows
+            sorted.forEach(result => {
+                const row = document.createElement('tr');
+                
+                const badge = `<span class="badge ${result.changeType.toLowerCase()}">${result.changeType}</span>`;
+                const partNumber = result.partNumber || '-';
+                const componentType = result.componentType || '-';
+                
+                // Handle descriptions with diff highlighting
+                let oldDesc = '-';
+                let newDesc = '-';
+                if (result.changeType === 'Changed' && result.attributesChanged.includes('Description')) {
+                    const diff = createDiff(result.oldDescription, result.newDescription);
+                    oldDesc = diff.old;
+                    newDesc = diff.new;
+                } else {
+                    oldDesc = result.oldDescription || '-';
+                    newDesc = result.newDescription || '-';
+                }
+                
+                const lengthDec = result.lengthDecimal !== null ? result.lengthDecimal : '-';
+                const lengthFrac = result.lengthFractional || '-';
+                const oldQty = result.oldQty !== null ? result.oldQty : '-';
+                const newQty = result.newQty !== null ? result.newQty : '-';
+                
+                // Delta Qty: show '-' if no change (deltaQty === 0)
+                let deltaQtyHtml = '-';
+                if (result.deltaQty !== null && result.deltaQty !== 0) {
+                    const deltaValue = result.deltaQty >= 0 ? `+${result.deltaQty}` : result.deltaQty;
+                    const deltaClass = result.deltaQty > 0 ? 'delta-positive' : 'delta-negative';
+                    deltaQtyHtml = `<span class="${deltaClass}">${deltaValue}</span>`;
+                }
+                
+                // Handle purchase descriptions with diff highlighting
+                let oldPurDesc = '-';
+                let newPurDesc = '-';
+                if (result.changeType === 'Changed' && result.attributesChanged.includes('Purchase Desc')) {
+                    const diff = createDiff(
+                        result.oldPurchaseDescription ? result.oldPurchaseDescription.replace(/\n/g, ' ') : '',
+                        result.newPurchaseDescription ? result.newPurchaseDescription.replace(/\n/g, ' ') : ''
+                    );
+                    oldPurDesc = diff.old.replace(/\n/g, '<br>');
+                    newPurDesc = diff.new.replace(/\n/g, '<br>');
+                } else {
+                    oldPurDesc = result.oldPurchaseDescription ? result.oldPurchaseDescription.replace(/\n/g, '<br>') : '-';
+                    newPurDesc = result.newPurchaseDescription ? result.newPurchaseDescription.replace(/\n/g, '<br>') : '-';
+                }
+                
+                const changes = result.attributesChanged.length > 0 ? result.attributesChanged.join(', ') : '-';
+                
+                row.innerHTML = `
+                    <td>${badge}</td>
+                    <td>${partNumber}</td>
+                    <td>${componentType}</td>
+                    <td class="description">${oldDesc}</td>
+                    <td class="description">${newDesc}</td>
+                    <td class="numeric">${lengthDec}</td>
+                    <td>${lengthFrac}</td>
+                    <td class="numeric">${oldQty}</td>
+                    <td class="numeric">${newQty}</td>
+                    <td class="numeric">${deltaQtyHtml}</td>
+                    <td class="purchase-desc">${oldPurDesc}</td>
+                    <td class="purchase-desc">${newPurDesc}</td>
+                    <td>${changes}</td>
+                `;
+                
+                compareBody.appendChild(row);
+            });
+        }
+        
+        // ========================================
+        // BOM COMPARISON - FILTERING
+        // ========================================
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentFilter = btn.dataset.filter;
+                
+                // Update button states
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Re-render table
+                renderComparisonTable();
+            });
+        });
+        
+        // ========================================
+        // BOM COMPARISON - EXPORTS
+        // ========================================
+        
+        exportCompareExcelBtn.addEventListener('click', () => {
+            const today = new Date();
+            const dateStr = today.getFullYear() +
+                          String(today.getMonth() + 1).padStart(2, '0') +
+                          String(today.getDate()).padStart(2, '0');
+
+            // Use uploaded filenames (strip extension) or fall back to part numbers
+            const oldBase = oldBomFilename
+                ? oldBomFilename.replace(/\.(csv|xml)$/i, '')
+                : `${oldBomInfo.partNumber}-Rev${oldBomInfo.revision}`;
+            const newBase = newBomFilename
+                ? newBomFilename.replace(/\.(csv|xml)$/i, '')
+                : `${newBomInfo.partNumber}-Rev${newBomInfo.revision}`;
+            const filename = `${oldBase}-vs-${newBase}-Comparison-${dateStr}.xlsx`;
+
+            // Build scope info for header
+            const oldScopeText = oldBomInfo.isScoped ? `Scope: ${oldBomInfo.scopedPartNumber}` : 'Full Assembly';
+            const newScopeText = newBomInfo.isScoped ? `Scope: ${newBomInfo.scopedPartNumber}` : 'Full Assembly';
+
+            const ws_data = [
+                ['Old BOM:', oldBomFilename || 'N/A', `${oldBomInfo.partNumber} - ${oldBomInfo.description}`, `Rev ${oldBomInfo.revision}`, oldScopeText],
+                ['New BOM:', newBomFilename || 'N/A', `${newBomInfo.partNumber} - ${newBomInfo.description}`, `Rev ${newBomInfo.revision}`, newScopeText],
+                [],
+                ['Change Type', 'Part Number', 'Component Type', 'Old Description', 'New Description', 'Length (Decimal)', 'Length (Fractional)', 'Old Qty', 'New Qty', 'Δ Qty', 'Old Purchase Description', 'New Purchase Description', 'Attributes Changed']
+            ];
+            
+            const sorted = sortComparisonResults(comparisonResults);
+            
+            sorted.forEach(result => {
+                const deltaQty = result.deltaQty !== null && result.deltaQty !== 0 ? result.deltaQty : '';
+                
+                ws_data.push([
+                    result.changeType,
+                    result.partNumber,
+                    result.componentType,
+                    result.oldDescription || '',
+                    result.newDescription || '',
+                    result.lengthDecimal,
+                    result.lengthFractional,
+                    result.oldQty,
+                    result.newQty,
+                    deltaQty,
+                    result.oldPurchaseDescription || '',
+                    result.newPurchaseDescription || '',
+                    result.attributesChanged.join(', ')
+                ]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Comparison");
+            
+            XLSX.writeFile(wb, filename);
+        });
+        
+        exportCompareHtmlBtn.addEventListener('click', () => {
+            const today = new Date();
+            const dateStr = today.getFullYear() +
+                          String(today.getMonth() + 1).padStart(2, '0') +
+                          String(today.getDate()).padStart(2, '0');
+            
+            // Format date as YYYY-MM-DD HH:MM:SS
+            const generatedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`;
+
+            // Use uploaded filenames (strip extension) or fall back to part numbers
+            const oldBase = oldBomFilename
+                ? oldBomFilename.replace(/\.(csv|xml)$/i, '')
+                : `${oldBomInfo.partNumber}-Rev${oldBomInfo.revision}`;
+            const newBase = newBomFilename
+                ? newBomFilename.replace(/\.(csv|xml)$/i, '')
+                : `${newBomInfo.partNumber}-Rev${newBomInfo.revision}`;
+            const filename = `${oldBase}-vs-${newBase}-Comparison-${dateStr}.html`;
+            
+            const added = comparisonResults.filter(r => r.changeType === 'Added').length;
+            const removed = comparisonResults.filter(r => r.changeType === 'Removed').length;
+            const changed = comparisonResults.filter(r => r.changeType === 'Changed').length;
+            
+            const sorted = sortComparisonResults(comparisonResults);
+            
+            let tableRows = '';
+            sorted.forEach(result => {
+                const badge = `<span class="badge ${result.changeType.toLowerCase()}">${result.changeType}</span>`;
+                const partNumber = result.partNumber || '-';
+                const componentType = result.componentType || '-';
+                
+                // Handle descriptions with diff highlighting
+                let oldDesc = '-';
+                let newDesc = '-';
+                if (result.changeType === 'Changed' && result.attributesChanged.includes('Description')) {
+                    const diff = createDiff(result.oldDescription, result.newDescription);
+                    oldDesc = diff.old;
+                    newDesc = diff.new;
+                } else {
+                    oldDesc = result.oldDescription || '-';
+                    newDesc = result.newDescription || '-';
+                }
+                
+                const lengthDec = result.lengthDecimal !== null ? result.lengthDecimal : '-';
+                const lengthFrac = result.lengthFractional || '-';
+                const oldQty = result.oldQty !== null ? result.oldQty : '-';
+                const newQty = result.newQty !== null ? result.newQty : '-';
+                
+                // Delta Qty: show '-' if no change
+                let deltaQtyHtml = '-';
+                if (result.deltaQty !== null && result.deltaQty !== 0) {
+                    const deltaValue = result.deltaQty >= 0 ? `+${result.deltaQty}` : result.deltaQty;
+                    const deltaClass = result.deltaQty > 0 ? 'delta-positive' : 'delta-negative';
+                    deltaQtyHtml = `<span class="${deltaClass}">${deltaValue}</span>`;
+                }
+                
+                // Handle purchase descriptions with diff highlighting
+                let oldPurDesc = '-';
+                let newPurDesc = '-';
+                if (result.changeType === 'Changed' && result.attributesChanged.includes('Purchase Desc')) {
+                    const diff = createDiff(
+                        result.oldPurchaseDescription ? result.oldPurchaseDescription.replace(/\n/g, ' ') : '',
+                        result.newPurchaseDescription ? result.newPurchaseDescription.replace(/\n/g, ' ') : ''
+                    );
+                    oldPurDesc = diff.old.replace(/\n/g, '<br>');
+                    newPurDesc = diff.new.replace(/\n/g, '<br>');
+                } else {
+                    oldPurDesc = result.oldPurchaseDescription ? result.oldPurchaseDescription.replace(/\n/g, '<br>') : '-';
+                    newPurDesc = result.newPurchaseDescription ? result.newPurchaseDescription.replace(/\n/g, '<br>') : '-';
+                }
+                
+                const changes = result.attributesChanged.length > 0 ? result.attributesChanged.join(', ') : '-';
+                
+                tableRows += `<tr><td>${badge}</td><td>${partNumber}</td><td>${componentType}</td><td class="description">${oldDesc}</td><td class="description">${newDesc}</td><td class="numeric">${lengthDec}</td><td>${lengthFrac}</td><td class="numeric">${oldQty}</td><td class="numeric">${newQty}</td><td class="numeric">${deltaQtyHtml}</td><td class="purchase-desc">${oldPurDesc}</td><td class="purchase-desc">${newPurDesc}</td><td>${changes}</td></tr>`;
+            });
+            
+            const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BOM Comparison - ${oldBomInfo.partNumber} vs ${newBomInfo.partNumber}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fafafa;
+            background-image: linear-gradient(rgba(200,200,200,0.15) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(200,200,200,0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #0f172a;
+            padding: 2rem;
+        }
+        .container { max-width: 100%; }
+        .header {
+            margin-bottom: 3rem;
+            border-left: 4px solid #1e40af;
+            padding-left: 1.5rem;
+        }
+        h1 { 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .subtitle { color: #475569; font-size: 0.875rem; }
+        .assembly-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .assembly-card {
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .assembly-card.old { border-left-color: #10b981; }
+        .assembly-card.new { border-left-color: #3b82f6; }
+        .assembly-label { 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .assembly-value { font-weight: 600; color: #0f172a; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid;
+        }
+        .stat-card.added { border-left-color: #10b981; }
+        .stat-card.removed { border-left-color: #ef4444; }
+        .stat-card.changed { border-left-color: #f59e0b; }
+        .stat-value { 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .stat-value.added { color: #10b981; }
+        .stat-value.removed { color: #ef4444; }
+        .stat-value.changed { color: #f59e0b; }
+        .stat-label { 
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.5rem;
+        }
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+        table { width: max-content; min-width: 100%; border-collapse: collapse; }
+        thead { 
+            background: #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: #0f172a;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #cbd5e1;
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #0f172a;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            vertical-align: top;
+        }
+        tr:hover { background: #f8fafc; }
+        .numeric { 
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        .description { max-width: 400px; white-space: normal; word-wrap: break-word; }
+        .purchase-desc { max-width: 300px; white-space: pre-wrap; word-wrap: break-word; }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.625rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        .badge.added { background: #d1fae5; color: #065f46; }
+        .badge.removed { background: #fee2e2; color: #991b1b; }
+        .badge.changed { background: #fed7aa; color: #92400e; }
+        .diff-removed {
+            background: #fee2e2;
+            text-decoration: line-through;
+            padding: 0 0.125rem;
+        }
+        .diff-added {
+            background: #d1fae5;
+            padding: 0 0.125rem;
+        }
+        .delta-positive {
+            background: #d1fae5;
+            color: #065f46;
+            font-weight: 600;
+            padding: 0.125rem 0.25rem;
+            border-radius: 3px;
+        }
+        .delta-negative {
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: 600;
+            padding: 0.125rem 0.25rem;
+            border-radius: 3px;
+        }
+        @media print {
+            body { background: white; }
+            .table-container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BOM Comparison</h1>
+            <div class="subtitle">Generated: ${generatedDate}</div>
+        </div>
+        
+        <div class="assembly-grid">
+            <div class="assembly-card old">
+                <div class="assembly-label">Old BOM</div>
+                <div class="assembly-value">${oldBomFilename || 'N/A'}</div>
+                <div class="assembly-label" style="margin-top: 0.5rem;">${oldBomInfo.partNumber} - ${oldBomInfo.description}</div>
+                <div class="assembly-label" style="margin-top: 0.25rem;">Revision: ${oldBomInfo.revision || '-'} | Scope: ${oldBomInfo.isScoped ? oldBomInfo.scopedPartNumber : 'Full Assembly'}</div>
+            </div>
+            <div class="assembly-card new">
+                <div class="assembly-label">New BOM</div>
+                <div class="assembly-value">${newBomFilename || 'N/A'}</div>
+                <div class="assembly-label" style="margin-top: 0.5rem;">${newBomInfo.partNumber} - ${newBomInfo.description}</div>
+                <div class="assembly-label" style="margin-top: 0.25rem;">Revision: ${newBomInfo.revision || '-'} | Scope: ${newBomInfo.isScoped ? newBomInfo.scopedPartNumber : 'Full Assembly'}</div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card added">
+                <div class="stat-value added">${added}</div>
+                <div class="stat-label">Added</div>
+            </div>
+            <div class="stat-card removed">
+                <div class="stat-value removed">${removed}</div>
+                <div class="stat-label">Removed</div>
+            </div>
+            <div class="stat-card changed">
+                <div class="stat-value changed">${changed}</div>
+                <div class="stat-label">Changed</div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Change</th>
+                        <th>Part Number</th>
+                        <th>Component Type</th>
+                        <th>Old Description</th>
+                        <th>New Description</th>
+                        <th>Length (Dec)</th>
+                        <th>Length (Frac)</th>
+                        <th>Old Qty</th>
+                        <th>New Qty</th>
+                        <th>Δ Qty</th>
+                        <th>Old Purchase Description</th>
+                        <th>New Purchase Description</th>
+                        <th>Changes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>`;
+            
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+        
+        // ========================================
+        // BOM COMPARISON - RESET
+        // ========================================
+        
+        // Reset Comparison button - clears results/selections, keeps files/trees loaded
+        resetScopeBtn.addEventListener('click', () => {
+            // Clear comparison results
+            comparisonResults = [];
+            oldBomFlattened = null;
+            newBomFlattened = null;
+            currentFilter = 'all';
+
+            // Clear selections (but keep trees)
+            oldSelectedNode = null;
+            newSelectedNode = null;
+
+            // Update selection visuals
+            oldBomTreeContainer.querySelectorAll('.tree-select-row').forEach(row => {
+                row.classList.remove('selected');
+            });
+            newBomTreeContainer.querySelectorAll('.tree-select-row').forEach(row => {
+                row.classList.remove('selected');
+            });
+
+            // Update status displays
+            updateSelectionDisplay('old');
+            updateSelectionDisplay('new');
+
+            // Hide results and export buttons
+            compareResults.classList.remove('show');
+            exportCompareExcelBtn.style.display = 'none';
+            exportCompareHtmlBtn.style.display = 'none';
+            resetScopeBtn.style.display = 'none';
+
+            // Reset filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+
+            // Scroll to top of comparison tab
+            document.getElementById('compareTab').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Start Over button - clears everything including files
+        resetCompareBtn.addEventListener('click', () => {
+            // Clear all data
+            oldBomData = null;
+            oldBomFlattened = null;
+            oldBomInfo = { partNumber: '', revision: '', description: '' };
+            oldBomFilename = null;
+            oldBomTree = null;
+            oldSelectedNode = null;
+
+            newBomData = null;
+            newBomFlattened = null;
+            newBomInfo = { partNumber: '', revision: '', description: '' };
+            newBomFilename = null;
+            newBomTree = null;
+            newSelectedNode = null;
+
+            comparisonResults = [];
+            currentFilter = 'all';
+
+            // Reset Old BOM UI - show drop zone, hide tree panel
+            oldBomZone.classList.remove('has-file');
+            oldBomZone.style.display = '';
+            oldBomTreePanel.style.display = 'none';
+            oldBomTreeContainer.innerHTML = '';
+            oldBomFileInfo.classList.remove('show');
+            oldBomInput.value = '';
+
+            // Reset New BOM UI - show drop zone, hide tree panel
+            newBomZone.classList.remove('has-file');
+            newBomZone.style.display = '';
+            newBomTreePanel.style.display = 'none';
+            newBomTreeContainer.innerHTML = '';
+            newBomFileInfo.classList.remove('show');
+            newBomInput.value = '';
+
+            compareBtn.disabled = true;
+            compareResults.classList.remove('show');
+            compareMessage.classList.remove('show');
+
+            exportCompareExcelBtn.style.display = 'none';
+            exportCompareHtmlBtn.style.display = 'none';
+            resetScopeBtn.style.display = 'none';
+
+            // Reset filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Change File links - allow re-uploading a different file
+        oldBomChangeFile.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Clear old BOM data but keep new BOM
+            oldBomData = null;
+            oldBomTree = null;
+            oldSelectedNode = null;
+
+            // Reset UI
+            oldBomTreePanel.style.display = 'none';
+            oldBomTreeContainer.innerHTML = '';
+            oldBomZone.classList.remove('has-file');
+            oldBomZone.style.display = '';
+
+            // Disable compare if no longer both loaded
+            compareBtn.disabled = true;
+
+            // Trigger file picker
+            oldBomInput.click();
+        });
+
+        newBomChangeFile.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Clear new BOM data but keep old BOM
+            newBomData = null;
+            newBomTree = null;
+            newSelectedNode = null;
+
+            // Reset UI
+            newBomTreePanel.style.display = 'none';
+            newBomTreeContainer.innerHTML = '';
+            newBomZone.classList.remove('has-file');
+            newBomZone.style.display = '';
+
+            // Disable compare if no longer both loaded
+            compareBtn.disabled = true;
+
+            // Trigger file picker
+            newBomInput.click();
+        });
+
+        // ========================================
+        // HIERARCHY VIEW - STATE & DOM ELEMENTS
+        // ========================================
+
+        let hierarchyData = null;
+        let hierarchyTree = null;
+        let hierarchyFilename = null;
+        let hierarchyRootInfo = { partNumber: '', revision: '', description: '' };
+
+        const hierarchyUploadZone = document.getElementById('hierarchyUploadZone');
+        const hierarchyFileInput = document.getElementById('hierarchyFile');
+        const hierarchyFileInfo = document.getElementById('hierarchyFileInfo');
+        const hierarchyFileName = document.getElementById('hierarchyFileName');
+        const hierarchyFileMeta = document.getElementById('hierarchyFileMeta');
+        const hierarchyMessage = document.getElementById('hierarchyMessage');
+        const viewHierarchyBtn = document.getElementById('viewHierarchyBtn');
+        const resetHierarchyBtn = document.getElementById('resetHierarchyBtn');
+        const hierarchyResults = document.getElementById('hierarchyResults');
+        const hierarchyTreeBody = document.getElementById('hierarchyTreeBody');
+        const hierarchyFilenameDisplay = document.getElementById('hierarchyFilenameDisplay');
+        const hierarchyAssemblyPartNumDesc = document.getElementById('hierarchyAssemblyPartNumDesc');
+        const hierarchyAssemblyRev = document.getElementById('hierarchyAssemblyRev');
+        const hierarchyUnitQtyInput = document.getElementById('hierarchyUnitQty');
+        const hierarchyUnitQtyDisplay = document.getElementById('hierarchyUnitQtyDisplay');
+        const hierarchyExpandAllBtn = document.getElementById('hierarchyExpandAllBtn');
+        const hierarchyCollapseAllBtn = document.getElementById('hierarchyCollapseAllBtn');
+        const exportHierarchyExcelBtn = document.getElementById('exportHierarchyExcelBtn');
+        const exportHierarchyHtmlBtn = document.getElementById('exportHierarchyHtmlBtn');
+
+        // ========================================
+        // HIERARCHY VIEW - FILE UPLOAD HANDLERS
+        // ========================================
+
+        hierarchyUploadZone.addEventListener('click', () => hierarchyFileInput.click());
+
+        hierarchyUploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            hierarchyUploadZone.classList.add('dragover');
+        });
+
+        hierarchyUploadZone.addEventListener('dragleave', () => {
+            hierarchyUploadZone.classList.remove('dragover');
+        });
+
+        hierarchyUploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            hierarchyUploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            const fileName = file ? file.name.toLowerCase() : '';
+            if (file && (fileName.endsWith('.csv') || fileName.endsWith('.xml'))) {
+                handleHierarchyFile(file);
+            } else {
+                showHierarchyMessage('Please upload a CSV or XML file', 'error');
+            }
+        });
+
+        hierarchyFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleHierarchyFile(file);
+            }
+        });
+
+        function handleHierarchyFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const fileName = file.name.toLowerCase();
+                    const isXML = fileName.endsWith('.xml');
+
+                    if (isXML) {
+                        const decoder = new TextDecoder('utf-8');
+                        const xmlText = decoder.decode(e.target.result);
+                        hierarchyData = parseXML(xmlText);
+                        hierarchyFilename = file.name;
+                    } else {
+                        const decoder = new TextDecoder('utf-16le');
+                        let csvText = decoder.decode(e.target.result);
+
+                        if (csvText.charCodeAt(0) === 0xFEFF) {
+                            csvText = csvText.substring(1);
+                        }
+
+                        const workbook = XLSX.read(csvText, {
+                            type: 'string',
+                            raw: true,
+                            cellText: true,
+                            cellDates: false
+                        });
+
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        hierarchyData = XLSX.utils.sheet_to_json(worksheet, {
+                            raw: true,
+                            defval: ''
+                        });
+                        hierarchyFilename = file.name;
+                    }
+
+                    // Update UI
+                    hierarchyUploadZone.classList.add('has-file');
+                    hierarchyFileName.textContent = file.name;
+                    hierarchyFileMeta.textContent = `${hierarchyData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                    hierarchyFileInfo.classList.add('show');
+                    viewHierarchyBtn.disabled = false;
+                    showHierarchyMessage(`${isXML ? 'XML' : 'CSV'} loaded successfully: ${hierarchyData.length} rows`, 'success');
+                } catch (error) {
+                    showHierarchyMessage(`Error parsing file: ${error.message}`, 'error');
+                    console.error('Parse error:', error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showHierarchyMessage(text, type) {
+            hierarchyMessage.textContent = text;
+            hierarchyMessage.className = `message ${type} show`;
+            setTimeout(() => {
+                hierarchyMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        // ========================================
+        // HIERARCHY VIEW - BUILD & DISPLAY
+        // ========================================
+
+        viewHierarchyBtn.addEventListener('click', () => {
+            try {
+                // Build tree
+                hierarchyTree = buildTree(hierarchyData);
+
+                // Store root info
+                hierarchyRootInfo = {
+                    partNumber: rootPartNumber,
+                    revision: rootRevision,
+                    description: rootDescription
+                };
+
+                // Display tree
+                displayHierarchyTree(hierarchyTree);
+
+                showHierarchyMessage('Hierarchy displayed successfully!', 'success');
+            } catch (error) {
+                showHierarchyMessage(`Error building hierarchy: ${error.message}`, 'error');
+                console.error(error);
+            }
+        });
+
+        // Re-render tree when unit qty changes
+        hierarchyUnitQtyInput.addEventListener('change', () => {
+            if (hierarchyTree) {
+                displayHierarchyTree(hierarchyTree);
+            }
+        });
+
+        function displayHierarchyTree(root) {
+            // Get unit qty multiplier
+            const unitQty = parseInt(hierarchyUnitQtyInput.value) || 1;
+
+            // Update assembly info - filename is primary, PN/description is secondary
+            hierarchyFilenameDisplay.textContent = hierarchyFilename || 'N/A';
+            hierarchyAssemblyPartNumDesc.textContent = `${root.partNumber} - ${root.description}`;
+            hierarchyAssemblyRev.textContent = root.revision;
+            hierarchyUnitQtyDisplay.textContent = unitQty;
+
+            // Render tree with unit qty
+            hierarchyTreeBody.innerHTML = '';
+            renderTreeNode(root, hierarchyTreeBody, 0, false, [], unitQty);
+
+            // Show results and export buttons
+            hierarchyResults.classList.add('show');
+            exportHierarchyExcelBtn.style.display = '';
+            exportHierarchyHtmlBtn.style.display = '';
+
+            // Scroll to results
+            hierarchyResults.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderTreeNode(node, container, depth = 0, isLastChild = false, ancestorContinues = [], unitQty = 1) {
+            // ancestorContinues[i] = true means ancestor at depth i has more siblings after this subtree
+
+            const row = document.createElement('tr');
+            row.dataset.level = node.level;
+            row.dataset.depth = depth;
+
+            const hasChildren = node.children.length > 0;
+            const indent = depth * 24; // 24px per level
+            const baseIndent = 16; // 1rem in pixels
+
+            // Part Number cell (with tree lines and toggle)
+            const partCell = document.createElement('td');
+            partCell.className = 'tree-cell';
+            partCell.style.paddingLeft = `${1 + indent / 16}rem`;
+
+            // Create tree lines for non-root nodes
+            if (depth > 0) {
+                const linesContainer = document.createElement('div');
+                linesContainer.className = 'tree-lines';
+
+                // Draw vertical lines for ancestors that have more siblings (depths 0 to depth-2)
+                for (let i = 0; i < depth - 1; i++) {
+                    if (ancestorContinues[i]) {
+                        const vertLine = document.createElement('div');
+                        vertLine.className = 'tree-line-vertical';
+                        // Position: baseIndent + i * 24px + 7px (center of toggle at that depth)
+                        vertLine.style.left = `${baseIndent + i * 24 + 7}px`;
+                        linesContainer.appendChild(vertLine);
+                    }
+                }
+
+                // Draw vertical line for immediate parent (depth - 1)
+                const parentVertLine = document.createElement('div');
+                parentVertLine.className = 'tree-line-vertical';
+                if (isLastChild) {
+                    parentVertLine.classList.add('last-child'); // Half-height for L-shape
+                }
+                parentVertLine.style.left = `${baseIndent + (depth - 1) * 24 + 7}px`;
+                linesContainer.appendChild(parentVertLine);
+
+                // Draw horizontal line from parent's vertical to this item
+                const horizLine = document.createElement('div');
+                horizLine.className = 'tree-line-horizontal';
+                const horizStart = baseIndent + (depth - 1) * 24 + 7; // Parent's vertical line position
+                const horizEnd = baseIndent + depth * 24; // Where toggle/spacer starts
+                horizLine.style.left = `${horizStart}px`;
+                horizLine.style.width = `${horizEnd - horizStart}px`;
+                linesContainer.appendChild(horizLine);
+
+                partCell.appendChild(linesContainer);
+            }
+
+            // Create toggle or spacer
+            if (hasChildren) {
+                const toggle = document.createElement('span');
+                toggle.className = 'tree-toggle collapsed';
+                toggle.textContent = '+';
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleChildren(row);
+                });
+
+                partCell.appendChild(toggle);
+            } else {
+                const spacer = document.createElement('span');
+                spacer.style.display = 'inline-block';
+                spacer.style.width = '14px'; // Match toggle width
+                spacer.style.marginRight = '6px';
+                partCell.appendChild(spacer);
+            }
+
+            const partText = document.createTextNode(node.partNumber);
+            partCell.appendChild(partText);
+
+            // Qty cell (multiplied by unit qty)
+            const qtyCell = document.createElement('td');
+            qtyCell.className = 'numeric';
+            qtyCell.textContent = node.qty * unitQty;
+
+            // Component Type cell
+            const typeCell = document.createElement('td');
+            typeCell.textContent = node.componentType;
+
+            // Description cell
+            const descCell = document.createElement('td');
+            descCell.className = 'description';
+            descCell.textContent = node.description;
+
+            // Length (Fractional) cell
+            const lengthCell = document.createElement('td');
+            lengthCell.textContent = node.length !== null ? decimalToFractional(node.length) : '';
+
+            // UofM cell
+            const uofmCell = document.createElement('td');
+            uofmCell.textContent = node.uofm || '';
+
+            // Purchase Description cell
+            const purchaseDescCell = document.createElement('td');
+            purchaseDescCell.className = 'purchase-desc';
+            purchaseDescCell.textContent = node.purchaseDescription || '';
+
+            // Revision cell
+            const revCell = document.createElement('td');
+            revCell.textContent = node.revision || '';
+
+            // NS Item Type cell
+            const nsItemCell = document.createElement('td');
+            nsItemCell.textContent = node.nsItemType || '';
+
+            row.appendChild(partCell);
+            row.appendChild(qtyCell);
+            row.appendChild(typeCell);
+            row.appendChild(descCell);
+            row.appendChild(lengthCell);
+            row.appendChild(uofmCell);
+            row.appendChild(purchaseDescCell);
+            row.appendChild(revCell);
+            row.appendChild(nsItemCell);
+
+            container.appendChild(row);
+
+            // Render children
+            if (hasChildren) {
+                row.classList.add('has-children');
+                // Set CSS variable for parent's downward vertical line positioning
+                partCell.style.setProperty('--this-depth', depth);
+                node.children.forEach((child, index) => {
+                    const isLast = index === node.children.length - 1;
+                    // Build new ancestorContinues array for children:
+                    // Copy current array and add whether THIS node has more siblings
+                    const childAncestorContinues = [...ancestorContinues, !isLastChild];
+                    const childRow = renderTreeNode(child, container, depth + 1, isLast, childAncestorContinues, unitQty);
+                    childRow.classList.add('child-row', 'collapsed');
+                    childRow.dataset.parentLevel = node.level;
+                });
+            }
+
+            return row;
+        }
+
+        function toggleChildren(parentRow) {
+            const toggle = parentRow.querySelector('.tree-toggle');
+            const parentLevel = parentRow.dataset.level;
+            const parentDepth = parseInt(parentRow.dataset.depth);
+
+            // Find all direct children (need to iterate through all descendants to find them)
+            let nextRow = parentRow.nextElementSibling;
+            let childRows = [];
+
+            // Keep iterating until we hit a row at the same depth or shallower (sibling or ancestor)
+            while (nextRow) {
+                const nextDepth = parseInt(nextRow.dataset.depth);
+
+                // Stop if we've reached a sibling or ancestor
+                if (nextDepth <= parentDepth) {
+                    break;
+                }
+
+                // Collect direct children (those whose parent level matches our level)
+                if (nextRow.dataset.parentLevel === parentLevel) {
+                    childRows.push(nextRow);
+                }
+
+                nextRow = nextRow.nextElementSibling;
+            }
+
+            // Toggle visibility
+            const isCollapsed = toggle.classList.contains('collapsed');
+
+            childRows.forEach(childRow => {
+                if (isCollapsed) {
+                    // Expanding
+                    childRow.classList.remove('collapsed');
+                    toggle.textContent = '-';
+                    toggle.classList.remove('collapsed');
+                    toggle.classList.add('expanded');
+                    parentRow.classList.add('expanded');  // Show parent's downward line
+                } else {
+                    // Collapsing - hide this row and all its descendants
+                    childRow.classList.add('collapsed');
+                    const childToggle = childRow.querySelector('.tree-toggle');
+                    if (childToggle && childToggle.classList.contains('expanded')) {
+                        // If child was expanded, collapse it too
+                        toggleChildren(childRow);
+                    }
+                    toggle.textContent = '+';
+                    toggle.classList.remove('expanded');
+                    toggle.classList.add('collapsed');
+                    parentRow.classList.remove('expanded');  // Hide parent's downward line
+                }
+            });
+        }
+
+        // ========================================
+        // HIERARCHY VIEW - EXPAND/COLLAPSE ALL
+        // ========================================
+
+        hierarchyExpandAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('#hierarchyTreeBody .child-row').forEach(row => {
+                row.classList.remove('collapsed');
+            });
+            document.querySelectorAll('#hierarchyTreeBody .tree-toggle').forEach(toggle => {
+                toggle.classList.remove('collapsed');
+                toggle.classList.add('expanded');
+                toggle.textContent = '-';
+            });
+            document.querySelectorAll('#hierarchyTreeBody tr.has-children').forEach(row => {
+                row.classList.add('expanded');
+            });
+        });
+
+        hierarchyCollapseAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('#hierarchyTreeBody .child-row').forEach(row => {
+                row.classList.add('collapsed');
+            });
+            document.querySelectorAll('#hierarchyTreeBody .tree-toggle').forEach(toggle => {
+                toggle.classList.remove('expanded');
+                toggle.classList.add('collapsed');
+                toggle.textContent = '+';
+            });
+            document.querySelectorAll('#hierarchyTreeBody tr.has-children').forEach(row => {
+                row.classList.remove('expanded');
+            });
+        });
+
+        // ========================================
+        // HIERARCHY VIEW - EXPORTS
+        // ========================================
+
+        exportHierarchyExcelBtn.addEventListener('click', () => {
+            const today = new Date();
+            const dateStr = today.getFullYear() +
+                          String(today.getMonth() + 1).padStart(2, '0') +
+                          String(today.getDate()).padStart(2, '0');
+
+            // Use uploaded filename or fall back to part number
+            const baseFilename = hierarchyFilename
+                ? hierarchyFilename.replace(/\.(csv|xml)$/i, '')
+                : `${hierarchyRootInfo.partNumber}-Rev${hierarchyRootInfo.revision}`;
+            const filename = `${baseFilename}-Hierarchy-${dateStr}.xlsx`;
+
+            // Get unit qty for export
+            const unitQty = parseInt(hierarchyUnitQtyInput.value) || 1;
+
+            // Flatten tree to rows with Level column
+            const rows = [];
+            function traverseForExport(node, parentLevel = '', childIndex = 1) {
+                const level = parentLevel ? `${parentLevel}.${childIndex}` : String(childIndex);
+                rows.push({
+                    'Level': level,
+                    'Part Number': node.partNumber,
+                    'Qty': node.qty * unitQty,
+                    'Component Type': node.componentType,
+                    'Description': node.description,
+                    'Length (Decimal)': node.length !== null ? node.length : '',
+                    'Length (Fractional)': node.length !== null ? decimalToFractional(node.length) : '',
+                    'UofM': node.uofm || '',
+                    'Purchase Description': node.purchaseDescription || '',
+                    'Revision': node.revision || '',
+                    'NS Item Type': node.nsItemType || ''
+                });
+                node.children.forEach((child, idx) => {
+                    traverseForExport(child, level, idx + 1);
+                });
+            }
+            traverseForExport(hierarchyTree, '', 1);
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Hierarchy');
+
+            XLSX.writeFile(wb, filename);
+        });
+
+        exportHierarchyHtmlBtn.addEventListener('click', () => {
+            const today = new Date();
+            const dateStr = today.getFullYear() +
+                          String(today.getMonth() + 1).padStart(2, '0') +
+                          String(today.getDate()).padStart(2, '0');
+            const generatedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`;
+
+            // Use uploaded filename or fall back to part number
+            const baseFilename = hierarchyFilename
+                ? hierarchyFilename.replace(/\.(csv|xml)$/i, '')
+                : `${hierarchyRootInfo.partNumber}-Rev${hierarchyRootInfo.revision}`;
+            const filename = `${baseFilename}-Hierarchy-${dateStr}.html`;
+
+            // Get unit qty for export
+            const unitQty = parseInt(hierarchyUnitQtyInput.value) || 1;
+
+            // Generate tree HTML with interactive toggles (table rows)
+            function generateTreeHTML(node, depth = 0, isLastChild = false, ancestorContinues = [], uQty = 1) {
+                // ancestorContinues[i] = true means ancestor at depth i has more siblings after this subtree
+
+                const hasChildren = node.children.length > 0;
+                const indent = depth * 24; // 24px per level
+                const paddingLeft = 1 + indent / 16; // Convert to rem
+                const baseIndent = 16; // 1rem in pixels
+
+                // Build class list
+                let classList = [];
+                if (hasChildren) classList.push('has-children');
+
+                const classAttr = classList.length > 0 ? ` class="${classList.join(' ')}"` : '';
+                const dataAttrs = `data-level="${node.level}" data-depth="${depth}"`;
+
+                // CSS variable for parent's downward vertical line positioning
+                const styleVars = hasChildren ? `padding-left: ${paddingLeft}rem; --this-depth: ${depth};` : `padding-left: ${paddingLeft}rem;`;
+
+                let html = `<tr${classAttr} ${dataAttrs}>
+                    <td class="tree-cell" style="${styleVars}">`;
+
+                // Generate tree lines for non-root nodes
+                if (depth > 0) {
+                    html += `<div class="tree-lines">`;
+
+                    // Vertical lines for ancestors that have more siblings (depths 0 to depth-2)
+                    for (let i = 0; i < depth - 1; i++) {
+                        if (ancestorContinues[i]) {
+                            const leftPos = baseIndent + i * 24 + 7;
+                            html += `<div class="tree-line-vertical" style="left: ${leftPos}px;"></div>`;
+                        }
+                    }
+
+                    // Vertical line for immediate parent (depth - 1)
+                    const parentLeftPos = baseIndent + (depth - 1) * 24 + 7;
+                    const lastChildClass = isLastChild ? ' last-child' : '';
+                    html += `<div class="tree-line-vertical${lastChildClass}" style="left: ${parentLeftPos}px;"></div>`;
+
+                    // Horizontal line from parent's vertical to this item
+                    const horizStart = baseIndent + (depth - 1) * 24 + 7;
+                    const horizEnd = baseIndent + depth * 24;
+                    html += `<div class="tree-line-horizontal" style="left: ${horizStart}px; width: ${horizEnd - horizStart}px;"></div>`;
+
+                    html += `</div>`;
+                }
+
+                if (hasChildren) {
+                    html += `<span class="tree-toggle collapsed" onclick="toggleNode(this)">+</span>`;
+                } else {
+                    html += `<span style="display: inline-block; width: 14px; margin-right: 6px;"></span>`;
+                }
+
+                html += `${node.partNumber}</td>
+                    <td class="numeric">${node.qty * uQty}</td>
+                    <td>${node.componentType}</td>
+                    <td class="description">${node.description}</td>
+                    <td>${node.length !== null ? decimalToFractional(node.length) : ''}</td>
+                    <td>${node.uofm || ''}</td>
+                    <td class="purchase-desc">${node.purchaseDescription ? node.purchaseDescription.replace(/\n/g, '<br>') : ''}</td>
+                    <td>${node.revision || ''}</td>
+                    <td>${node.nsItemType || ''}</td>
+                </tr>`;
+
+                // Generate child rows
+                if (hasChildren) {
+                    node.children.forEach((child, index) => {
+                        const isLast = index === node.children.length - 1;
+                        // Build new ancestorContinues for children: copy current and add whether THIS node has more siblings
+                        const childAncestorContinues = [...ancestorContinues, !isLastChild];
+                        const childHTML = generateTreeHTML(child, depth + 1, isLast, childAncestorContinues, uQty);
+                        // Add child-row and collapsed classes
+                        const childWithClasses = childHTML.replace(
+                            /<tr([^>]*)(class="([^"]*)")?/,
+                            (match, attrs, classAttr, existingClasses) => {
+                                const classes = existingClasses ? `${existingClasses} child-row collapsed` : 'child-row collapsed';
+                                const otherAttrs = attrs.replace(/class="[^"]*"/, '').trim();
+                                return `<tr ${otherAttrs} class="${classes}" data-parent-level="${node.level}"`;
+                            }
+                        );
+                        html += childWithClasses;
+                    });
+                }
+
+                return html;
+            }
+
+            const treeHTML = generateTreeHTML(hierarchyTree, 0, false, [], unitQty);
+
+            const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BOM Hierarchy - ${hierarchyRootInfo.partNumber} Rev${hierarchyRootInfo.revision}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fafafa;
+            background-image:
+                linear-gradient(rgba(200, 200, 200, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200, 200, 200, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #0f172a;
+            padding: 2rem;
+        }
+        .container { max-width: 100%; }
+        .header {
+            margin-bottom: 3rem;
+            border-left: 4px solid #1e40af;
+            padding-left: 1.5rem;
+        }
+        h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .subtitle {
+            color: #475569;
+            font-size: 0.875rem;
+        }
+        .assembly-info {
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #1e40af;
+        }
+        .assembly-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .assembly-part {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+        .assembly-desc {
+            font-size: 0.875rem;
+            color: #334155;
+        }
+        .assembly-rev {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            overflow-y: visible;
+        }
+        table {
+            width: max-content;
+            min-width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: #0f172a;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #cbd5e1;
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #0f172a;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            vertical-align: top;
+        }
+        tr:hover {
+            background: #f8fafc;
+        }
+        .numeric {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        .description {
+            max-width: 400px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .purchase-desc {
+            max-width: 300px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        tr.child-row.collapsed {
+            display: none;
+        }
+        /* Tree toggle styling */
+        .tree-toggle {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            line-height: 12px;
+            text-align: center;
+            border: 1px solid #cbd5e1;
+            background: white;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: #52525b;
+            user-select: none;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .tree-toggle:hover {
+            border-color: #1e40af;
+            color: #1e40af;
+        }
+        /* Tree lines */
+        .tree-cell {
+            position: relative;
+        }
+        .tree-lines {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            pointer-events: none;
+        }
+        .tree-line-vertical {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: #d4d4d8;
+        }
+        .tree-line-vertical.last-child {
+            bottom: 50%;
+        }
+        .tree-line-horizontal {
+            position: absolute;
+            top: 1.5rem;  /* Align with text baseline, not row center */
+            height: 1px;
+            background: #d4d4d8;
+        }
+        /* Vertical line extending down from expanded parent toggle to children */
+        tr.has-children.expanded .tree-cell::before {
+            content: '';
+            position: absolute;
+            left: calc(1rem + var(--this-depth, 0) * 24px + 7px);
+            top: 1.5rem;  /* From toggle position */
+            bottom: 0;    /* To bottom of row */
+            width: 1px;
+            background: #d4d4d8;
+            z-index: 1;
+        }
+        @media print {
+            body { background: white; }
+            .table-container { box-shadow: none; }
+        }
+    </style>
+    <script>
+        function toggleNode(toggle) {
+            const parentRow = toggle.closest('tr');
+            const parentLevel = parentRow.dataset.level;
+            const parentDepth = parseInt(parentRow.dataset.depth);
+            const isCollapsed = toggle.classList.contains('collapsed');
+
+            // Find all direct children (need to search through all descendants)
+            let nextRow = parentRow.nextElementSibling;
+            let childRows = [];
+
+            // Keep iterating until we hit a row at the same depth or shallower
+            while (nextRow) {
+                const nextDepth = parseInt(nextRow.dataset.depth);
+
+                // Stop if we've reached a sibling or ancestor
+                if (nextDepth <= parentDepth) {
+                    break;
+                }
+
+                // Collect direct children (those whose parent level matches our level)
+                if (nextRow.dataset.parentLevel === parentLevel) {
+                    childRows.push(nextRow);
+                }
+
+                nextRow = nextRow.nextElementSibling;
+            }
+
+            // Toggle visibility
+            childRows.forEach(childRow => {
+                if (isCollapsed) {
+                    // Expanding
+                    childRow.classList.remove('collapsed');
+                    toggle.textContent = '-';
+                    toggle.classList.remove('collapsed');
+                    toggle.classList.add('expanded');
+                    parentRow.classList.add('expanded');  // Show parent's downward line
+                } else {
+                    // Collapsing
+                    childRow.classList.add('collapsed');
+                    const childToggle = childRow.querySelector('.tree-toggle');
+                    if (childToggle && childToggle.classList.contains('expanded')) {
+                        toggleNode(childToggle);
+                    }
+                    toggle.textContent = '+';
+                    toggle.classList.remove('expanded');
+                    toggle.classList.add('collapsed');
+                    parentRow.classList.remove('expanded');  // Hide parent's downward line
+                }
+            });
+        }
+    <\/script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BOM Hierarchy</h1>
+            <div class="subtitle">Generated: ${generatedDate}</div>
+        </div>
+
+        <div class="assembly-info">
+            <div class="assembly-label">Assembly</div>
+            <div class="assembly-part">${hierarchyFilename || 'N/A'}</div>
+            <div class="assembly-desc">${hierarchyRootInfo.partNumber} - ${hierarchyRootInfo.description || ''}</div>
+            <div class="assembly-rev">Revision: ${hierarchyRootInfo.revision} | Unit Qty: ${unitQty}</div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Part Number</th>
+                        <th class="numeric">Qty</th>
+                        <th>Component Type</th>
+                        <th>Description</th>
+                        <th>Length (Fractional)</th>
+                        <th>UofM</th>
+                        <th>Purchase Description</th>
+                        <th>Revision</th>
+                        <th>NS Item Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${treeHTML}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>`;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // ========================================
+        // HIERARCHY VIEW - RESET
+        // ========================================
+
+        resetHierarchyBtn.addEventListener('click', () => {
+            hierarchyData = null;
+            hierarchyTree = null;
+            hierarchyFilename = null;
+            hierarchyRootInfo = { partNumber: '', revision: '', description: '' };
+
+            hierarchyUploadZone.classList.remove('has-file');
+            hierarchyFileInfo.classList.remove('show');
+            hierarchyFileInput.value = '';
+
+            viewHierarchyBtn.disabled = true;
+            hierarchyResults.classList.remove('show');
+            hierarchyMessage.classList.remove('show');
+
+            // Clear tree content and assembly info
+            hierarchyTreeBody.innerHTML = '';
+            hierarchyFilenameDisplay.textContent = '';
+            hierarchyAssemblyPartNumDesc.textContent = '';
+            hierarchyAssemblyRev.textContent = '';
+
+            // Reset unit qty
+            hierarchyUnitQtyInput.value = 1;
+
+            exportHierarchyExcelBtn.style.display = 'none';
+            exportHierarchyHtmlBtn.style.display = 'none';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
