@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**BOM Tool 2.1** - A single-file web application (~3500 lines) for flattening, comparing, and visualizing hierarchical Bills of Materials (BOMs) from SOLIDWORKS PDM exports. The entire application is self-contained in one HTML file with embedded CSS and JavaScript. Production-ready and validated against legacy Excel tools.
+**BOM Tool 2.1** - A single-file web application (~4400 lines) for flattening, comparing, and visualizing hierarchical Bills of Materials (BOMs) from SOLIDWORKS PDM exports. The entire application is self-contained in one HTML file with embedded CSS and JavaScript. Production-ready and validated against legacy Excel tools.
 
 ### Core Functions
 
@@ -23,12 +23,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Structure
 
 ```
-PDM BOM 2.1/
-├── BOM Tool.html                      # Main application (single file)
-├── BOM Tool Handoff 20251209.md       # Complete documentation
-├── BOM Tool Enhancements 20260115.md  # Enhancement requirements (3 features)
+bom-tool/
+├── index.html                         # Main application (~4400 lines)
 ├── CLAUDE.md                          # This file
-├── context.md                         # User/project context
+├── BOM Tool Handoff 20251209.md       # Complete documentation
+├── BOM Tool Enhancements 20260115.md  # Enhancement requirements (3 features, all complete)
+├── archive/                           # Historical documents
+│   ├── context-original-20251209.md   # Original project context
+│   ├── IFP Release Challenge.md       # Problem specification for IFP feature
+│   ├── IFP BOM Merge Tool PRD.md      # Product requirements document
+│   └── IFP BOM Merge Tool - Codebase Reality Check.md  # PRD validation against codebase
 ├── test/                              # Automated test harness
 │   ├── run-tests.js                   # Node.js test runner
 │   ├── inspect-excel.js               # Excel file inspection utility
@@ -67,20 +71,20 @@ PDM BOM 2.1/
 
 ## Architecture Overview
 
-### File Structure (~3500 lines)
+### File Structure (~4400 lines)
 
 ```
-BOM Tool.html
+index.html
 ├── <head>
 │   ├── SheetJS library (CDN: xlsx v0.18.5)
-│   └── <style> (~750 lines of CSS)
+│   └── <style> (~840 lines of CSS)
 ├── <body>
 │   ├── Header
 │   ├── Tab Navigation (Flat BOM | BOM Comparison | Hierarchy View)
 │   ├── Tab 1: Flat BOM UI
 │   ├── Tab 2: BOM Comparison UI
 │   ├── Tab 3: Hierarchy View UI
-│   └── <script> (~2700 lines of JavaScript)
+│   └── <script> (~3200 lines of JavaScript)
 ```
 
 ### Technology Stack
@@ -449,7 +453,7 @@ git reset --hard HEAD~1             # Undo last commit (DESTRUCTIVE)
 
 - **Internet required**: CDN dependencies (SheetJS, Google Fonts)
 - **Browser dependency**: Requires modern browser with ES6+ support
-- **File size**: Single large file (~3500 lines) can be hard to navigate
+- **File size**: Single large file (~4400 lines) can be hard to navigate (multi-file refactor planned)
 - **No undo in UI**: Refresh page to reset (processing is non-destructive)
 
 ## Recent Changes
@@ -526,3 +530,40 @@ All three enhancements from `BOM Tool Enhancements 20260115.md` are implemented 
 3. **Export File Naming** - Uses uploaded filename
 
 All 4 validation tests pass (see `test-data/BOM Tool 2.1 Validation Testing Plan 20260115.md`).
+
+---
+
+## Planned Features
+
+### IFP BOM Merge Tool (Next Major Feature)
+
+**Problem:** When assemblies are under revision (WIP) during an IFP release, they must be suppressed in the CAD model. This causes the BOM comparison tool to report them as "Removed" — a false signal that can lead Operations to cancel procurement or work orders.
+
+**Solution:** A new tool mode that detects WIP assemblies by PDM state metadata and grafts their last-known-good content from the prior IFP release, producing an accurate official BOM artifact.
+
+**Planning Documents (in `archive/`):**
+- `IFP Release Challenge.md` — Problem specification and domain model
+- `IFP BOM Merge Tool PRD.md` — Full product requirements document
+- `IFP BOM Merge Tool - Codebase Reality Check.md` — PRD validation against actual codebase
+
+**Key Technical Decisions:**
+- **B(n) output format:** JSON with SHA-256 integrity hash (tamper-evident)
+- **State detection:** Whitelist approach — only "Issued for Purchasing" and "Issued for Use" are released; all other states are WIP
+- **Implementation:** ~400 lines of new code; most infrastructure already exists
+
+**Status:** Planning complete. Ready for GSD implementation cycle.
+
+---
+
+## Future Refactoring: Multi-File Codebase
+
+The single-file architecture was intentional for portability (email a single HTML file). Now that the tool is hosted on GitHub Pages, this constraint no longer applies.
+
+**Planned refactor:** Split into multiple files optimized for Claude Code assistance:
+- Smaller, focused files reduce context needed for edits
+- Clear boundaries between modules
+- Easier navigation and reduced risk
+
+**Timing:** After IFP Merge feature is complete (refactoring mid-feature is risky).
+
+See `archive/IFP BOM Merge Tool - Codebase Reality Check.md` → "Future Refactoring" section for proposed file structure.
