@@ -21,12 +21,12 @@ Requirements for the multi-file refactor. Each maps to roadmap phases.
 
 ### Core Logic Extraction
 
-- [ ] **CORE-01**: Utility functions extracted (parseLength, decimalToFractional, getParentLevel, createDiff)
-- [ ] **CORE-02**: BOMNode class extracted into its own module
-- [ ] **CORE-03**: File parsers extracted (parseCSV, parseXML) into parser module
-- [ ] **CORE-04**: Tree operations extracted (buildTree) into tree module
-- [ ] **CORE-05**: BOM flattening extracted (flattenBOM, getCompositeKey) into flatten module
-- [ ] **CORE-06**: BOM comparison extracted (compareBOMs) into compare module
+- [x] **CORE-01**: Utility functions extracted (parseLength, decimalToFractional, getParentLevel, createDiff)
+- [x] **CORE-02**: BOMNode class extracted into its own module
+- [x] **CORE-03**: File parsers extracted (parseCSV, parseXML) into parser module
+- [x] **CORE-04**: Tree operations extracted (buildTree) into tree module
+- [x] **CORE-05**: BOM flattening extracted (flattenBOM, getCompositeKey) into flatten module
+- [x] **CORE-06**: BOM comparison extracted (compareBOMs) into compare module
 
 ### State Management
 
@@ -108,12 +108,12 @@ Deferred to future milestones. Not in current roadmap.
 | TEST-04 | Phase 1 | Complete |
 | CSS-01 | Phase 2 | Complete |
 | CSS-02 | Phase 2 | Complete |
-| CORE-01 | Phase 3 | Pending |
-| CORE-02 | Phase 4 | Pending |
-| CORE-03 | Phase 4 | Pending |
-| CORE-04 | Phase 4 | Pending |
-| CORE-05 | Phase 4 | Pending |
-| CORE-06 | Phase 4 | Pending |
+| CORE-01 | Phase 3 | Complete |
+| CORE-02 | Phase 4 | Complete |
+| CORE-03 | Phase 4 | Complete |
+| CORE-04 | Phase 4 | Complete |
+| CORE-05 | Phase 4 | Complete |
+| CORE-06 | Phase 4 | Complete |
 | STATE-01 | Phase 5 | Pending |
 | STATE-02 | Phase 5 | Pending |
 | STATE-03 | Phase 5 | Pending |
@@ -145,4 +145,4 @@ Deferred to future milestones. Not in current roadmap.
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-07 after roadmap creation (traceability updated)*
+*Last updated: 2026-02-08 after Phase 4 completion (CORE-01 through CORE-06 marked Complete)*
