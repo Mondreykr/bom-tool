@@ -392,14 +392,15 @@
 
     <script type="module">
         import { parseLength, decimalToFractional, getParentLevel, getCompositeKey, createDiff } from './js/core/utils.js';
+        import { BOMNode, buildTree, getRootPartNumber, getRootRevision, getRootDescription, resetRootInfo } from './js/core/tree.js';
+        import { flattenBOM, sortBOM } from './js/core/flatten.js';
+        import { parseXML } from './js/core/parser.js';
+        import { compareBOMs, extractSubtree } from './js/core/compare.js';
 
         // Global state
         let csvData = null;
         let flattenedBOM = null;
         let treeRoot = null;  // NEW: Preserve tree structure for hierarchy view
-        let rootPartNumber = null;
-        let rootRevision = null;
-        let rootDescription = null;
         let uploadedFilename = null;  // Store uploaded filename for exports
         
         // DOM elements
@@ -531,280 +532,7 @@
             reader.readAsArrayBuffer(file);
         }
         
-        // Parse XML to array of row objects (same structure as CSV)
-        function parseXML(xmlText) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-            
-            // Check for parsing errors
-            const parserError = xmlDoc.querySelector('parsererror');
-            if (parserError) {
-                throw new Error('Invalid XML format');
-            }
-            
-            const rows = [];
-            
-            // Get root document (the main assembly)
-            const rootDoc = xmlDoc.querySelector('transaction > document');
-            if (!rootDoc) {
-                throw new Error('No root document found in XML');
-            }
-            
-            console.log('Root document ID:', rootDoc.getAttribute('id'));
-            
-            // Recursive function to traverse XML hierarchy
-            function traverseDocument(docElement, level, startIndex, isRoot = false) {
-                // Get ALL configurations (each config = one unique part)
-                const configs = docElement.querySelectorAll(':scope > configuration');
-                if (configs.length === 0) {
-                    console.warn(`No configurations found for document at level ${level}`);
-                    return startIndex;
-                }
-                
-                console.log(`Document has ${configs.length} configuration(s), starting at index ${startIndex}`);
-                
-                let childIndex = startIndex;
-                
-                // Process each configuration as a separate part
-                configs.forEach((config, configIdx) => {
-                    // Root level is just "1", all others use level.index format
-                    const currentLevel = isRoot && configIdx === 0 ? level : level + '.' + childIndex;
-                    
-                    // Extract attributes from this configuration
-                    const attributes = {};
-                    config.querySelectorAll(':scope > attribute').forEach(attr => {
-                        const name = attr.getAttribute('name');
-                        const value = attr.getAttribute('value');
-                        attributes[name] = value;
-                    });
-                    
-                    console.log(`Processing Level ${currentLevel}: Part=${attributes['Part Number']}, Config=${config.getAttribute('name')}, Desc=${attributes['Description']?.substring(0, 40)}`);
-                    
-                    // Create row object matching CSV structure
-                    const row = {
-                        'Level': currentLevel,
-                        'Part Number': attributes['Part Number'] || '',
-                        'Component Type': attributes['Component-Type'] || '',
-                        'Description': attributes['Description'] || '',
-                        'Material': attributes['Material'] || '',
-                        'Qty': attributes['Reference Count (BOM Quantity disregarded)'] || '1',
-                        'Length': attributes['Length'] || '',
-                        'UofM': attributes['Unit of Measure'] || '',
-                        'State': attributes['State'] || '',
-                        'Purchase Description': attributes['Purchase Description'] || '',
-                        'NS Item Type': attributes['NS Item Type'] || '',
-                        'Revision': attributes['Revision'] || ''
-                    };
-                    
-                    rows.push(row);
-                    
-                    // Only increment if not the first config of root
-                    if (!isRoot || configIdx > 0) {
-                        childIndex++;
-                    }
-                    
-                    // Process children (references) for THIS configuration
-                    const references = config.querySelector(':scope > references');
-                    if (references) {
-                        const childDocs = references.querySelectorAll(':scope > document');
-                        console.log(`  Found ${childDocs.length} child document(s) for config at level ${currentLevel}`);
-                        childDocs.forEach((childDoc) => {
-                            // Pass current childIndex and get back the next available index
-                            childIndex = traverseDocument(childDoc, currentLevel, childIndex, false);
-                        });
-                    }
-                });
-                
-                return childIndex;
-            }
-            
-            // Start traversal from root with level "1", index 1, and mark as root
-            traverseDocument(rootDoc, '1', 1, true);
-            
-            console.log(`XML parsing complete: ${rows.length} rows`);
-            console.log('First row (root):', rows[0]);
-            
-            return rows;
-        }
-        
-        // Tree Node Class
-        class BOMNode {
-            constructor(rowData) {
-                this.level = rowData.Level;
-                this.partNumber = rowData['Part Number'].trim();
-                this.componentType = rowData['Component Type'];
-                this.description = rowData.Description;
-                this.material = rowData.Material;
-                this.qty = parseInt(rowData.Qty) || 0;
-                this.length = parseLength(rowData.Length);
-                this.uofm = rowData.UofM;
-                this.state = rowData.State;
-                this.purchaseDescription = rowData['Purchase Description'];
-                this.nsItemType = rowData['NS Item Type'];
-                this.revision = rowData.Revision;
-                this.children = [];
-            }
-        }
 
-        // Build tree from CSV data
-        function buildTree(rows) {
-            const nodes = new Map();
-            
-            // Pass 1: Create all nodes
-            rows.forEach((row, index) => {
-                const node = new BOMNode(row);
-                console.log(`Row ${index + 1}: Level="${node.level}" PartNumber="${node.partNumber}"`);
-                nodes.set(node.level, node);
-            });
-            
-            console.log(`Total nodes created: ${nodes.size}`);
-            console.log('All levels:', Array.from(nodes.keys()).join(', '));
-            
-            // Pass 2: Link children to parents
-            nodes.forEach((node, level) => {
-                const parentLevel = getParentLevel(level);
-                if (parentLevel !== null) {
-                    const parent = nodes.get(parentLevel);
-                    if (!parent) {
-                        console.error(`ERROR: Looking for parent "${parentLevel}" for child "${level}"`);
-                        console.error('Available levels:', Array.from(nodes.keys()).join(', '));
-                        throw new Error(`Parent ${parentLevel} not found for ${level}. Available levels: ${Array.from(nodes.keys()).join(', ')}`);
-                    }
-                    parent.children.push(node);
-                }
-            });
-            
-            // Get root
-            const root = nodes.get('1');
-            if (!root) {
-                throw new Error("No root node (Level '1') found in CSV");
-            }
-
-            // Pass 3: Sort all children recursively
-            function sortChildren(node) {
-                if (node.children.length > 0) {
-                    // Sort by: Component Type → Description → Length (decimal)
-                    node.children.sort((a, b) => {
-                        // Primary: Component Type (alphabetical: Assembly, Manufactured, Purchased, Raw Stock)
-                        if (a.componentType !== b.componentType) {
-                            return a.componentType.localeCompare(b.componentType);
-                        }
-
-                        // Secondary: Description
-                        if (a.description !== b.description) {
-                            return a.description.localeCompare(b.description, undefined, {
-                                numeric: true,
-                                sensitivity: 'base'
-                            });
-                        }
-
-                        // Tertiary: Length (decimal, nulls last)
-                        if (a.length === null && b.length === null) return 0;
-                        if (a.length === null) return 1;
-                        if (b.length === null) return -1;
-                        return a.length - b.length;
-                    });
-
-                    // Recursively sort grandchildren
-                    node.children.forEach(child => sortChildren(child));
-                }
-            }
-
-            sortChildren(root);
-
-            // Capture root info for file naming and display
-            rootPartNumber = root.partNumber;
-            rootRevision = root.revision;
-            rootDescription = root.description;
-
-            return root;
-        }
-
-        // Flatten BOM with recursive aggregation
-        function flattenBOM(rootNode, unitQty) {
-            const aggregatedItems = new Map();
-            
-            function traverse(node, multiplier) {
-                const effectiveQty = node.qty * multiplier;
-                
-                console.log(`Processing: Level=${node.level}, PN=${node.partNumber}, Type=${node.componentType}, Qty=${node.qty}, Multiplier=${multiplier}, Effective=${effectiveQty}`);
-                
-                // Only add non-assembly items to output
-                // Assemblies are containers - not purchasable items
-                if (node.componentType !== 'Assembly') {
-                    const compositeKey = getCompositeKey(node.partNumber, node.length);
-                    
-                    if (aggregatedItems.has(compositeKey)) {
-                        console.log(`  → Aggregating: ${compositeKey} (was ${aggregatedItems.get(compositeKey).qty}, adding ${effectiveQty})`);
-                        aggregatedItems.get(compositeKey).qty += effectiveQty;
-                    } else {
-                        console.log(`  → Adding new: ${compositeKey} with qty ${effectiveQty}`);
-                        
-                        // Concatenate Description + Material (if material is not empty or hyphen)
-                        let finalDescription = node.description;
-                        if (node.material && node.material.trim() !== '' && node.material.trim() !== '-') {
-                            finalDescription = node.description + ', ' + node.material;
-                        }
-                        
-                        aggregatedItems.set(compositeKey, {
-                            partNumber: node.partNumber,
-                            componentType: node.componentType,
-                            description: finalDescription,  // Concatenated description
-                            material: node.material,        // Keep original for reference (not displayed)
-                            qty: effectiveQty,
-                            lengthDecimal: node.length,
-                            lengthFractional: decimalToFractional(node.length),
-                            uofm: node.uofm,
-                            state: node.state,
-                            purchaseDescription: node.purchaseDescription,
-                            nsItemType: node.nsItemType,
-                            revision: node.revision
-                        });
-                    }
-                } else {
-                    console.log(`  → Skipping (Assembly)`);
-                }
-                
-                // Always traverse children regardless of component type
-                node.children.forEach(child => {
-                    traverse(child, effectiveQty);
-                });
-            }
-            
-            traverse(rootNode, unitQty);
-            
-            console.log(`Final aggregated items: ${aggregatedItems.size}`);
-            aggregatedItems.forEach((item, key) => {
-                console.log(`  ${key}: Qty=${item.qty}`);
-            });
-            
-            return Array.from(aggregatedItems.values());
-        }
-
-        // Sort BOM (Component Type → Description → Length)
-        function sortBOM(items) {
-            return items.sort((a, b) => {
-                // Primary: Component Type
-                if (a.componentType !== b.componentType) {
-                    return a.componentType.localeCompare(b.componentType);
-                }
-                
-                // Secondary: Description (natural sort - handles numbers in strings)
-                if (a.description !== b.description) {
-                    return a.description.localeCompare(b.description, undefined, {
-                        numeric: true,
-                        sensitivity: 'base'
-                    });
-                }
-                
-                // Tertiary: Length (numeric, nulls last)
-                if (a.lengthDecimal === null && b.lengthDecimal === null) return 0;
-                if (a.lengthDecimal === null) return 1;
-                if (b.lengthDecimal === null) return -1;
-                return a.lengthDecimal - b.lengthDecimal;
-            });
-        }
-        
         // Flatten button handler
         flattenBtn.addEventListener('click', () => {
             try {
@@ -889,8 +617,8 @@
             
             // Update assembly info - filename is primary, PN/description is secondary
             document.getElementById('assemblyFilenameDisplay').textContent = uploadedFilename || 'N/A';
-            document.getElementById('assemblyPartNumDesc').textContent = `${rootPartNumber} - ${rootDescription || ''}`;
-            document.getElementById('assemblyRev').textContent = rootRevision;
+            document.getElementById('assemblyPartNumDesc').textContent = `${getRootPartNumber()} - ${getRootDescription() || ''}`;
+            document.getElementById('assemblyRev').textContent = getRootRevision();
             
             // Show export buttons
             exportExcelBtn.style.display = '';
@@ -955,7 +683,7 @@
             // Use uploaded filename (strip extension) or fall back to part number
             const baseFilename = uploadedFilename
                 ? uploadedFilename.replace(/\.(csv|xml)$/i, '')
-                : `${rootPartNumber}-Rev${rootRevision}`;
+                : `${getRootPartNumber()}-Rev${getRootRevision()}`;
             const filename = `${baseFilename}-Flat BOM-${dateStr}.xlsx`;
             
             // Download
@@ -1013,7 +741,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Flat BOM - ${rootPartNumber} Rev${rootRevision}</title>
+    <title>Flat BOM - ${getRootPartNumber()} Rev${getRootRevision()}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -1189,8 +917,8 @@
         <div class="assembly-info">
             <div class="assembly-label">Assembly</div>
             <div class="assembly-part">${uploadedFilename || 'N/A'}</div>
-            <div class="assembly-desc">${rootPartNumber} - ${rootDescription || ''}</div>
-            <div class="assembly-rev">Revision: ${rootRevision}</div>
+            <div class="assembly-desc">${getRootPartNumber()} - ${getRootDescription() || ''}</div>
+            <div class="assembly-rev">Revision: ${getRootRevision()}</div>
         </div>
         
         <div class="stats-section">
@@ -1247,7 +975,7 @@
             // Generate filename using uploaded filename
             const baseFilename = uploadedFilename
                 ? uploadedFilename.replace(/\.(csv|xml)$/i, '')
-                : `${rootPartNumber}-Rev${rootRevision}`;
+                : `${getRootPartNumber()}-Rev${getRootRevision()}`;
             const filename = `${baseFilename}-Flat BOM-${dateStr}.html`;
             
             // Download
@@ -1265,9 +993,7 @@
             csvData = null;
             flattenedBOM = null;
             treeRoot = null;
-            rootPartNumber = null;
-            rootRevision = null;
-            rootDescription = null;
+            resetRootInfo();
             uploadedFilename = null;
             fileInput.value = '';
             uploadZone.classList.remove('has-file');
@@ -1542,29 +1268,6 @@
             }
         }
 
-        // Extract a subtree for scoped comparison (clone with Qty 1 at root)
-        function extractSubtree(node) {
-            function cloneNode(n, isRoot = false) {
-                const clone = new BOMNode({
-                    Level: n.level,
-                    'Part Number': n.partNumber,
-                    'Component Type': n.componentType,
-                    Description: n.description,
-                    Material: n.material,
-                    Qty: isRoot ? 1 : n.qty,
-                    Length: n.length,
-                    UofM: n.uofm,
-                    State: n.state,
-                    'Purchase Description': n.purchaseDescription,
-                    'NS Item Type': n.nsItemType,
-                    Revision: n.revision
-                });
-                clone.children = n.children.map(child => cloneNode(child, false));
-                return clone;
-            }
-            return cloneNode(node, true);
-        }
-
         // ========================================
         // BOM COMPARISON - FILE UPLOAD HANDLERS
         // ========================================
@@ -1791,7 +1494,7 @@
 
                 // Compare
                 console.log('Comparing BOMs...');
-                compareBOMs();
+                comparisonResults = compareBOMs(oldBomFlattened, newBomFlattened);
 
                 // Display results
                 displayComparisonResults();
@@ -1804,111 +1507,7 @@
                 console.error('Comparison error:', error);
             }
         });
-        
-        function compareBOMs() {
-            const oldMap = new Map();
-            const newMap = new Map();
-            
-            // Build maps with composite keys
-            oldBomFlattened.forEach(item => {
-                const key = createCompositeKey(item.partNumber, item.lengthDecimal);
-                oldMap.set(key, item);
-            });
-            
-            newBomFlattened.forEach(item => {
-                const key = createCompositeKey(item.partNumber, item.lengthDecimal);
-                newMap.set(key, item);
-            });
-            
-            comparisonResults = [];
-            
-            // Find added and changed items
-            newMap.forEach((newItem, key) => {
-                if (!oldMap.has(key)) {
-                    // Added
-                    comparisonResults.push({
-                        changeType: 'Added',
-                        partNumber: newItem.partNumber,
-                        componentType: newItem.componentType,
-                        oldDescription: null,
-                        newDescription: newItem.description,
-                        lengthDecimal: newItem.lengthDecimal,
-                        lengthFractional: newItem.lengthFractional,
-                        oldQty: null,
-                        newQty: newItem.qty,
-                        deltaQty: null,
-                        oldPurchaseDescription: null,
-                        newPurchaseDescription: newItem.purchaseDescription,
-                        attributesChanged: []
-                    });
-                } else {
-                    // Exists in both - check for changes
-                    const oldItem = oldMap.get(key);
-                    const changedAttrs = [];
-                    
-                    if (oldItem.qty !== newItem.qty) {
-                        changedAttrs.push('Qty');
-                    }
-                    
-                    if (oldItem.description !== newItem.description) {
-                        changedAttrs.push('Description');
-                    }
-                    
-                    if (oldItem.purchaseDescription !== newItem.purchaseDescription) {
-                        changedAttrs.push('Purchase Desc');
-                    }
-                    
-                    if (changedAttrs.length > 0) {
-                        comparisonResults.push({
-                            changeType: 'Changed',
-                            partNumber: newItem.partNumber,
-                            componentType: newItem.componentType,
-                            oldDescription: oldItem.description,
-                            newDescription: newItem.description,
-                            lengthDecimal: newItem.lengthDecimal,
-                            lengthFractional: newItem.lengthFractional,
-                            oldQty: oldItem.qty,
-                            newQty: newItem.qty,
-                            deltaQty: newItem.qty - oldItem.qty,
-                            oldPurchaseDescription: oldItem.purchaseDescription,
-                            newPurchaseDescription: newItem.purchaseDescription,
-                            attributesChanged: changedAttrs
-                        });
-                    }
-                }
-            });
-            
-            // Find removed items
-            oldMap.forEach((oldItem, key) => {
-                if (!newMap.has(key)) {
-                    comparisonResults.push({
-                        changeType: 'Removed',
-                        partNumber: oldItem.partNumber,
-                        componentType: oldItem.componentType,
-                        oldDescription: oldItem.description,
-                        newDescription: null,
-                        lengthDecimal: oldItem.lengthDecimal,
-                        lengthFractional: oldItem.lengthFractional,
-                        oldQty: oldItem.qty,
-                        newQty: null,
-                        deltaQty: null,
-                        oldPurchaseDescription: oldItem.purchaseDescription,
-                        newPurchaseDescription: null,
-                        attributesChanged: []
-                    });
-                }
-            });
-            
-            console.log(`Comparison complete: ${comparisonResults.length} changes`);
-        }
-        
-        function createCompositeKey(partNumber, length) {
-            if (length !== null && length !== undefined && length !== '') {
-                return `${partNumber}|${length}`;
-            }
-            return `${partNumber}|`;
-        }
-        
+
         function displayComparisonResults() {
             // Update assembly info - filename is primary, PN/description is secondary
             document.getElementById('oldBomFilenameDisplay').textContent = oldBomFilename || 'N/A';
@@ -2718,9 +2317,9 @@
 
                 // Store root info
                 hierarchyRootInfo = {
-                    partNumber: rootPartNumber,
-                    revision: rootRevision,
-                    description: rootDescription
+                    partNumber: getRootPartNumber(),
+                    revision: getRootRevision(),
+                    description: getRootDescription()
                 };
 
                 // Display tree
