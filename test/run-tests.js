@@ -371,7 +371,9 @@ function compareBOMs(oldFlattened, newFlattened) {
                 lengthDecimal: newItem.lengthDecimal,
                 oldQty: null,
                 newQty: newItem.qty,
-                deltaQty: null
+                deltaQty: null,
+                oldPurchaseDescription: null,
+                newPurchaseDescription: newItem.purchaseDescription
             });
         }
     });
@@ -394,7 +396,9 @@ function compareBOMs(oldFlattened, newFlattened) {
                     lengthDecimal: oldItem.lengthDecimal,
                     oldQty: oldItem.qty,
                     newQty: newItem.qty,
-                    deltaQty: newItem.qty - oldItem.qty
+                    deltaQty: newItem.qty - oldItem.qty,
+                    oldPurchaseDescription: oldItem.purchaseDescription,
+                    newPurchaseDescription: newItem.purchaseDescription
                 });
             }
         }
@@ -412,7 +416,9 @@ function compareBOMs(oldFlattened, newFlattened) {
                 lengthDecimal: oldItem.lengthDecimal,
                 oldQty: oldItem.qty,
                 newQty: null,
-                deltaQty: null
+                deltaQty: null,
+                oldPurchaseDescription: oldItem.purchaseDescription,
+                newPurchaseDescription: null
             });
         }
     });
@@ -506,6 +512,55 @@ function compareFlattened(result, expected) {
         if (resDesc !== expDesc) {
             errors.push(`DESC MISMATCH ${key}:\n  Expected: "${expDesc}"\n  Got: "${resDesc}"`);
         }
+
+        // Compare Component Type
+        const expCompType = expItem['Component Type']?.trim() || '';
+        const resCompType = resItem.componentType?.trim() || '';
+        if (resCompType !== expCompType) {
+            errors.push(`COMPONENT TYPE MISMATCH ${key}: expected "${expCompType}", got "${resCompType}"`);
+        }
+
+        // Compare Purchase Description (normalize tabs to spaces — Excel converts tabs on export)
+        const expPurDesc = (expItem['Purchase Description'] || '').trim().replace(/\t/g, ' ');
+        const resPurDesc = (resItem.purchaseDescription || '').trim().replace(/\t/g, ' ');
+        if (resPurDesc !== expPurDesc) {
+            errors.push(`PURCHASE DESC MISMATCH ${key}:\n  Expected: "${expPurDesc.substring(0, 60)}..."\n  Got: "${resPurDesc.substring(0, 60)}..."`);
+        }
+
+        // Compare Length (Fractional)
+        const expLenFrac = expItem['Length (Fractional)']?.trim() || '';
+        const resLenFrac = resItem.lengthFractional?.trim() || '';
+        if (resLenFrac !== expLenFrac) {
+            errors.push(`LENGTH FRAC MISMATCH ${key}: expected "${expLenFrac}", got "${resLenFrac}"`);
+        }
+
+        // Compare Unit of Measure
+        const expUofm = expItem['UofM']?.trim() || '';
+        const resUofm = resItem.uofm?.trim() || '';
+        if (resUofm !== expUofm) {
+            errors.push(`UOFM MISMATCH ${key}: expected "${expUofm}", got "${resUofm}"`);
+        }
+
+        // Compare State
+        const expState = expItem['State']?.trim() || '';
+        const resState = resItem.state?.trim() || '';
+        if (resState !== expState) {
+            errors.push(`STATE MISMATCH ${key}: expected "${expState}", got "${resState}"`);
+        }
+
+        // Compare Revision
+        const expRev = expItem['Revision']?.trim() || '';
+        const resRev = resItem.revision?.trim() || '';
+        if (resRev !== expRev) {
+            errors.push(`REVISION MISMATCH ${key}: expected "${expRev}", got "${resRev}"`);
+        }
+
+        // Compare NS Item Type
+        const expNsType = expItem['NS Item Type']?.trim() || '';
+        const resNsType = resItem.nsItemType?.trim() || '';
+        if (resNsType !== expNsType) {
+            errors.push(`NS ITEM TYPE MISMATCH ${key}: expected "${expNsType}", got "${resNsType}"`);
+        }
     });
 
     return errors;
@@ -571,6 +626,13 @@ function compareComparisonResults(results, expected) {
             errors.push(`CHANGE TYPE MISMATCH ${key}: expected "${expItem['Change Type']}", got "${resItem.changeType}"`);
         }
 
+        // Check Component Type
+        const expCompType = expItem['Component Type']?.trim() || '';
+        const resCompType = resItem.componentType?.trim() || '';
+        if (resCompType !== expCompType) {
+            errors.push(`COMPONENT TYPE MISMATCH ${key}: expected "${expCompType}", got "${resCompType}"`);
+        }
+
         // Check quantities for Changed items
         if (resItem.changeType === 'Changed') {
             const expOldQty = parseInt(expItem['Old Qty']) || 0;
@@ -580,6 +642,38 @@ function compareComparisonResults(results, expected) {
             }
             if (resItem.newQty !== expNewQty) {
                 errors.push(`NEW QTY MISMATCH ${key}: expected ${expNewQty}, got ${resItem.newQty}`);
+            }
+        }
+
+        // Check Old/New Descriptions
+        if (resItem.changeType === 'Changed' || resItem.changeType === 'Removed') {
+            const expOldDesc = expItem['Old Description']?.trim() || '';
+            const resOldDesc = resItem.oldDescription?.trim() || '';
+            if (resOldDesc !== expOldDesc) {
+                errors.push(`OLD DESC MISMATCH ${key}:\n  Expected: "${expOldDesc.substring(0, 60)}"\n  Got: "${resOldDesc.substring(0, 60)}"`);
+            }
+        }
+        if (resItem.changeType === 'Changed' || resItem.changeType === 'Added') {
+            const expNewDesc = expItem['New Description']?.trim() || '';
+            const resNewDesc = resItem.newDescription?.trim() || '';
+            if (resNewDesc !== expNewDesc) {
+                errors.push(`NEW DESC MISMATCH ${key}:\n  Expected: "${expNewDesc.substring(0, 60)}"\n  Got: "${resNewDesc.substring(0, 60)}"`);
+            }
+        }
+
+        // Check Purchase Descriptions (normalize tabs to spaces — Excel converts tabs on export)
+        if (resItem.changeType === 'Changed' || resItem.changeType === 'Removed') {
+            const expOldPurDesc = (expItem['Old Purchase Description'] || '').trim().replace(/\t/g, ' ');
+            const resOldPurDesc = (resItem.oldPurchaseDescription || '').trim().replace(/\t/g, ' ');
+            if (resOldPurDesc !== expOldPurDesc) {
+                errors.push(`OLD PURCHASE DESC MISMATCH ${key}:\n  Expected: "${expOldPurDesc.substring(0, 60)}"\n  Got: "${resOldPurDesc.substring(0, 60)}"`);
+            }
+        }
+        if (resItem.changeType === 'Changed' || resItem.changeType === 'Added') {
+            const expNewPurDesc = (expItem['New Purchase Description'] || '').trim().replace(/\t/g, ' ');
+            const resNewPurDesc = (resItem.newPurchaseDescription || '').trim().replace(/\t/g, ' ');
+            if (resNewPurDesc !== expNewPurDesc) {
+                errors.push(`NEW PURCHASE DESC MISMATCH ${key}:\n  Expected: "${expNewPurDesc.substring(0, 60)}"\n  Got: "${resNewPurDesc.substring(0, 60)}"`);
             }
         }
     });
