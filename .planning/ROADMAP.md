@@ -8,7 +8,7 @@ Transform a production-validated 4400-line single-file HTML application into a m
 
 - [x] **Phase 1: Test Infrastructure** - Adapt test harness to validate modular structure
 - [x] **Phase 2: CSS Extraction** - Extract styling to separate file
-- [ ] **Phase 3: Utilities Extraction** - Extract zero-dependency utility functions
+- [x] **Phase 3: Utilities Extraction** - Extract zero-dependency utility functions
 - [ ] **Phase 4: Core Logic Extraction** - Extract business logic modules
 - [ ] **Phase 5: State Management** - Centralize global state
 - [ ] **Phase 6: UI Module Extraction** - Extract tab-specific UI logic
@@ -60,7 +60,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 03-01-PLAN.md — Add createDiff to utils.js, convert HTML to module, remove inline definitions
+- [x] 03-01-PLAN.md — Add createDiff to utils.js, convert HTML to module, remove inline definitions
 
 ### Phase 4: Core Logic Extraction
 **Goal**: Business logic modules handle parsing, tree building, flattening, comparison
@@ -170,7 +170,7 @@ Plans: (TBD - defined during plan-phase)
 |-------|----------------|--------|-----------|
 | 1. Test Infrastructure | 2/2 | ✓ Complete | 2026-02-07 |
 | 2. CSS Extraction | 1/1 | ✓ Complete | 2026-02-07 |
-| 3. Utilities Extraction | 0/1 | Planned | - |
+| 3. Utilities Extraction | 1/1 | ✓ Complete | 2026-02-08 |
 | 4. Core Logic Extraction | 0/TBD | Not started | - |
 | 5. State Management | 0/TBD | Not started | - |
 | 6. UI Module Extraction | 0/TBD | Not started | - |
