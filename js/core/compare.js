@@ -30,11 +30,13 @@ export function compareBOMs(oldFlattened, newFlattened) {
                 oldDescription: null,
                 newDescription: newItem.description,
                 lengthDecimal: newItem.lengthDecimal,
+                lengthFractional: newItem.lengthFractional,
                 oldQty: null,
                 newQty: newItem.qty,
                 deltaQty: null,
                 oldPurchaseDescription: null,
-                newPurchaseDescription: newItem.purchaseDescription
+                newPurchaseDescription: newItem.purchaseDescription,
+                attributesChanged: []
             });
         }
     });
@@ -48,6 +50,11 @@ export function compareBOMs(oldFlattened, newFlattened) {
             const purDescChanged = oldItem.purchaseDescription !== newItem.purchaseDescription;
 
             if (qtyChanged || descChanged || purDescChanged) {
+                const changedAttrs = [];
+                if (qtyChanged) changedAttrs.push('Qty');
+                if (descChanged) changedAttrs.push('Description');
+                if (purDescChanged) changedAttrs.push('Purchase Desc');
+
                 results.push({
                     changeType: 'Changed',
                     partNumber: oldItem.partNumber,
@@ -55,11 +62,13 @@ export function compareBOMs(oldFlattened, newFlattened) {
                     oldDescription: oldItem.description,
                     newDescription: newItem.description,
                     lengthDecimal: oldItem.lengthDecimal,
+                    lengthFractional: newItem.lengthFractional,
                     oldQty: oldItem.qty,
                     newQty: newItem.qty,
                     deltaQty: newItem.qty - oldItem.qty,
                     oldPurchaseDescription: oldItem.purchaseDescription,
-                    newPurchaseDescription: newItem.purchaseDescription
+                    newPurchaseDescription: newItem.purchaseDescription,
+                    attributesChanged: changedAttrs
                 });
             }
         }
@@ -75,11 +84,13 @@ export function compareBOMs(oldFlattened, newFlattened) {
                 oldDescription: oldItem.description,
                 newDescription: null,
                 lengthDecimal: oldItem.lengthDecimal,
+                lengthFractional: oldItem.lengthFractional,
                 oldQty: oldItem.qty,
                 newQty: null,
                 deltaQty: null,
                 oldPurchaseDescription: oldItem.purchaseDescription,
-                newPurchaseDescription: null
+                newPurchaseDescription: null,
+                attributesChanged: []
             });
         }
     });
