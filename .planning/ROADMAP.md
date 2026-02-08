@@ -28,9 +28,11 @@ Transform a production-validated 4400-line single-file HTML application into a m
   2. All 4 existing validation tests pass against current single-file codebase
   3. Browser smoke test checklist exists for manual verification
   4. Test execution time is under 10 seconds
-**Plans**: TBD
+**Plans:** 2 plans
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 01-01-PLAN.md — Extract core BOM functions into js/core/ ES6 module files
+- [ ] 01-02-PLAN.md — Rewrite test harness imports, verify tests, create smoke test checklist
 
 ### Phase 2: CSS Extraction
 **Goal**: Styling lives in separate file with zero visual changes
@@ -164,7 +166,7 @@ Plans: (TBD - defined during plan-phase)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Test Infrastructure | 0/TBD | Not started | - |
+| 1. Test Infrastructure | 0/2 | Planned | - |
 | 2. CSS Extraction | 0/TBD | Not started | - |
 | 3. Utilities Extraction | 0/TBD | Not started | - |
 | 4. Core Logic Extraction | 0/TBD | Not started | - |
