@@ -57,9 +57,10 @@ Plans:
   2. All utility functions export correctly as named exports
   3. Utility functions produce identical outputs to original implementation
   4. Automated tests pass (no behavioral changes)
-**Plans**: TBD
+**Plans:** 1 plan
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 03-01-PLAN.md — Add createDiff to utils.js, convert HTML to module, remove inline definitions
 
 ### Phase 4: Core Logic Extraction
 **Goal**: Business logic modules handle parsing, tree building, flattening, comparison
@@ -169,7 +170,7 @@ Plans: (TBD - defined during plan-phase)
 |-------|----------------|--------|-----------|
 | 1. Test Infrastructure | 2/2 | ✓ Complete | 2026-02-07 |
 | 2. CSS Extraction | 1/1 | ✓ Complete | 2026-02-07 |
-| 3. Utilities Extraction | 0/TBD | Not started | - |
+| 3. Utilities Extraction | 0/1 | Planned | - |
 | 4. Core Logic Extraction | 0/TBD | Not started | - |
 | 5. State Management | 0/TBD | Not started | - |
 | 6. UI Module Extraction | 0/TBD | Not started | - |
