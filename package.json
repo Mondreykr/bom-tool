@@ -1,0 +1,10 @@
+{
+  "name": "bom-tool",
+  "version": "2.1.0",
+  "description": "BOM Tool - Flatten, compare, and visualize hierarchical BOMs",
+  "type": "module",
+  "dependencies": {
+    "xlsx": "^0.18.5",
+    "xmldom": "^0.6.0"
+  }
+}
