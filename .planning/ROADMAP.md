@@ -43,9 +43,10 @@ Plans:
   2. Visual appearance is pixel-identical in browser (all three tabs)
   3. Print styles work identically (export HTML previews)
   4. External fonts (Google Fonts) load correctly
-**Plans**: TBD
+**Plans:** 1 plan
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 02-01-PLAN.md — Extract CSS to css/styles.css and verify visual parity
 
 ### Phase 3: Utilities Extraction
 **Goal**: Zero-dependency utility functions work as ES6 modules
