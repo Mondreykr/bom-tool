@@ -109,7 +109,7 @@ Deferred to future milestones. Not in current roadmap.
 | CSS-01 | Phase 2 | Pending |
 | CSS-02 | Phase 2 | Pending |
 | CORE-01 | Phase 3 | Pending |
-| CORE-02 | Phase 3 | Pending |
+| CORE-02 | Phase 4 | Pending |
 | CORE-03 | Phase 4 | Pending |
 | CORE-04 | Phase 4 | Pending |
 | CORE-05 | Phase 4 | Pending |
@@ -145,4 +145,4 @@ Deferred to future milestones. Not in current roadmap.
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-07 after initial definition*
+*Last updated: 2026-02-07 after roadmap creation (traceability updated)*
