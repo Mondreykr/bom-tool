@@ -73,9 +73,10 @@ Plans:
   4. BOM flattening (flattenBOM, getCompositeKey) works from js/core/flatten.js
   5. BOM comparison (compareBOMs) works from js/core/compare.js
   6. All 4 automated tests pass with identical outputs
-**Plans**: TBD
+**Plans:** 1 plan
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 04-01-PLAN.md — Update modules to match HTML behavior, wire imports, remove inline definitions
 
 ### Phase 5: State Management
 **Goal**: All global state centralized in single state module
@@ -168,10 +169,10 @@ Plans: (TBD - defined during plan-phase)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Test Infrastructure | 2/2 | ✓ Complete | 2026-02-07 |
-| 2. CSS Extraction | 1/1 | ✓ Complete | 2026-02-07 |
-| 3. Utilities Extraction | 1/1 | ✓ Complete | 2026-02-08 |
-| 4. Core Logic Extraction | 0/TBD | Not started | - |
+| 1. Test Infrastructure | 2/2 | Complete | 2026-02-07 |
+| 2. CSS Extraction | 1/1 | Complete | 2026-02-07 |
+| 3. Utilities Extraction | 1/1 | Complete | 2026-02-08 |
+| 4. Core Logic Extraction | 0/1 | Not started | - |
 | 5. State Management | 0/TBD | Not started | - |
 | 6. UI Module Extraction | 0/TBD | Not started | - |
 | 7. Export Module Extraction | 0/TBD | Not started | - |
