@@ -56,3 +56,36 @@ export function getCompositeKey(partNumber, length) {
     }
     return `${partNumber}|${length}`;
 }
+
+// Create word-level diff highlighting
+export function createDiff(oldText, newText) {
+    if (!oldText && !newText) return { old: '-', new: '-' };
+    if (!oldText) return { old: '-', new: newText };
+    if (!newText) return { old: oldText, new: '-' };
+    if (oldText === newText) return { old: oldText, new: newText };
+
+    // Split into words
+    const oldWords = oldText.split(/\s+/);
+    const newWords = newText.split(/\s+/);
+
+    // Find common and different words
+    const oldSet = new Set(oldWords);
+    const newSet = new Set(newWords);
+
+    // Build highlighted versions
+    let oldHtml = oldWords.map(word => {
+        if (!newSet.has(word)) {
+            return `<span class="diff-removed">${word}</span>`;
+        }
+        return word;
+    }).join(' ');
+
+    let newHtml = newWords.map(word => {
+        if (!oldSet.has(word)) {
+            return `<span class="diff-added">${word}</span>`;
+        }
+        return word;
+    }).join(' ');
+
+    return { old: oldHtml, new: newHtml };
+}
