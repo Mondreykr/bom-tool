@@ -7,7 +7,7 @@ Transform a production-validated 4400-line single-file HTML application into a m
 ## Phases
 
 - [x] **Phase 1: Test Infrastructure** - Adapt test harness to validate modular structure
-- [ ] **Phase 2: CSS Extraction** - Extract styling to separate file
+- [x] **Phase 2: CSS Extraction** - Extract styling to separate file
 - [ ] **Phase 3: Utilities Extraction** - Extract zero-dependency utility functions
 - [ ] **Phase 4: Core Logic Extraction** - Extract business logic modules
 - [ ] **Phase 5: State Management** - Centralize global state
@@ -46,7 +46,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 02-01-PLAN.md — Extract CSS to css/styles.css and verify visual parity
+- [x] 02-01-PLAN.md — Extract CSS to css/styles.css and verify visual parity
 
 ### Phase 3: Utilities Extraction
 **Goal**: Zero-dependency utility functions work as ES6 modules
@@ -168,7 +168,7 @@ Plans: (TBD - defined during plan-phase)
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Test Infrastructure | 2/2 | ✓ Complete | 2026-02-07 |
-| 2. CSS Extraction | 0/TBD | Not started | - |
+| 2. CSS Extraction | 1/1 | ✓ Complete | 2026-02-07 |
 | 3. Utilities Extraction | 0/TBD | Not started | - |
 | 4. Core Logic Extraction | 0/TBD | Not started | - |
 | 5. State Management | 0/TBD | Not started | - |

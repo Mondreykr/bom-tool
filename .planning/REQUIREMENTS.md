@@ -16,8 +16,8 @@ Requirements for the multi-file refactor. Each maps to roadmap phases.
 
 ### CSS Extraction
 
-- [ ] **CSS-01**: All CSS extracted from index.html into separate css/styles.css file
-- [ ] **CSS-02**: Visual appearance is pixel-identical in browser after extraction
+- [x] **CSS-01**: All CSS extracted from index.html into separate css/styles.css file
+- [x] **CSS-02**: Visual appearance is pixel-identical in browser after extraction
 
 ### Core Logic Extraction
 
@@ -106,8 +106,8 @@ Deferred to future milestones. Not in current roadmap.
 | TEST-02 | Phase 1 | Complete |
 | TEST-03 | Phase 1 | Complete |
 | TEST-04 | Phase 1 | Complete |
-| CSS-01 | Phase 2 | Pending |
-| CSS-02 | Phase 2 | Pending |
+| CSS-01 | Phase 2 | Complete |
+| CSS-02 | Phase 2 | Complete |
 | CORE-01 | Phase 3 | Pending |
 | CORE-02 | Phase 4 | Pending |
 | CORE-03 | Phase 4 | Pending |
