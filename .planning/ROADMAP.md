@@ -6,7 +6,7 @@ Transform a production-validated 4400-line single-file HTML application into a m
 
 ## Phases
 
-- [ ] **Phase 1: Test Infrastructure** - Adapt test harness to validate modular structure
+- [x] **Phase 1: Test Infrastructure** - Adapt test harness to validate modular structure
 - [ ] **Phase 2: CSS Extraction** - Extract styling to separate file
 - [ ] **Phase 3: Utilities Extraction** - Extract zero-dependency utility functions
 - [ ] **Phase 4: Core Logic Extraction** - Extract business logic modules
@@ -31,8 +31,8 @@ Transform a production-validated 4400-line single-file HTML application into a m
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Extract core BOM functions into js/core/ ES6 module files
-- [ ] 01-02-PLAN.md — Rewrite test harness imports, verify tests, create smoke test checklist
+- [x] 01-01-PLAN.md — Extract core BOM functions into js/core/ ES6 module files
+- [x] 01-02-PLAN.md — Rewrite test harness imports, verify tests, create smoke test checklist
 
 ### Phase 2: CSS Extraction
 **Goal**: Styling lives in separate file with zero visual changes
@@ -166,7 +166,7 @@ Plans: (TBD - defined during plan-phase)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Test Infrastructure | 0/2 | Planned | - |
+| 1. Test Infrastructure | 2/2 | ✓ Complete | 2026-02-07 |
 | 2. CSS Extraction | 0/TBD | Not started | - |
 | 3. Utilities Extraction | 0/TBD | Not started | - |
 | 4. Core Logic Extraction | 0/TBD | Not started | - |

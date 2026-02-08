@@ -9,10 +9,10 @@ Requirements for the multi-file refactor. Each maps to roadmap phases.
 
 ### Test Infrastructure
 
-- [ ] **TEST-01**: Test runner imports functions from new multi-file structure instead of copied code
-- [ ] **TEST-02**: All 4 existing validation tests pass against refactored codebase (same inputs, same controls)
-- [ ] **TEST-03**: Tests run at every phase — no code moves without passing tests
-- [ ] **TEST-04**: Browser smoke test checklist exists for manual verification after each phase
+- [x] **TEST-01**: Test runner imports functions from new multi-file structure instead of copied code
+- [x] **TEST-02**: All 4 existing validation tests pass against refactored codebase (same inputs, same controls)
+- [x] **TEST-03**: Tests run at every phase — no code moves without passing tests
+- [x] **TEST-04**: Browser smoke test checklist exists for manual verification after each phase
 
 ### CSS Extraction
 
@@ -102,10 +102,10 @@ Deferred to future milestones. Not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
-| TEST-03 | Phase 1 | Pending |
-| TEST-04 | Phase 1 | Pending |
+| TEST-01 | Phase 1 | Complete |
+| TEST-02 | Phase 1 | Complete |
+| TEST-03 | Phase 1 | Complete |
+| TEST-04 | Phase 1 | Complete |
 | CSS-01 | Phase 2 | Pending |
 | CSS-02 | Phase 2 | Pending |
 | CORE-01 | Phase 3 | Pending |
