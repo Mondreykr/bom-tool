@@ -1206,27 +1206,27 @@
         // Handle node selection click
         function handleNodeSelection(node, type) {
             const container = type === 'old' ? oldBomTreeContainer : newBomTreeContainer;
-            const currentNode = type === 'old' ? oldSelectedNode : newSelectedNode;
+            const currentNode = type === 'old' ? state.oldSelectedNode : state.newSelectedNode;
 
             // Toggle selection
             if (currentNode === node) {
                 // Deselect
                 if (type === 'old') {
-                    oldSelectedNode = null;
+                    state.oldSelectedNode = null;
                 } else {
-                    newSelectedNode = null;
+                    state.newSelectedNode = null;
                 }
             } else {
                 // Select
                 if (type === 'old') {
-                    oldSelectedNode = node;
+                    state.oldSelectedNode = node;
                 } else {
-                    newSelectedNode = node;
+                    state.newSelectedNode = node;
                 }
             }
 
             // Update visual selection
-            const selectedNode = type === 'old' ? oldSelectedNode : newSelectedNode;
+            const selectedNode = type === 'old' ? state.oldSelectedNode : state.newSelectedNode;
             container.querySelectorAll('.tree-select-row').forEach(row => {
                 if (selectedNode && row.dataset.level === selectedNode.level) {
                     row.classList.add('selected');
@@ -1242,8 +1242,8 @@
         // Update the selection status display
         function updateSelectionDisplay(type) {
             const displayEl = type === 'old' ? oldBomSelectedDisplay : newBomSelectedDisplay;
-            const selectedNode = type === 'old' ? oldSelectedNode : newSelectedNode;
-            const tree = type === 'old' ? oldBomTree : newBomTree;
+            const selectedNode = type === 'old' ? state.oldSelectedNode : state.newSelectedNode;
+            const tree = type === 'old' ? state.oldBomTree : state.newBomTree;
 
             if (selectedNode && selectedNode !== tree) {
                 displayEl.textContent = selectedNode.partNumber;
@@ -1333,27 +1333,27 @@
                         const parsed = parseXML(xmlText);
 
                         if (type === 'old') {
-                            oldBomData = parsed;
-                            oldBomFilename = file.name;  // Store filename
+                            state.oldBomData = parsed;
+                            state.oldBomFilename = file.name;  // Store filename
                         } else {
-                            newBomData = parsed;
-                            newBomFilename = file.name;  // Store filename
+                            state.newBomData = parsed;
+                            state.newBomFilename = file.name;  // Store filename
                         }
                     } else {
                         const decoder = new TextDecoder('utf-16le');
                         let csvText = decoder.decode(e.target.result);
-                        
+
                         if (csvText.charCodeAt(0) === 0xFEFF) {
                             csvText = csvText.substring(1);
                         }
-                        
+
                         const workbook = XLSX.read(csvText, {
                             type: 'string',
                             raw: true,
                             cellText: true,
                             cellDates: false
                         });
-                        
+
                         const sheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[sheetName];
                         const parsed = XLSX.utils.sheet_to_json(worksheet, {
@@ -1362,18 +1362,18 @@
                         });
 
                         if (type === 'old') {
-                            oldBomData = parsed;
-                            oldBomFilename = file.name;  // Store filename
+                            state.oldBomData = parsed;
+                            state.oldBomFilename = file.name;  // Store filename
                         } else {
-                            newBomData = parsed;
-                            newBomFilename = file.name;  // Store filename
+                            state.newBomData = parsed;
+                            state.newBomFilename = file.name;  // Store filename
                         }
                     }
-                    
-                    console.log(`${type} BOM loaded: ${type === 'old' ? oldBomData.length : newBomData.length} rows`);
+
+                    console.log(`${type} BOM loaded: ${type === 'old' ? state.oldBomData.length : state.newBomData.length} rows`);
 
                     // Build tree immediately for scoped comparison UI
-                    const rawData = type === 'old' ? oldBomData : newBomData;
+                    const rawData = type === 'old' ? state.oldBomData : state.newBomData;
                     let tree;
                     try {
                         tree = buildTree(rawData);
@@ -1385,11 +1385,11 @@
 
                     // Store tree globally and reset selection
                     if (type === 'old') {
-                        oldBomTree = tree;
-                        oldSelectedNode = null;
+                        state.oldBomTree = tree;
+                        state.oldSelectedNode = null;
                     } else {
-                        newBomTree = tree;
-                        newSelectedNode = null;
+                        state.newBomTree = tree;
+                        state.newSelectedNode = null;
                     }
 
                     // Update UI: Hide drop zone, show tree selection panel
@@ -1397,24 +1397,24 @@
                         oldBomZone.style.display = 'none';
                         oldBomTreePanel.style.display = 'block';
                         oldBomPanelName.textContent = file.name;
-                        renderSelectionTree(oldBomTree, 'old');
+                        renderSelectionTree(state.oldBomTree, 'old');
                         updateSelectionDisplay('old');
                         // Keep file info for reference
                         oldBomFileName.textContent = file.name;
-                        oldBomFileMeta.textContent = `${oldBomData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                        oldBomFileMeta.textContent = `${state.oldBomData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
                     } else {
                         newBomZone.style.display = 'none';
                         newBomTreePanel.style.display = 'block';
                         newBomPanelName.textContent = file.name;
-                        renderSelectionTree(newBomTree, 'new');
+                        renderSelectionTree(state.newBomTree, 'new');
                         updateSelectionDisplay('new');
                         // Keep file info for reference
                         newBomFileName.textContent = file.name;
-                        newBomFileMeta.textContent = `${newBomData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                        newBomFileMeta.textContent = `${state.newBomData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
                     }
 
                     // Enable compare button if both files loaded
-                    if (oldBomData && newBomData) {
+                    if (state.oldBomData && state.newBomData) {
                         compareBtn.disabled = false;
                         showCompareMessage('Both BOMs loaded. Select scope and compare.', 'success');
                     }
@@ -1443,8 +1443,8 @@
                 console.log('Starting BOM comparison...');
 
                 // Determine scope for each BOM (selected node or full tree)
-                const oldScope = oldSelectedNode || oldBomTree;
-                const newScope = newSelectedNode || newBomTree;
+                const oldScope = state.oldSelectedNode || state.oldBomTree;
+                const newScope = state.newSelectedNode || state.newBomTree;
 
                 console.log(`Old scope: ${oldScope.partNumber} (Level: ${oldScope.level})`);
                 console.log(`New scope: ${newScope.partNumber} (Level: ${newScope.level})`);
@@ -1455,30 +1455,30 @@
 
                 // Flatten scoped subtrees
                 console.log('Flattening old BOM scope...');
-                oldBomFlattened = flattenBOM(oldSubtree, 1);
+                state.oldBomFlattened = flattenBOM(oldSubtree, 1);
 
                 // Store info for display (full GA info + scope info)
-                oldBomInfo.partNumber = oldBomTree.partNumber;
-                oldBomInfo.revision = oldBomTree.revision;
-                oldBomInfo.description = oldBomTree.description;
-                oldBomInfo.scopedPartNumber = oldScope.partNumber;
-                oldBomInfo.isScoped = oldSelectedNode !== null;
+                state.oldBomInfo.partNumber = state.oldBomTree.partNumber;
+                state.oldBomInfo.revision = state.oldBomTree.revision;
+                state.oldBomInfo.description = state.oldBomTree.description;
+                state.oldBomInfo.scopedPartNumber = oldScope.partNumber;
+                state.oldBomInfo.isScoped = state.oldSelectedNode !== null;
 
                 console.log('Flattening new BOM scope...');
-                newBomFlattened = flattenBOM(newSubtree, 1);
+                state.newBomFlattened = flattenBOM(newSubtree, 1);
 
-                newBomInfo.partNumber = newBomTree.partNumber;
-                newBomInfo.revision = newBomTree.revision;
-                newBomInfo.description = newBomTree.description;
-                newBomInfo.scopedPartNumber = newScope.partNumber;
-                newBomInfo.isScoped = newSelectedNode !== null;
+                state.newBomInfo.partNumber = state.newBomTree.partNumber;
+                state.newBomInfo.revision = state.newBomTree.revision;
+                state.newBomInfo.description = state.newBomTree.description;
+                state.newBomInfo.scopedPartNumber = newScope.partNumber;
+                state.newBomInfo.isScoped = state.newSelectedNode !== null;
 
-                console.log(`Old BOM flattened: ${oldBomFlattened.length} items`);
-                console.log(`New BOM flattened: ${newBomFlattened.length} items`);
+                console.log(`Old BOM flattened: ${state.oldBomFlattened.length} items`);
+                console.log(`New BOM flattened: ${state.newBomFlattened.length} items`);
 
                 // Compare
                 console.log('Comparing BOMs...');
-                comparisonResults = compareBOMs(oldBomFlattened, newBomFlattened);
+                state.comparisonResults = compareBOMs(state.oldBomFlattened, state.newBomFlattened);
 
                 // Display results
                 displayComparisonResults();
@@ -1494,44 +1494,44 @@
 
         function displayComparisonResults() {
             // Update assembly info - filename is primary, PN/description is secondary
-            document.getElementById('oldBomFilenameDisplay').textContent = oldBomFilename || 'N/A';
-            document.getElementById('oldBomAssembly').textContent = `${oldBomInfo.partNumber} - ${oldBomInfo.description}`;
-            document.getElementById('oldBomRev').textContent = oldBomInfo.revision || '-';
-            document.getElementById('newBomFilenameDisplay').textContent = newBomFilename || 'N/A';
-            document.getElementById('newBomAssembly').textContent = `${newBomInfo.partNumber} - ${newBomInfo.description}`;
-            document.getElementById('newBomRev').textContent = newBomInfo.revision || '-';
+            document.getElementById('oldBomFilenameDisplay').textContent = state.oldBomFilename || 'N/A';
+            document.getElementById('oldBomAssembly').textContent = `${state.oldBomInfo.partNumber} - ${state.oldBomInfo.description}`;
+            document.getElementById('oldBomRev').textContent = state.oldBomInfo.revision || '-';
+            document.getElementById('newBomFilenameDisplay').textContent = state.newBomFilename || 'N/A';
+            document.getElementById('newBomAssembly').textContent = `${state.newBomInfo.partNumber} - ${state.newBomInfo.description}`;
+            document.getElementById('newBomRev').textContent = state.newBomInfo.revision || '-';
 
             // Show scope info
-            if (oldBomInfo.isScoped) {
-                oldBomScopeDisplay.textContent = `Scope: ${oldBomInfo.scopedPartNumber}`;
+            if (state.oldBomInfo.isScoped) {
+                oldBomScopeDisplay.textContent = `Scope: ${state.oldBomInfo.scopedPartNumber}`;
             } else {
                 oldBomScopeDisplay.textContent = 'Scope: Full Assembly';
             }
-            if (newBomInfo.isScoped) {
-                newBomScopeDisplay.textContent = `Scope: ${newBomInfo.scopedPartNumber}`;
+            if (state.newBomInfo.isScoped) {
+                newBomScopeDisplay.textContent = `Scope: ${state.newBomInfo.scopedPartNumber}`;
             } else {
                 newBomScopeDisplay.textContent = 'Scope: Full Assembly';
             }
-            
+
             // Update stats
-            const added = comparisonResults.filter(r => r.changeType === 'Added').length;
-            const removed = comparisonResults.filter(r => r.changeType === 'Removed').length;
-            const changed = comparisonResults.filter(r => r.changeType === 'Changed').length;
-            
+            const added = state.comparisonResults.filter(r => r.changeType === 'Added').length;
+            const removed = state.comparisonResults.filter(r => r.changeType === 'Removed').length;
+            const changed = state.comparisonResults.filter(r => r.changeType === 'Changed').length;
+
             document.getElementById('addedCount').textContent = added;
             document.getElementById('removedCount').textContent = removed;
             document.getElementById('changedCount').textContent = changed;
-            
+
             // Show results section
             compareResults.classList.add('show');
-            
+
             // Render table
             renderComparisonTable();
-            
+
             // Show export buttons
             exportCompareExcelBtn.style.display = '';
             exportCompareHtmlBtn.style.display = '';
-            
+
             // Scroll to results
             compareResults.scrollIntoView({ behavior: 'smooth' });
         }
@@ -1557,12 +1557,12 @@
 
         function renderComparisonTable() {
             compareBody.innerHTML = '';
-            
+
             // Filter results
-            const filtered = currentFilter === 'all'
-                ? comparisonResults
-                : comparisonResults.filter(r => r.changeType === currentFilter);
-            
+            const filtered = state.currentFilter === 'all'
+                ? state.comparisonResults
+                : state.comparisonResults.filter(r => r.changeType === state.currentFilter);
+
             // Sort results
             const sorted = sortComparisonResults(filtered);
             
@@ -1642,12 +1642,12 @@
         
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                currentFilter = btn.dataset.filter;
-                
+                state.currentFilter = btn.dataset.filter;
+
                 // Update button states
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
+
                 // Re-render table
                 renderComparisonTable();
             });
@@ -1664,26 +1664,26 @@
                           String(today.getDate()).padStart(2, '0');
 
             // Use uploaded filenames (strip extension) or fall back to part numbers
-            const oldBase = oldBomFilename
-                ? oldBomFilename.replace(/\.(csv|xml)$/i, '')
-                : `${oldBomInfo.partNumber}-Rev${oldBomInfo.revision}`;
-            const newBase = newBomFilename
-                ? newBomFilename.replace(/\.(csv|xml)$/i, '')
-                : `${newBomInfo.partNumber}-Rev${newBomInfo.revision}`;
+            const oldBase = state.oldBomFilename
+                ? state.oldBomFilename.replace(/\.(csv|xml)$/i, '')
+                : `${state.oldBomInfo.partNumber}-Rev${state.oldBomInfo.revision}`;
+            const newBase = state.newBomFilename
+                ? state.newBomFilename.replace(/\.(csv|xml)$/i, '')
+                : `${state.newBomInfo.partNumber}-Rev${state.newBomInfo.revision}`;
             const filename = `${oldBase}-vs-${newBase}-Comparison-${dateStr}.xlsx`;
 
             // Build scope info for header
-            const oldScopeText = oldBomInfo.isScoped ? `Scope: ${oldBomInfo.scopedPartNumber}` : 'Full Assembly';
-            const newScopeText = newBomInfo.isScoped ? `Scope: ${newBomInfo.scopedPartNumber}` : 'Full Assembly';
+            const oldScopeText = state.oldBomInfo.isScoped ? `Scope: ${state.oldBomInfo.scopedPartNumber}` : 'Full Assembly';
+            const newScopeText = state.newBomInfo.isScoped ? `Scope: ${state.newBomInfo.scopedPartNumber}` : 'Full Assembly';
 
             const ws_data = [
-                ['Old BOM:', oldBomFilename || 'N/A', `${oldBomInfo.partNumber} - ${oldBomInfo.description}`, `Rev ${oldBomInfo.revision}`, oldScopeText],
-                ['New BOM:', newBomFilename || 'N/A', `${newBomInfo.partNumber} - ${newBomInfo.description}`, `Rev ${newBomInfo.revision}`, newScopeText],
+                ['Old BOM:', state.oldBomFilename || 'N/A', `${state.oldBomInfo.partNumber} - ${state.oldBomInfo.description}`, `Rev ${state.oldBomInfo.revision}`, oldScopeText],
+                ['New BOM:', state.newBomFilename || 'N/A', `${state.newBomInfo.partNumber} - ${state.newBomInfo.description}`, `Rev ${state.newBomInfo.revision}`, newScopeText],
                 [],
                 ['Change Type', 'Part Number', 'Component Type', 'Old Description', 'New Description', 'Length (Decimal)', 'Length (Fractional)', 'Old Qty', 'New Qty', 'Δ Qty', 'Old Purchase Description', 'New Purchase Description', 'Attributes Changed']
             ];
-            
-            const sorted = sortComparisonResults(comparisonResults);
+
+            const sorted = sortComparisonResults(state.comparisonResults);
             
             sorted.forEach(result => {
                 const deltaQty = result.deltaQty !== null && result.deltaQty !== 0 ? result.deltaQty : '';
@@ -1717,24 +1717,24 @@
             const dateStr = today.getFullYear() +
                           String(today.getMonth() + 1).padStart(2, '0') +
                           String(today.getDate()).padStart(2, '0');
-            
+
             // Format date as YYYY-MM-DD HH:MM:SS
             const generatedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`;
 
             // Use uploaded filenames (strip extension) or fall back to part numbers
-            const oldBase = oldBomFilename
-                ? oldBomFilename.replace(/\.(csv|xml)$/i, '')
-                : `${oldBomInfo.partNumber}-Rev${oldBomInfo.revision}`;
-            const newBase = newBomFilename
-                ? newBomFilename.replace(/\.(csv|xml)$/i, '')
-                : `${newBomInfo.partNumber}-Rev${newBomInfo.revision}`;
+            const oldBase = state.oldBomFilename
+                ? state.oldBomFilename.replace(/\.(csv|xml)$/i, '')
+                : `${state.oldBomInfo.partNumber}-Rev${state.oldBomInfo.revision}`;
+            const newBase = state.newBomFilename
+                ? state.newBomFilename.replace(/\.(csv|xml)$/i, '')
+                : `${state.newBomInfo.partNumber}-Rev${state.newBomInfo.revision}`;
             const filename = `${oldBase}-vs-${newBase}-Comparison-${dateStr}.html`;
-            
-            const added = comparisonResults.filter(r => r.changeType === 'Added').length;
-            const removed = comparisonResults.filter(r => r.changeType === 'Removed').length;
-            const changed = comparisonResults.filter(r => r.changeType === 'Changed').length;
-            
-            const sorted = sortComparisonResults(comparisonResults);
+
+            const added = state.comparisonResults.filter(r => r.changeType === 'Added').length;
+            const removed = state.comparisonResults.filter(r => r.changeType === 'Removed').length;
+            const changed = state.comparisonResults.filter(r => r.changeType === 'Changed').length;
+
+            const sorted = sortComparisonResults(state.comparisonResults);
             
             let tableRows = '';
             sorted.forEach(result => {
@@ -1791,7 +1791,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>BOM Comparison - ${oldBomInfo.partNumber} vs ${newBomInfo.partNumber}</title>
+    <title>BOM Comparison - ${state.oldBomInfo.partNumber} vs ${state.newBomInfo.partNumber}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -1970,15 +1970,15 @@
         <div class="assembly-grid">
             <div class="assembly-card old">
                 <div class="assembly-label">Old BOM</div>
-                <div class="assembly-value">${oldBomFilename || 'N/A'}</div>
-                <div class="assembly-label" style="margin-top: 0.5rem;">${oldBomInfo.partNumber} - ${oldBomInfo.description}</div>
-                <div class="assembly-label" style="margin-top: 0.25rem;">Revision: ${oldBomInfo.revision || '-'} | Scope: ${oldBomInfo.isScoped ? oldBomInfo.scopedPartNumber : 'Full Assembly'}</div>
+                <div class="assembly-value">${state.oldBomFilename || 'N/A'}</div>
+                <div class="assembly-label" style="margin-top: 0.5rem;">${state.oldBomInfo.partNumber} - ${state.oldBomInfo.description}</div>
+                <div class="assembly-label" style="margin-top: 0.25rem;">Revision: ${state.oldBomInfo.revision || '-'} | Scope: ${state.oldBomInfo.isScoped ? state.oldBomInfo.scopedPartNumber : 'Full Assembly'}</div>
             </div>
             <div class="assembly-card new">
                 <div class="assembly-label">New BOM</div>
-                <div class="assembly-value">${newBomFilename || 'N/A'}</div>
-                <div class="assembly-label" style="margin-top: 0.5rem;">${newBomInfo.partNumber} - ${newBomInfo.description}</div>
-                <div class="assembly-label" style="margin-top: 0.25rem;">Revision: ${newBomInfo.revision || '-'} | Scope: ${newBomInfo.isScoped ? newBomInfo.scopedPartNumber : 'Full Assembly'}</div>
+                <div class="assembly-value">${state.newBomFilename || 'N/A'}</div>
+                <div class="assembly-label" style="margin-top: 0.5rem;">${state.newBomInfo.partNumber} - ${state.newBomInfo.description}</div>
+                <div class="assembly-label" style="margin-top: 0.25rem;">Revision: ${state.newBomInfo.revision || '-'} | Scope: ${state.newBomInfo.isScoped ? state.newBomInfo.scopedPartNumber : 'Full Assembly'}</div>
             </div>
         </div>
         
@@ -2041,14 +2041,14 @@
         // Reset Comparison button - clears results/selections, keeps files/trees loaded
         resetScopeBtn.addEventListener('click', () => {
             // Clear comparison results
-            comparisonResults = [];
-            oldBomFlattened = null;
-            newBomFlattened = null;
-            currentFilter = 'all';
+            state.comparisonResults = [];
+            state.oldBomFlattened = null;
+            state.newBomFlattened = null;
+            state.currentFilter = 'all';
 
             // Clear selections (but keep trees)
-            oldSelectedNode = null;
-            newSelectedNode = null;
+            state.oldSelectedNode = null;
+            state.newSelectedNode = null;
 
             // Update selection visuals
             oldBomTreeContainer.querySelectorAll('.tree-select-row').forEach(row => {
@@ -2079,22 +2079,22 @@
         // Start Over button - clears everything including files
         resetCompareBtn.addEventListener('click', () => {
             // Clear all data
-            oldBomData = null;
-            oldBomFlattened = null;
-            oldBomInfo = { partNumber: '', revision: '', description: '' };
-            oldBomFilename = null;
-            oldBomTree = null;
-            oldSelectedNode = null;
+            state.oldBomData = null;
+            state.oldBomFlattened = null;
+            state.oldBomInfo = { partNumber: '', revision: '', description: '' };
+            state.oldBomFilename = null;
+            state.oldBomTree = null;
+            state.oldSelectedNode = null;
 
-            newBomData = null;
-            newBomFlattened = null;
-            newBomInfo = { partNumber: '', revision: '', description: '' };
-            newBomFilename = null;
-            newBomTree = null;
-            newSelectedNode = null;
+            state.newBomData = null;
+            state.newBomFlattened = null;
+            state.newBomInfo = { partNumber: '', revision: '', description: '' };
+            state.newBomFilename = null;
+            state.newBomTree = null;
+            state.newSelectedNode = null;
 
-            comparisonResults = [];
-            currentFilter = 'all';
+            state.comparisonResults = [];
+            state.currentFilter = 'all';
 
             // Reset Old BOM UI - show drop zone, hide tree panel
             oldBomZone.classList.remove('has-file');
@@ -2131,9 +2131,9 @@
         oldBomChangeFile.addEventListener('click', (e) => {
             e.preventDefault();
             // Clear old BOM data but keep new BOM
-            oldBomData = null;
-            oldBomTree = null;
-            oldSelectedNode = null;
+            state.oldBomData = null;
+            state.oldBomTree = null;
+            state.oldSelectedNode = null;
 
             // Reset UI
             oldBomTreePanel.style.display = 'none';
@@ -2151,9 +2151,9 @@
         newBomChangeFile.addEventListener('click', (e) => {
             e.preventDefault();
             // Clear new BOM data but keep old BOM
-            newBomData = null;
-            newBomTree = null;
-            newSelectedNode = null;
+            state.newBomData = null;
+            state.newBomTree = null;
+            state.newSelectedNode = null;
 
             // Reset UI
             newBomTreePanel.style.display = 'none';
