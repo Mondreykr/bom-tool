@@ -123,9 +123,11 @@ Plans:
   4. HTML exports render identically to current behavior
   5. SheetJS dependency loads before export functions execute
   6. All export filenames follow correct pattern
-**Plans**: TBD
+**Plans:** 2 plans
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 07-01-PLAN.md — Extract shared utilities and Excel export functions to js/export/
+- [ ] 07-02-PLAN.md — Extract HTML export functions to js/export/html.js
 
 ### Phase 8: Entry Point Consolidation
 **Goal**: Application initializes correctly with modular architecture
@@ -180,7 +182,7 @@ Plans: (TBD - defined during plan-phase)
 | 4. Core Logic Extraction | 1/1 | Complete | 2026-02-08 |
 | 5. State Management | 2/2 | Complete | 2026-02-08 |
 | 6. UI Module Extraction | 3/3 | Complete | 2026-02-09 |
-| 7. Export Module Extraction | 0/TBD | Not started | - |
+| 7. Export Module Extraction | 0/2 | Not started | - |
 | 8. Entry Point Consolidation | 0/TBD | Not started | - |
 | 9. Deployment | 0/TBD | Not started | - |
 | 10. Final Validation | 0/TBD | Not started | - |
