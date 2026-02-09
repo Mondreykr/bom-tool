@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Identical outputs after refactoring — zero tolerance for behavioral differences
-**Current focus:** Phase 5 complete — State Management
+**Current focus:** Phase 6 complete — UI Module Extraction
 
 ## Current Position
 
@@ -39,7 +39,6 @@ Progress: [████████░░] 70%
 - Phase 6 COMPLETE: All three UI modules extracted (Flat BOM 8m, Comparison 9m, Hierarchy 8m)
 
 *Updated after each plan completion*
-| Phase 06 P03 | 8 | 2 tasks | 2 files |
 
 ## Accumulated Context
 

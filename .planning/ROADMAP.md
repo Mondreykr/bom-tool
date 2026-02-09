@@ -11,7 +11,7 @@ Transform a production-validated 4400-line single-file HTML application into a m
 - [x] **Phase 3: Utilities Extraction** - Extract zero-dependency utility functions
 - [x] **Phase 4: Core Logic Extraction** - Extract business logic modules
 - [x] **Phase 5: State Management** - Centralize global state
-- [ ] **Phase 6: UI Module Extraction** - Extract tab-specific UI logic
+- [x] **Phase 6: UI Module Extraction** - Extract tab-specific UI logic
 - [ ] **Phase 7: Export Module Extraction** - Extract Excel and HTML export functions
 - [ ] **Phase 8: Entry Point Consolidation** - Wire modules together in main.js
 - [ ] **Phase 9: Deployment** - Git branch workflow and GitHub Pages deployment
@@ -108,9 +108,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Extract Flat BOM tab logic to js/ui/flat-bom.js module
-- [ ] 06-02-PLAN.md — Extract Comparison tab logic to js/ui/comparison.js module
-- [ ] 06-03-PLAN.md — Extract Hierarchy tab logic to js/ui/hierarchy.js, finalize index.html
+- [x] 06-01-PLAN.md — Extract Flat BOM tab logic to js/ui/flat-bom.js module
+- [x] 06-02-PLAN.md — Extract Comparison tab logic to js/ui/comparison.js module
+- [x] 06-03-PLAN.md — Extract Hierarchy tab logic to js/ui/hierarchy.js, finalize index.html
 
 ### Phase 7: Export Module Extraction
 **Goal**: Export functionality produces identical Excel and HTML files
@@ -179,7 +179,7 @@ Plans: (TBD - defined during plan-phase)
 | 3. Utilities Extraction | 1/1 | Complete | 2026-02-08 |
 | 4. Core Logic Extraction | 1/1 | Complete | 2026-02-08 |
 | 5. State Management | 2/2 | Complete | 2026-02-08 |
-| 6. UI Module Extraction | 0/3 | Not started | - |
+| 6. UI Module Extraction | 3/3 | Complete | 2026-02-09 |
 | 7. Export Module Extraction | 0/TBD | Not started | - |
 | 8. Entry Point Consolidation | 0/TBD | Not started | - |
 | 9. Deployment | 0/TBD | Not started | - |
