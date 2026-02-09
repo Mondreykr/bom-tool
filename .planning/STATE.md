@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 
 ## Current Position
 
-Phase: 10 of 10 (Final Validation) — READY
-Plan: Phase 9 complete (2 of 2 plans)
-Status: GitHub Pages deployed and browser-verified at https://mondreykr.github.io/bom-tool/
-Last activity: 2026-02-09 — Completed 09-02-PLAN.md (Browser Functional Verification)
+Phase: 10 of 10 (Final Validation) — IN PROGRESS
+Plan: 1 of 2 plans complete
+Status: Test regressions fixed (4/4 tests passing) - ready for browser re-verification
+Last activity: 2026-02-09 — Completed 10-01-PLAN.md (Test Regression Fix)
 
-Progress: [█████████░] 93%
+Progress: [█████████░] 94%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: ~11.5 minutes
-- Total execution time: ~3.2 hours
+- Total plans completed: 16
+- Average duration: ~11.3 minutes
+- Total execution time: ~3.25 hours
 
 **By Phase:**
 
@@ -36,15 +36,18 @@ Progress: [█████████░] 93%
 | 07-export-module-extraction | 2 | 13.2m | 6.6m |
 | 08-entry-point-consolidation | 1 | 3.9m | 3.9m |
 | 09-deployment | 2 | 20m | 10m |
+| 10-final-validation | 1 | 5m | 5m |
 
 **Recent Trend:**
-- Last 5 plans: 07-02 (8.7m), 08-01 (3.9m), 09-01 (15m), 09-02 (5m)
+- Last 5 plans: 08-01 (3.9m), 09-01 (15m), 09-02 (5m), 10-01 (5m)
 - Phase 6 COMPLETE: All three UI modules extracted
 - Phase 7 COMPLETE: All export functions extracted to dedicated modules (13.2m)
 - Phase 8 COMPLETE: Entry point extracted to js/main.js (3.9m)
 - Phase 9 COMPLETE: GitHub Pages deployed and browser-verified (2 of 2 plans, 20m total)
+- Phase 10 IN PROGRESS: Test regression fix complete (1 of 2 plans, 5m so far)
 
 *Updated after each plan completion*
+| Phase 10-final-validation P01 | 5 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -83,6 +86,12 @@ Recent decisions affecting current work:
 - **Repository visibility (09-01):** Made repository public to enable free GitHub Pages (was private)
 - **Browser verification checklist (09-02):** 9-step systematic verification covering module loading, console errors, CSS, tabs, file processing, and exports
 - **Rollback procedure (09-02):** Use git revert (not reset) to preserve history and enable safe deployment rollback
+- **sortChildren extraction (10-01):** sortChildren extracted from buildTree to fix test regressions while preserving sorted UI display
+- **Unsorted tree baseline (10-01):** Flatten/compare operations use unsorted trees (matching Phase 1 baseline behavior)
+- **UI-only sorting (10-01):** Only UI display modules call sortChildren explicitly (hierarchy.js, comparison.js)
+- [Phase 10-01]: sortChildren extracted from buildTree to fix test regressions while preserving sorted UI display
+- [Phase 10-01]: Flatten/compare operations use unsorted trees (matching Phase 1 baseline behavior)
+- [Phase 10-01]: Only UI display modules call sortChildren explicitly (hierarchy.js, comparison.js)
 
 ### Pending Todos
 
@@ -143,7 +152,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-09 (Phase 9 Plan 02 execution)
-Stopped at: Completed 09-02-PLAN.md (Browser functional verification - all checks passed)
+Last session: 2026-02-09 (Phase 10 Plan 01 execution)
+Stopped at: Completed 10-01-PLAN.md (Test regression fix - 4/4 tests passing)
 Resume file: None
-Next: Phase 10 (Final Validation - documentation and production readiness checklist)
+Next: Phase 10 Plan 02 (Browser re-verification after test fix)
