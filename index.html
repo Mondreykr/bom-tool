@@ -1041,24 +1041,11 @@
         // ========================================
         // BOM COMPARISON - STATE & DOM ELEMENTS
         // ========================================
-        
-        let oldBomData = null;
-        let oldBomFlattened = null;
-        let oldBomInfo = { partNumber: '', revision: '', description: '' };
-        let oldBomFilename = null;  // Store old BOM filename
-        let oldBomTree = null;      // Preserved tree for scoped comparison
-        let oldSelectedNode = null; // Selected node for scoped comparison (null = full GA)
 
-        let newBomData = null;
-        let newBomFlattened = null;
-        let newBomInfo = { partNumber: '', revision: '', description: '' };
-        let newBomFilename = null;  // Store new BOM filename
-        let newBomTree = null;      // Preserved tree for scoped comparison
-        let newSelectedNode = null; // Selected node for scoped comparison (null = full GA)
+        // Comparison tab state: state.oldBomData, state.oldBomFlattened, state.oldBomInfo, state.oldBomFilename,
+        //   state.oldBomTree, state.oldSelectedNode, state.newBomData, state.newBomFlattened, state.newBomInfo,
+        //   state.newBomFilename, state.newBomTree, state.newSelectedNode, state.comparisonResults, state.currentFilter
 
-        let comparisonResults = [];
-        let currentFilter = 'all';
-        
         const oldBomZone = document.getElementById('oldBomZone');
         const oldBomInput = document.getElementById('oldBomFile');
         const oldBomFileInfo = document.getElementById('oldBomInfo');
