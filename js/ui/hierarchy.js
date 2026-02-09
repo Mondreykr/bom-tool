@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { parseXML } from '../core/parser.js';
 import { buildTree, getRootPartNumber, getRootRevision, getRootDescription, resetRootInfo } from '../core/tree.js';
 import { decimalToFractional } from '../core/utils.js';
+import { exportHierarchyExcel } from '../export/excel.js';
 
 export function init() {
     // ========================================
@@ -414,48 +415,8 @@ export function init() {
     // ========================================
 
     exportHierarchyExcelBtn.addEventListener('click', () => {
-        const today = new Date();
-        const dateStr = today.getFullYear() +
-                      String(today.getMonth() + 1).padStart(2, '0') +
-                      String(today.getDate()).padStart(2, '0');
-
-        // Use uploaded filename or fall back to part number
-        const baseFilename = state.hierarchyFilename
-            ? state.hierarchyFilename.replace(/\.(csv|xml)$/i, '')
-            : `${state.hierarchyRootInfo.partNumber}-Rev${state.hierarchyRootInfo.revision}`;
-        const filename = `${baseFilename}-Hierarchy-${dateStr}.xlsx`;
-
-        // Get unit qty for export
         const unitQty = parseInt(hierarchyUnitQtyInput.value) || 1;
-
-        // Flatten tree to rows with Level column
-        const rows = [];
-        function traverseForExport(node, parentLevel = '', childIndex = 1) {
-            const level = parentLevel ? `${parentLevel}.${childIndex}` : String(childIndex);
-            rows.push({
-                'Level': level,
-                'Part Number': node.partNumber,
-                'Qty': node.qty * unitQty,
-                'Component Type': node.componentType,
-                'Description': node.description,
-                'Length (Decimal)': node.length !== null ? node.length : '',
-                'Length (Fractional)': node.length !== null ? decimalToFractional(node.length) : '',
-                'UofM': node.uofm || '',
-                'Purchase Description': node.purchaseDescription || '',
-                'Revision': node.revision || '',
-                'NS Item Type': node.nsItemType || ''
-            });
-            node.children.forEach((child, idx) => {
-                traverseForExport(child, level, idx + 1);
-            });
-        }
-        traverseForExport(state.hierarchyTree, '', 1);
-
-        const ws = XLSX.utils.json_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Hierarchy');
-
-        XLSX.writeFile(wb, filename);
+        exportHierarchyExcel(state.hierarchyTree, state.hierarchyFilename, state.hierarchyRootInfo, unitQty);
     });
 
     exportHierarchyHtmlBtn.addEventListener('click', () => {

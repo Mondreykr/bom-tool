@@ -6,6 +6,7 @@ import { parseXML } from '../core/parser.js';
 import { buildTree, getRootPartNumber, getRootRevision, getRootDescription, resetRootInfo } from '../core/tree.js';
 import { flattenBOM, sortBOM } from '../core/flatten.js';
 import { parseLength, decimalToFractional } from '../core/utils.js';
+import { exportFlatBomExcel } from '../export/excel.js';
 
 export function init() {
     // Flat BOM tab state: state.csvData, state.flattenedBOM, state.treeRoot, state.uploadedFilename
@@ -260,41 +261,7 @@ export function init() {
     // Export to Excel
     exportExcelBtn.addEventListener('click', () => {
         if (!state.flattenedBOM) return;
-
-        // Prepare data for Excel with new column order
-        const excelData = state.flattenedBOM.map(item => ({
-            'Qty': item.qty,
-            'Part Number': item.partNumber,
-            'Component Type': item.componentType,
-            'Description': item.description,
-            'Length (Decimal)': item.lengthDecimal !== null ? item.lengthDecimal : '',
-            'Length (Fractional)': item.lengthFractional,
-            'UofM': item.uofm,
-            'Purchase Description': item.purchaseDescription || '',
-            'State': item.state,
-            'Revision': item.revision,
-            'NS Item Type': item.nsItemType
-        }));
-
-        // Create workbook
-        const ws = XLSX.utils.json_to_sheet(excelData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Flat BOM');
-
-        // Generate filename using uploaded filename
-        const today = new Date();
-        const dateStr = today.getFullYear() +
-                      String(today.getMonth() + 1).padStart(2, '0') +
-                      String(today.getDate()).padStart(2, '0');
-
-        // Use uploaded filename (strip extension) or fall back to part number
-        const baseFilename = state.uploadedFilename
-            ? state.uploadedFilename.replace(/\.(csv|xml)$/i, '')
-            : `${getRootPartNumber()}-Rev${getRootRevision()}`;
-        const filename = `${baseFilename}-Flat BOM-${dateStr}.xlsx`;
-
-        // Download
-        XLSX.writeFile(wb, filename);
+        exportFlatBomExcel(state.flattenedBOM, state.uploadedFilename, getRootPartNumber(), getRootRevision());
     });
 
     // Export to HTML

@@ -4,6 +4,7 @@ import { buildTree } from '../core/tree.js';
 import { flattenBOM } from '../core/flatten.js';
 import { compareBOMs, extractSubtree } from '../core/compare.js';
 import { createDiff } from '../core/utils.js';
+import { exportComparisonExcel } from '../export/excel.js';
 
 export function init() {
     // ========================================
@@ -626,58 +627,7 @@ export function init() {
     // ========================================
 
     exportCompareExcelBtn.addEventListener('click', () => {
-        const today = new Date();
-        const dateStr = today.getFullYear() +
-                      String(today.getMonth() + 1).padStart(2, '0') +
-                      String(today.getDate()).padStart(2, '0');
-
-        // Use uploaded filenames (strip extension) or fall back to part numbers
-        const oldBase = state.oldBomFilename
-            ? state.oldBomFilename.replace(/\.(csv|xml)$/i, '')
-            : `${state.oldBomInfo.partNumber}-Rev${state.oldBomInfo.revision}`;
-        const newBase = state.newBomFilename
-            ? state.newBomFilename.replace(/\.(csv|xml)$/i, '')
-            : `${state.newBomInfo.partNumber}-Rev${state.newBomInfo.revision}`;
-        const filename = `${oldBase}-vs-${newBase}-Comparison-${dateStr}.xlsx`;
-
-        // Build scope info for header
-        const oldScopeText = state.oldBomInfo.isScoped ? `Scope: ${state.oldBomInfo.scopedPartNumber}` : 'Full Assembly';
-        const newScopeText = state.newBomInfo.isScoped ? `Scope: ${state.newBomInfo.scopedPartNumber}` : 'Full Assembly';
-
-        const ws_data = [
-            ['Old BOM:', state.oldBomFilename || 'N/A', `${state.oldBomInfo.partNumber} - ${state.oldBomInfo.description}`, `Rev ${state.oldBomInfo.revision}`, oldScopeText],
-            ['New BOM:', state.newBomFilename || 'N/A', `${state.newBomInfo.partNumber} - ${state.newBomInfo.description}`, `Rev ${state.newBomInfo.revision}`, newScopeText],
-            [],
-            ['Change Type', 'Part Number', 'Component Type', 'Old Description', 'New Description', 'Length (Decimal)', 'Length (Fractional)', 'Old Qty', 'New Qty', 'Δ Qty', 'Old Purchase Description', 'New Purchase Description', 'Attributes Changed']
-        ];
-
-        const sorted = sortComparisonResults(state.comparisonResults);
-
-        sorted.forEach(result => {
-            const deltaQty = result.deltaQty !== null && result.deltaQty !== 0 ? result.deltaQty : '';
-
-            ws_data.push([
-                result.changeType,
-                result.partNumber,
-                result.componentType,
-                result.oldDescription || '',
-                result.newDescription || '',
-                result.lengthDecimal,
-                result.lengthFractional,
-                result.oldQty,
-                result.newQty,
-                deltaQty,
-                result.oldPurchaseDescription || '',
-                result.newPurchaseDescription || '',
-                result.attributesChanged.join(', ')
-            ]);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Comparison");
-
-        XLSX.writeFile(wb, filename);
+        exportComparisonExcel(state.comparisonResults, sortComparisonResults, state.oldBomFilename, state.oldBomInfo, state.newBomFilename, state.newBomInfo);
     });
 
     exportCompareHtmlBtn.addEventListener('click', () => {
