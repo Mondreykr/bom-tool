@@ -14,7 +14,7 @@ Transform a production-validated 4400-line single-file HTML application into a m
 - [x] **Phase 6: UI Module Extraction** - Extract tab-specific UI logic
 - [x] **Phase 7: Export Module Extraction** - Extract Excel and HTML export functions
 - [x] **Phase 8: Entry Point Consolidation** - Wire modules together in main.js
-- [ ] **Phase 9: Deployment** - Git branch workflow and GitHub Pages deployment
+- [ ] **Phase 9: Deployment** - GitHub Pages deployment and first browser verification
 - [ ] **Phase 10: Final Validation** - Comprehensive testing before production
 
 ## Phase Details
@@ -145,18 +145,20 @@ Plans:
 - [x] 08-01-PLAN.md — Extract inline script to js/main.js, update index.html
 
 ### Phase 9: Deployment
-**Goal**: Multi-file structure deploys successfully to GitHub Pages
+**Goal**: Multi-file structure deploys and works correctly on GitHub Pages
 **Depends on**: Phase 8
 **Requirements**: DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04
 **Success Criteria** (what must be TRUE):
-  1. All refactor work completed on refactor/multi-file branch
-  2. GitHub Pages serves multi-file structure correctly (all files load)
-  3. Every extraction step has atomic git commit with passing tests
-  4. Branch ready for merge to main (all validation complete)
-  5. Rollback plan tested (can revert to single-file version if needed)
-**Plans**: TBD
+  1. GitHub Pages enabled and serving from main branch root
+  2. GitHub Pages serves multi-file structure correctly (all JS/CSS files load with 200 status)
+  3. All three tabs render and function correctly in browser
+  4. Rollback procedure documented and tested (can revert via git revert if needed)
+  5. First browser verification of entire refactor passes
+**Plans:** 2 plans
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 09-01-PLAN.md — Pre-flight verification and GitHub Pages deployment setup
+- [ ] 09-02-PLAN.md — Browser verification and rollback documentation
 
 ### Phase 10: Final Validation
 **Goal**: Refactored codebase validated and production-ready
@@ -185,5 +187,5 @@ Plans: (TBD - defined during plan-phase)
 | 6. UI Module Extraction | 3/3 | Complete | 2026-02-09 |
 | 7. Export Module Extraction | 2/2 | Complete | 2026-02-09 |
 | 8. Entry Point Consolidation | 1/1 | Complete | 2026-02-09 |
-| 9. Deployment | 0/TBD | Not started | - |
+| 9. Deployment | 0/2 | Not started | - |
 | 10. Final Validation | 0/TBD | Not started | - |
