@@ -66,35 +66,33 @@ export function buildTree(rows) {
         throw new Error("No root node (Level '1') found");
     }
 
-    // Pass 3: Sort all children recursively
-    function sortChildren(node) {
-        if (node.children.length > 0) {
-            // Sort by: Component Type > Description > Length (decimal)
-            node.children.sort((a, b) => {
-                if (a.componentType !== b.componentType) {
-                    return a.componentType.localeCompare(b.componentType);
-                }
-                if (a.description !== b.description) {
-                    return a.description.localeCompare(b.description, undefined, {
-                        numeric: true,
-                        sensitivity: 'base'
-                    });
-                }
-                if (a.length === null && b.length === null) return 0;
-                if (a.length === null) return 1;
-                if (b.length === null) return -1;
-                return a.length - b.length;
-            });
-            node.children.forEach(child => sortChildren(child));
-        }
-    }
-
-    sortChildren(root);
-
     // Capture root info
     _rootPartNumber = root.partNumber;
     _rootRevision = root.revision;
     _rootDescription = root.description;
 
     return root;
+}
+
+// Sort tree children recursively (for display purposes)
+export function sortChildren(node) {
+    if (node.children.length > 0) {
+        // Sort by: Component Type > Description > Length (decimal)
+        node.children.sort((a, b) => {
+            if (a.componentType !== b.componentType) {
+                return a.componentType.localeCompare(b.componentType);
+            }
+            if (a.description !== b.description) {
+                return a.description.localeCompare(b.description, undefined, {
+                    numeric: true,
+                    sensitivity: 'base'
+                });
+            }
+            if (a.length === null && b.length === null) return 0;
+            if (a.length === null) return 1;
+            if (b.length === null) return -1;
+            return a.length - b.length;
+        });
+        node.children.forEach(child => sortChildren(child));
+    }
 }
