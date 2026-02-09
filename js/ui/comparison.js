@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { parseXML } from '../core/parser.js';
-import { buildTree } from '../core/tree.js';
+import { buildTree, sortChildren } from '../core/tree.js';
 import { flattenBOM } from '../core/flatten.js';
 import { compareBOMs, extractSubtree } from '../core/compare.js';
 import { createDiff } from '../core/utils.js';
@@ -347,6 +347,7 @@ export function init() {
                 let tree;
                 try {
                     tree = buildTree(rawData);
+                    sortChildren(tree);
                 } catch (treeError) {
                     showCompareMessage(`Error building tree for ${type} BOM: ${treeError.message}`, 'error');
                     console.error(`Tree build error for ${type} BOM:`, treeError);

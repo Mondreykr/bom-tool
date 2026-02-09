@@ -3,7 +3,7 @@
 
 import { state } from './state.js';
 import { parseXML } from '../core/parser.js';
-import { buildTree, getRootPartNumber, getRootRevision, getRootDescription, resetRootInfo } from '../core/tree.js';
+import { buildTree, sortChildren, getRootPartNumber, getRootRevision, getRootDescription, resetRootInfo } from '../core/tree.js';
 import { decimalToFractional } from '../core/utils.js';
 import { exportHierarchyExcel } from '../export/excel.js';
 import { exportHierarchyHtml } from '../export/html.js';
@@ -136,6 +136,7 @@ export function init() {
         try {
             // Build tree
             state.hierarchyTree = buildTree(state.hierarchyData);
+            sortChildren(state.hierarchyTree);
 
             // Store root info
             state.hierarchyRootInfo = {
