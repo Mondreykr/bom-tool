@@ -171,9 +171,11 @@ Plans:
   4. Scoped comparison feature works correctly
   5. Performance is not degraded (page loads and processes files at same speed)
   6. Operations team validation complete (real-world BOM processing tested)
-**Plans**: TBD
+**Plans:** 2 plans
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 10-01-PLAN.md — Fix automated test regressions by separating tree sorting from tree building
+- [ ] 10-02-PLAN.md — Browser re-verification, project documentation update, UAT checklist
 
 ## Progress
 
@@ -188,4 +190,4 @@ Plans: (TBD - defined during plan-phase)
 | 7. Export Module Extraction | 2/2 | Complete | 2026-02-09 |
 | 8. Entry Point Consolidation | 1/1 | Complete | 2026-02-09 |
 | 9. Deployment | 2/2 | Complete | 2026-02-09 |
-| 10. Final Validation | 0/TBD | Not started | - |
+| 10. Final Validation | 0/2 | In progress | - |
