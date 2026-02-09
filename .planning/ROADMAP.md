@@ -149,10 +149,10 @@ Plans:
 **Depends on**: Phase 8
 **Requirements**: DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04
 **Success Criteria** (what must be TRUE):
-  1. GitHub Pages enabled and serving from main branch root
+  1. Rollback procedure documented for safety (can revert via git revert if needed)
   2. GitHub Pages serves multi-file structure correctly (all JS/CSS files load with 200 status)
   3. All three tabs render and function correctly in browser
-  4. Rollback procedure documented and tested (can revert via git revert if needed)
+  4. Deployment validated and production-ready
   5. First browser verification of entire refactor passes
 **Plans:** 2 plans
 

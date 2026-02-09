@@ -56,10 +56,10 @@ Requirements for the multi-file refactor. Each maps to roadmap phases.
 
 ### Deployment & Git
 
-- [ ] **DEPLOY-01**: All work done on refactor/multi-file branch (main branch untouched)
+- [ ] **DEPLOY-01**: Rollback procedure documented for safety (originally: refactor branch — all work done on main instead, so rollback via git revert replaces branch isolation)
 - [ ] **DEPLOY-02**: GitHub Pages serves multi-file structure correctly
 - [ ] **DEPLOY-03**: Atomic commits at each extraction step — tests pass at every commit
-- [ ] **DEPLOY-04**: Branch merged to main only after full validation
+- [ ] **DEPLOY-04**: Deployment validated before declaring production-ready (originally: branch merge — not applicable since all work on main)
 
 ### Final Validation
 
@@ -145,4 +145,4 @@ Deferred to future milestones. Not in current roadmap.
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-08 after Phase 5 completion (STATE-01 through STATE-03 marked Complete)*
+*Last updated: 2026-02-09 after Phase 9 plan revision (DEPLOY-01, DEPLOY-04 updated to reflect main-branch workflow)*
