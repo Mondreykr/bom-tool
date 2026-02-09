@@ -30,9 +30,9 @@ Requirements for the multi-file refactor. Each maps to roadmap phases.
 
 ### State Management
 
-- [ ] **STATE-01**: All ~20 global variables centralized into a single state module
-- [ ] **STATE-02**: All tabs read/write state through the same centralized module
-- [ ] **STATE-03**: No global variable behavior changes — state values work identically
+- [x] **STATE-01**: All ~20 global variables centralized into a single state module
+- [x] **STATE-02**: All tabs read/write state through the same centralized module
+- [x] **STATE-03**: No global variable behavior changes — state values work identically
 
 ### UI Extraction
 
@@ -114,9 +114,9 @@ Deferred to future milestones. Not in current roadmap.
 | CORE-04 | Phase 4 | Complete |
 | CORE-05 | Phase 4 | Complete |
 | CORE-06 | Phase 4 | Complete |
-| STATE-01 | Phase 5 | Pending |
-| STATE-02 | Phase 5 | Pending |
-| STATE-03 | Phase 5 | Pending |
+| STATE-01 | Phase 5 | Complete |
+| STATE-02 | Phase 5 | Complete |
+| STATE-03 | Phase 5 | Complete |
 | UI-01 | Phase 6 | Pending |
 | UI-02 | Phase 6 | Pending |
 | UI-03 | Phase 6 | Pending |
@@ -145,4 +145,4 @@ Deferred to future milestones. Not in current roadmap.
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-08 after Phase 4 completion (CORE-01 through CORE-06 marked Complete)*
+*Last updated: 2026-02-08 after Phase 5 completion (STATE-01 through STATE-03 marked Complete)*
