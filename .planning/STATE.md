@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 
 ## Current Position
 
-Phase: 6 of 10 (UI Module Extraction) — COMPLETE
-Plan: 3 of 3 in current phase — complete
-Status: All three UI tabs extracted - Phase 6 complete
-Last activity: 2026-02-09 — Completed 06-03-PLAN.md
+Phase: 7 of 10 (Export Module Extraction) — IN PROGRESS
+Plan: 1 of 2 in current phase — complete
+Status: Excel exports extracted to dedicated modules
+Last activity: 2026-02-09 — Completed 07-01-PLAN.md
 
-Progress: [████████░░] 70%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: ~13.5 minutes
-- Total execution time: ~2.5 hours
+- Total plans completed: 11
+- Average duration: ~12.5 minutes
+- Total execution time: ~2.6 hours
 
 **By Phase:**
 
@@ -33,10 +33,12 @@ Progress: [████████░░] 70%
 | 04-core-logic-extraction | 1 | 24m | 24m |
 | 05-state-management | 2 | 49m | 24.5m |
 | 06-ui-module-extraction | 3 | 25m | 8.3m |
+| 07-export-module-extraction | 1 | 4.5m | 4.5m |
 
 **Recent Trend:**
-- Last 5 plans: 05-02 (18m), 06-01 (8m), 06-02 (9m), 06-03 (8m)
-- Phase 6 COMPLETE: All three UI modules extracted (Flat BOM 8m, Comparison 9m, Hierarchy 8m)
+- Last 5 plans: 06-01 (8m), 06-02 (9m), 06-03 (8m), 07-01 (4.5m)
+- Phase 6 COMPLETE: All three UI modules extracted
+- Phase 7 Plan 01 COMPLETE: Excel exports extracted (4.5m)
 
 *Updated after each plan completion*
 
@@ -67,7 +69,8 @@ Recent decisions affecting current work:
 - **Init function pattern (06-01):** All DOM queries inside exported init() function to avoid timing issues with ES6 module loading
 - **DOMContentLoaded pattern (06-01):** Central initializeUI() function calls all tab init functions after DOM is ready
 - **Phase 6 complete (06-03):** All three UI tabs extracted to modules - index.html finalized to 41-line script block with zero inline tab logic
-- [Phase 06]: All three UI tabs extracted to modules - Phase 6 complete with zero inline tab logic in index.html
+- **XLSX global usage (07-01):** Excel export modules use XLSX global directly (not via environment.js) for CDN compatibility
+- **Export parameterization (07-01):** Root info passed as parameters (not calling getRootPartNumber inside shared.js to avoid tree.js dependency)
 
 ### Pending Todos
 
@@ -87,10 +90,13 @@ None yet.
 - ✅ Tests stable at 2/4 (baseline maintained throughout phase)
 - ✅ Module boundaries established: UI modules own DOM/events, core modules own business logic
 
-**Phase 7 ready:**
-- Three focused UI modules (flat-bom.js, comparison.js, hierarchy.js)
-- Clean separation between UI and core logic
-- Next: Export extraction (move Excel/HTML export to dedicated utilities)
+**Phase 7 status:**
+- ✅ Plan 01 COMPLETE - Excel exports extracted to js/export/ modules
+- 📋 Plan 02 PENDING - HTML exports extraction
+- Created js/export/shared.js (5 utility functions: date formatting, filename generation, blob download)
+- Created js/export/excel.js (3 Excel export functions: Flat BOM, Comparison, Hierarchy)
+- Updated all three UI modules to import+call pattern (removed 128 lines of inline Excel code)
+- Tests stable at 2/4 baseline (zero regressions)
 
 **IT constraint:**
 - Corporate IT blocks localhost web servers (python http.server, npx serve, etc.)
@@ -99,7 +105,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-09 (Phase 6 Plan 03 execution)
-Stopped at: Completed 06-03-PLAN.md (Phase 6 complete - all UI tabs extracted)
+Last session: 2026-02-09 (Phase 7 Plan 01 execution)
+Stopped at: Completed 07-01-PLAN.md (Excel exports extracted)
 Resume file: None
-Next: Phase 7 Plan 01 (Export extraction - move Excel/HTML export to dedicated utilities)
+Next: Phase 7 Plan 02 (HTML exports extraction - move HTML export to dedicated utilities)
