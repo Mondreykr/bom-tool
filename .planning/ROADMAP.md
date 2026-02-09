@@ -88,9 +88,11 @@ Plans:
   3. State values behave identically to original global variables
   4. No functional regressions (tabs can still switch, data persists correctly)
   5. Automated tests pass with state centralization
-**Plans**: TBD
+**Plans:** 2 plans
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 05-01-PLAN.md — Create state module, migrate Flat BOM + Hierarchy tab state
+- [ ] 05-02-PLAN.md — Migrate Comparison tab state (14 variables, ~156 references)
 
 ### Phase 6: UI Module Extraction
 **Goal**: Tab-specific UI logic operates as independent modules
