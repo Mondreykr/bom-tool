@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Identical outputs after refactoring — zero tolerance for behavioral differences
-**Current focus:** Phase 6 complete — UI Module Extraction
+**Current focus:** Phase 8 — Entry Point Consolidation COMPLETE
 
 ## Current Position
 
-Phase: 7 of 10 (Export Module Extraction) — COMPLETE
-Plan: 2 of 2 in current phase — complete
-Status: All export functions extracted to js/export/ modules
-Last activity: 2026-02-09 — Completed 07-02-PLAN.md
+Phase: 8 of 10 (Entry Point Consolidation) — COMPLETE
+Plan: 1 of 1 in current phase — complete
+Status: Entry point extracted to js/main.js; index.html contains zero inline JavaScript
+Last activity: 2026-02-09 — Completed 08-01-PLAN.md
 
-Progress: [████████░░] 80%
+Progress: [████████░░] 82%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: ~12.3 minutes
-- Total execution time: ~2.8 hours
+- Total plans completed: 13
+- Average duration: ~11.8 minutes
+- Total execution time: ~2.9 hours
 
 **By Phase:**
 
@@ -34,11 +34,13 @@ Progress: [████████░░] 80%
 | 05-state-management | 2 | 49m | 24.5m |
 | 06-ui-module-extraction | 3 | 25m | 8.3m |
 | 07-export-module-extraction | 2 | 13.2m | 6.6m |
+| 08-entry-point-consolidation | 1 | 3.9m | 3.9m |
 
 **Recent Trend:**
-- Last 5 plans: 06-02 (9m), 06-03 (8m), 07-01 (4.5m), 07-02 (8.7m)
+- Last 5 plans: 06-03 (8m), 07-01 (4.5m), 07-02 (8.7m), 08-01 (3.9m)
 - Phase 6 COMPLETE: All three UI modules extracted
 - Phase 7 COMPLETE: All export functions extracted to dedicated modules (13.2m)
+- Phase 8 COMPLETE: Entry point extracted to js/main.js (3.9m)
 
 *Updated after each plan completion*
 
@@ -73,6 +75,8 @@ Recent decisions affecting current work:
 - **Export parameterization (07-01):** Root info passed as parameters (not calling getRootPartNumber inside shared.js to avoid tree.js dependency)
 - **HTML export verbatim extraction (07-02):** All three HTML export functions extracted byte-for-byte from UI modules to preserve output format exactly
 - **Interactive HTML exports (07-02):** Hierarchy HTML includes embedded JavaScript (`toggleNode()` function) for expand/collapse functionality in exported reports
+- **Main.js as pure entry point (08-01):** No exports, private initializeUI function for internal initialization only
+- **Import path adjustment (08-01):** Changed from './js/ui/' (relative to index.html) to './ui/' (relative to js/main.js)
 
 ### Pending Todos
 
@@ -103,6 +107,16 @@ None yet.
 - Tests stable at 2/4 baseline (zero regressions)
 - Total Phase 7 reduction: ~1144 lines removed from UI modules
 
+**Phase 8 status:**
+- ✅ COMPLETE - Entry point extracted to js/main.js
+- ✅ Plan 01: Entry point consolidation (3.9m)
+- Created js/main.js (39 lines) with application initialization and tab switching
+- Reduced index.html from 435 to 394 lines (41-line reduction)
+- Zero inline JavaScript remains in index.html (100% inline script removal)
+- CDN loading order preserved (SheetJS before ES6 modules)
+- Tests stable at 2/4 baseline (zero regressions)
+- Multi-file refactor now complete
+
 **IT constraint:**
 - Corporate IT blocks localhost web servers (python http.server, npx serve, etc.)
 - Browser testing requires HTTP serving (ES6 modules don't work over file://)
@@ -110,7 +124,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-09 (Phase 7 Plan 02 execution)
-Stopped at: Completed 07-02-PLAN.md (HTML exports extracted)
+Last session: 2026-02-09 (Phase 8 Plan 01 execution)
+Stopped at: Completed 08-01-PLAN.md (Entry point extracted to js/main.js)
 Resume file: None
-Next: Phase 8 (Browser Verification - validate all functionality in browser after modularization)
+Next: Phase 9 (GitHub Pages Deployment - browser verification of refactored application)
