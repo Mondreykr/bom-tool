@@ -7,7 +7,10 @@
       "Bash(npm test:*)",
       "Bash(node run-tests.js:*)",
       "Bash(dir:*)",
-      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\amcallister\\\\OneDrive - Enercorp Engineered Solutions Inc\\\\1 Projects\\\\2025 Q4 - PDM BOMs 2.0\\\\PDM BOM 2.1\\\\test\\\\run-tests.js\")"
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\amcallister\\\\OneDrive - Enercorp Engineered Solutions Inc\\\\1 Projects\\\\2025 Q4 - PDM BOMs 2.0\\\\PDM BOM 2.1\\\\test\\\\run-tests.js\")",
+      "Bash(git config:*)",
+      "Bash(gh auth status:*)",
+      "Bash(git push:*)"
     ]
   }
 }
