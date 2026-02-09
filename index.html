@@ -396,12 +396,9 @@
         import { flattenBOM, sortBOM } from './js/core/flatten.js';
         import { parseXML } from './js/core/parser.js';
         import { compareBOMs, extractSubtree } from './js/core/compare.js';
+        import { state } from './js/ui/state.js';
 
-        // Global state
-        let csvData = null;
-        let flattenedBOM = null;
-        let treeRoot = null;  // NEW: Preserve tree structure for hierarchy view
-        let uploadedFilename = null;  // Store uploaded filename for exports
+        // Flat BOM tab state: state.csvData, state.flattenedBOM, state.treeRoot, state.uploadedFilename
         
         // DOM elements
         const uploadZone = document.getElementById('uploadZone');
@@ -465,22 +462,22 @@
                         // Parse XML
                         const decoder = new TextDecoder('utf-8');
                         const xmlText = decoder.decode(e.target.result);
-                        csvData = parseXML(xmlText);
-                        
-                        console.log(`XML parsed: ${csvData.length} data rows`);
-                        console.log('First 5 rows:', csvData.slice(0, 5).map(r => r.Level + ': ' + r['Part Number']).join(', '));
-                        console.log('Root assembly:', csvData[0]);
-                        
+                        state.csvData = parseXML(xmlText);
+
+                        console.log(`XML parsed: ${state.csvData.length} data rows`);
+                        console.log('First 5 rows:', state.csvData.slice(0, 5).map(r => r.Level + ': ' + r['Part Number']).join(', '));
+                        console.log('Root assembly:', state.csvData[0]);
+
                         // Store filename for exports
-                        uploadedFilename = file.name;
+                        state.uploadedFilename = file.name;
 
                         // Update UI
                         uploadZone.classList.add('has-file');
                         fileNameDisplay.textContent = file.name;
-                        fileMeta.textContent = `${csvData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                        fileMeta.textContent = `${state.csvData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
                         fileInfo.classList.add('show');
                         flattenBtn.disabled = false;
-                        showMessage(`XML loaded successfully: ${csvData.length} rows`, 'success');
+                        showMessage(`XML loaded successfully: ${state.csvData.length} rows`, 'success');
                     } else {
                         // Parse CSV
                         // Decode UTF-16 first
@@ -505,24 +502,24 @@
                         const worksheet = workbook.Sheets[sheetName];
                         
                         // Convert to JSON (array of objects)
-                        csvData = XLSX.utils.sheet_to_json(worksheet, { 
+                        state.csvData = XLSX.utils.sheet_to_json(worksheet, {
                             raw: true,       // Keep raw values
                             defval: ''       // Empty cells = empty string
                         });
-                        
-                        console.log(`CSV parsed: ${csvData.length} data rows`);
-                        console.log('First 5 rows:', csvData.slice(0, 5).map(r => r.Level + ': ' + r['Part Number']).join(', '));
+
+                        console.log(`CSV parsed: ${state.csvData.length} data rows`);
+                        console.log('First 5 rows:', state.csvData.slice(0, 5).map(r => r.Level + ': ' + r['Part Number']).join(', '));
 
                         // Store filename for exports
-                        uploadedFilename = file.name;
+                        state.uploadedFilename = file.name;
 
                         // Update UI
                         uploadZone.classList.add('has-file');
                         fileNameDisplay.textContent = file.name;
-                        fileMeta.textContent = `${csvData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                        fileMeta.textContent = `${state.csvData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
                         fileInfo.classList.add('show');
                         flattenBtn.disabled = false;
-                        showMessage(`CSV loaded successfully: ${csvData.length} rows`, 'success');
+                        showMessage(`CSV loaded successfully: ${state.csvData.length} rows`, 'success');
                     }
                 } catch (error) {
                     showMessage(`Error parsing file: ${error.message}`, 'error');
@@ -543,16 +540,16 @@
                 }
                 
                 // Build tree and preserve it
-                treeRoot = buildTree(csvData);
+                state.treeRoot = buildTree(state.csvData);
 
                 // Flatten and aggregate
-                const items = flattenBOM(treeRoot, unitQty);
-                
+                const items = flattenBOM(state.treeRoot, unitQty);
+
                 // Sort
-                flattenedBOM = sortBOM(items);
-                
+                state.flattenedBOM = sortBOM(items);
+
                 // Display results
-                displayResults(flattenedBOM, unitQty);
+                displayResults(state.flattenedBOM, unitQty);
                 
                 showMessage('BOM flattened successfully!', 'success');
             } catch (error) {
@@ -616,7 +613,7 @@
             breakdown.style.display = hasBreakdown ? '' : 'none';
             
             // Update assembly info - filename is primary, PN/description is secondary
-            document.getElementById('assemblyFilenameDisplay').textContent = uploadedFilename || 'N/A';
+            document.getElementById('assemblyFilenameDisplay').textContent = state.uploadedFilename || 'N/A';
             document.getElementById('assemblyPartNumDesc').textContent = `${getRootPartNumber()} - ${getRootDescription() || ''}`;
             document.getElementById('assemblyRev').textContent = getRootRevision();
             
@@ -652,10 +649,10 @@
         
         // Export to Excel
         exportExcelBtn.addEventListener('click', () => {
-            if (!flattenedBOM) return;
-            
+            if (!state.flattenedBOM) return;
+
             // Prepare data for Excel with new column order
-            const excelData = flattenedBOM.map(item => ({
+            const excelData = state.flattenedBOM.map(item => ({
                 'Qty': item.qty,
                 'Part Number': item.partNumber,
                 'Component Type': item.componentType,
@@ -681,8 +678,8 @@
                           String(today.getDate()).padStart(2, '0');
 
             // Use uploaded filename (strip extension) or fall back to part number
-            const baseFilename = uploadedFilename
-                ? uploadedFilename.replace(/\.(csv|xml)$/i, '')
+            const baseFilename = state.uploadedFilename
+                ? state.uploadedFilename.replace(/\.(csv|xml)$/i, '')
                 : `${getRootPartNumber()}-Rev${getRootRevision()}`;
             const filename = `${baseFilename}-Flat BOM-${dateStr}.xlsx`;
             
@@ -692,7 +689,7 @@
         
         // Export to HTML
         exportHtmlBtn.addEventListener('click', () => {
-            if (!flattenedBOM) return;
+            if (!state.flattenedBOM) return;
             
             const unitQty = parseInt(unitQtyInput.value);
             const today = new Date();
@@ -705,7 +702,7 @@
             
             // Calculate component breakdown
             const counts = { 'Manufactured': 0, 'Purchased': 0, 'Raw Stock': 0 };
-            flattenedBOM.forEach(item => {
+            state.flattenedBOM.forEach(item => {
                 if (counts.hasOwnProperty(item.componentType)) {
                     counts[item.componentType]++;
                 }
@@ -916,21 +913,21 @@
         
         <div class="assembly-info">
             <div class="assembly-label">Assembly</div>
-            <div class="assembly-part">${uploadedFilename || 'N/A'}</div>
+            <div class="assembly-part">${state.uploadedFilename || 'N/A'}</div>
             <div class="assembly-desc">${getRootPartNumber()} - ${getRootDescription() || ''}</div>
             <div class="assembly-rev">Revision: ${getRootRevision()}</div>
         </div>
-        
+
         <div class="stats-section">
             <div class="stats-grid">
                 <div class="stat-main">
-                    <div class="stat-value">${flattenedBOM.length}</div>
+                    <div class="stat-value">${state.flattenedBOM.length}</div>
                     <div class="stat-label">Unique Items</div>
                 </div>
                 ${breakdownHTML ? `<div class="breakdown">${breakdownHTML}</div>` : ''}
             </div>
         </div>
-        
+
         <div class="table-container">
             <table>
                 <thead>
@@ -949,7 +946,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    ${flattenedBOM.map(item => `
+                    ${state.flattenedBOM.map(item => `
                         <tr>
                             <td class="numeric">${item.qty}</td>
                             <td>${item.partNumber}</td>
@@ -973,8 +970,8 @@
             `;
 
             // Generate filename using uploaded filename
-            const baseFilename = uploadedFilename
-                ? uploadedFilename.replace(/\.(csv|xml)$/i, '')
+            const baseFilename = state.uploadedFilename
+                ? state.uploadedFilename.replace(/\.(csv|xml)$/i, '')
                 : `${getRootPartNumber()}-Rev${getRootRevision()}`;
             const filename = `${baseFilename}-Flat BOM-${dateStr}.html`;
             
@@ -990,11 +987,11 @@
         
         // Reset button
         resetBtn.addEventListener('click', () => {
-            csvData = null;
-            flattenedBOM = null;
-            treeRoot = null;
+            state.csvData = null;
+            state.flattenedBOM = null;
+            state.treeRoot = null;
             resetRootInfo();
-            uploadedFilename = null;
+            state.uploadedFilename = null;
             fileInput.value = '';
             uploadZone.classList.remove('has-file');
             fileInfo.classList.remove('show');
@@ -2188,10 +2185,7 @@
         // HIERARCHY VIEW - STATE & DOM ELEMENTS
         // ========================================
 
-        let hierarchyData = null;
-        let hierarchyTree = null;
-        let hierarchyFilename = null;
-        let hierarchyRootInfo = { partNumber: '', revision: '', description: '' };
+        // Hierarchy tab state: state.hierarchyData, state.hierarchyTree, state.hierarchyFilename, state.hierarchyRootInfo
 
         const hierarchyUploadZone = document.getElementById('hierarchyUploadZone');
         const hierarchyFileInput = document.getElementById('hierarchyFile');
@@ -2257,8 +2251,8 @@
                     if (isXML) {
                         const decoder = new TextDecoder('utf-8');
                         const xmlText = decoder.decode(e.target.result);
-                        hierarchyData = parseXML(xmlText);
-                        hierarchyFilename = file.name;
+                        state.hierarchyData = parseXML(xmlText);
+                        state.hierarchyFilename = file.name;
                     } else {
                         const decoder = new TextDecoder('utf-16le');
                         let csvText = decoder.decode(e.target.result);
@@ -2276,20 +2270,20 @@
 
                         const sheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[sheetName];
-                        hierarchyData = XLSX.utils.sheet_to_json(worksheet, {
+                        state.hierarchyData = XLSX.utils.sheet_to_json(worksheet, {
                             raw: true,
                             defval: ''
                         });
-                        hierarchyFilename = file.name;
+                        state.hierarchyFilename = file.name;
                     }
 
                     // Update UI
                     hierarchyUploadZone.classList.add('has-file');
                     hierarchyFileName.textContent = file.name;
-                    hierarchyFileMeta.textContent = `${hierarchyData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                    hierarchyFileMeta.textContent = `${state.hierarchyData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
                     hierarchyFileInfo.classList.add('show');
                     viewHierarchyBtn.disabled = false;
-                    showHierarchyMessage(`${isXML ? 'XML' : 'CSV'} loaded successfully: ${hierarchyData.length} rows`, 'success');
+                    showHierarchyMessage(`${isXML ? 'XML' : 'CSV'} loaded successfully: ${state.hierarchyData.length} rows`, 'success');
                 } catch (error) {
                     showHierarchyMessage(`Error parsing file: ${error.message}`, 'error');
                     console.error('Parse error:', error);
@@ -2313,17 +2307,17 @@
         viewHierarchyBtn.addEventListener('click', () => {
             try {
                 // Build tree
-                hierarchyTree = buildTree(hierarchyData);
+                state.hierarchyTree = buildTree(state.hierarchyData);
 
                 // Store root info
-                hierarchyRootInfo = {
+                state.hierarchyRootInfo = {
                     partNumber: getRootPartNumber(),
                     revision: getRootRevision(),
                     description: getRootDescription()
                 };
 
                 // Display tree
-                displayHierarchyTree(hierarchyTree);
+                displayHierarchyTree(state.hierarchyTree);
 
                 showHierarchyMessage('Hierarchy displayed successfully!', 'success');
             } catch (error) {
@@ -2334,8 +2328,8 @@
 
         // Re-render tree when unit qty changes
         hierarchyUnitQtyInput.addEventListener('change', () => {
-            if (hierarchyTree) {
-                displayHierarchyTree(hierarchyTree);
+            if (state.hierarchyTree) {
+                displayHierarchyTree(state.hierarchyTree);
             }
         });
 
@@ -2344,7 +2338,7 @@
             const unitQty = parseInt(hierarchyUnitQtyInput.value) || 1;
 
             // Update assembly info - filename is primary, PN/description is secondary
-            hierarchyFilenameDisplay.textContent = hierarchyFilename || 'N/A';
+            hierarchyFilenameDisplay.textContent = state.hierarchyFilename || 'N/A';
             hierarchyAssemblyPartNumDesc.textContent = `${root.partNumber} - ${root.description}`;
             hierarchyAssemblyRev.textContent = root.revision;
             hierarchyUnitQtyDisplay.textContent = unitQty;
@@ -2600,9 +2594,9 @@
                           String(today.getDate()).padStart(2, '0');
 
             // Use uploaded filename or fall back to part number
-            const baseFilename = hierarchyFilename
-                ? hierarchyFilename.replace(/\.(csv|xml)$/i, '')
-                : `${hierarchyRootInfo.partNumber}-Rev${hierarchyRootInfo.revision}`;
+            const baseFilename = state.hierarchyFilename
+                ? state.hierarchyFilename.replace(/\.(csv|xml)$/i, '')
+                : `${state.hierarchyRootInfo.partNumber}-Rev${state.hierarchyRootInfo.revision}`;
             const filename = `${baseFilename}-Hierarchy-${dateStr}.xlsx`;
 
             // Get unit qty for export
@@ -2629,7 +2623,7 @@
                     traverseForExport(child, level, idx + 1);
                 });
             }
-            traverseForExport(hierarchyTree, '', 1);
+            traverseForExport(state.hierarchyTree, '', 1);
 
             const ws = XLSX.utils.json_to_sheet(rows);
             const wb = XLSX.utils.book_new();
@@ -2646,9 +2640,9 @@
             const generatedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`;
 
             // Use uploaded filename or fall back to part number
-            const baseFilename = hierarchyFilename
-                ? hierarchyFilename.replace(/\.(csv|xml)$/i, '')
-                : `${hierarchyRootInfo.partNumber}-Rev${hierarchyRootInfo.revision}`;
+            const baseFilename = state.hierarchyFilename
+                ? state.hierarchyFilename.replace(/\.(csv|xml)$/i, '')
+                : `${state.hierarchyRootInfo.partNumber}-Rev${state.hierarchyRootInfo.revision}`;
             const filename = `${baseFilename}-Hierarchy-${dateStr}.html`;
 
             // Get unit qty for export
@@ -2741,13 +2735,13 @@
                 return html;
             }
 
-            const treeHTML = generateTreeHTML(hierarchyTree, 0, false, [], unitQty);
+            const treeHTML = generateTreeHTML(state.hierarchyTree, 0, false, [], unitQty);
 
             const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>BOM Hierarchy - ${hierarchyRootInfo.partNumber} Rev${hierarchyRootInfo.revision}</title>
+    <title>BOM Hierarchy - ${state.hierarchyRootInfo.partNumber} Rev${state.hierarchyRootInfo.revision}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -3000,9 +2994,9 @@
 
         <div class="assembly-info">
             <div class="assembly-label">Assembly</div>
-            <div class="assembly-part">${hierarchyFilename || 'N/A'}</div>
-            <div class="assembly-desc">${hierarchyRootInfo.partNumber} - ${hierarchyRootInfo.description || ''}</div>
-            <div class="assembly-rev">Revision: ${hierarchyRootInfo.revision} | Unit Qty: ${unitQty}</div>
+            <div class="assembly-part">${state.hierarchyFilename || 'N/A'}</div>
+            <div class="assembly-desc">${state.hierarchyRootInfo.partNumber} - ${state.hierarchyRootInfo.description || ''}</div>
+            <div class="assembly-rev">Revision: ${state.hierarchyRootInfo.revision} | Unit Qty: ${unitQty}</div>
         </div>
 
         <div class="table-container">
@@ -3043,10 +3037,10 @@
         // ========================================
 
         resetHierarchyBtn.addEventListener('click', () => {
-            hierarchyData = null;
-            hierarchyTree = null;
-            hierarchyFilename = null;
-            hierarchyRootInfo = { partNumber: '', revision: '', description: '' };
+            state.hierarchyData = null;
+            state.hierarchyTree = null;
+            state.hierarchyFilename = null;
+            state.hierarchyRootInfo = { partNumber: '', revision: '', description: '' };
 
             hierarchyUploadZone.classList.remove('has-file');
             hierarchyFileInfo.classList.remove('show');
