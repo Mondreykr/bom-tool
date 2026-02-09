@@ -139,9 +139,10 @@ Plans:
   3. SheetJS CDN loads before any parsing code executes
   4. Module load order ensures no undefined references
   5. Application works in browser exactly as before refactor
-**Plans**: TBD
+**Plans:** 1 plan
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 08-01-PLAN.md — Extract inline script to js/main.js, update index.html
 
 ### Phase 9: Deployment
 **Goal**: Multi-file structure deploys successfully to GitHub Pages
@@ -183,6 +184,6 @@ Plans: (TBD - defined during plan-phase)
 | 5. State Management | 2/2 | Complete | 2026-02-08 |
 | 6. UI Module Extraction | 3/3 | Complete | 2026-02-09 |
 | 7. Export Module Extraction | 2/2 | Complete | 2026-02-09 |
-| 8. Entry Point Consolidation | 0/TBD | Not started | - |
+| 8. Entry Point Consolidation | 0/1 | Not started | - |
 | 9. Deployment | 0/TBD | Not started | - |
 | 10. Final Validation | 0/TBD | Not started | - |
