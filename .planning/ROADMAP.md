@@ -105,9 +105,12 @@ Plans:
   4. All event listeners bind correctly after DOMContentLoaded
   5. Tab switching, file uploads, button clicks work identically
   6. All three tabs render results correctly
-**Plans**: TBD
+**Plans:** 3 plans
 
-Plans: (TBD - defined during plan-phase)
+Plans:
+- [ ] 06-01-PLAN.md — Extract Flat BOM tab logic to js/ui/flat-bom.js module
+- [ ] 06-02-PLAN.md — Extract Comparison tab logic to js/ui/comparison.js module
+- [ ] 06-03-PLAN.md — Extract Hierarchy tab logic to js/ui/hierarchy.js, finalize index.html
 
 ### Phase 7: Export Module Extraction
 **Goal**: Export functionality produces identical Excel and HTML files
@@ -176,7 +179,7 @@ Plans: (TBD - defined during plan-phase)
 | 3. Utilities Extraction | 1/1 | Complete | 2026-02-08 |
 | 4. Core Logic Extraction | 1/1 | Complete | 2026-02-08 |
 | 5. State Management | 2/2 | Complete | 2026-02-08 |
-| 6. UI Module Extraction | 0/TBD | Not started | - |
+| 6. UI Module Extraction | 0/3 | Not started | - |
 | 7. Export Module Extraction | 0/TBD | Not started | - |
 | 8. Entry Point Consolidation | 0/TBD | Not started | - |
 | 9. Deployment | 0/TBD | Not started | - |
