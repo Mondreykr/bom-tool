@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 
 ## Current Position
 
-Phase: 7 of 10 (Export Module Extraction) — IN PROGRESS
-Plan: 1 of 2 in current phase — complete
-Status: Excel exports extracted to dedicated modules
-Last activity: 2026-02-09 — Completed 07-01-PLAN.md
+Phase: 7 of 10 (Export Module Extraction) — COMPLETE
+Plan: 2 of 2 in current phase — complete
+Status: All export functions extracted to js/export/ modules
+Last activity: 2026-02-09 — Completed 07-02-PLAN.md
 
-Progress: [████████░░] 75%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: ~12.5 minutes
-- Total execution time: ~2.6 hours
+- Total plans completed: 12
+- Average duration: ~12.3 minutes
+- Total execution time: ~2.8 hours
 
 **By Phase:**
 
@@ -33,12 +33,12 @@ Progress: [████████░░] 75%
 | 04-core-logic-extraction | 1 | 24m | 24m |
 | 05-state-management | 2 | 49m | 24.5m |
 | 06-ui-module-extraction | 3 | 25m | 8.3m |
-| 07-export-module-extraction | 1 | 4.5m | 4.5m |
+| 07-export-module-extraction | 2 | 13.2m | 6.6m |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (8m), 06-02 (9m), 06-03 (8m), 07-01 (4.5m)
+- Last 5 plans: 06-02 (9m), 06-03 (8m), 07-01 (4.5m), 07-02 (8.7m)
 - Phase 6 COMPLETE: All three UI modules extracted
-- Phase 7 Plan 01 COMPLETE: Excel exports extracted (4.5m)
+- Phase 7 COMPLETE: All export functions extracted to dedicated modules (13.2m)
 
 *Updated after each plan completion*
 
@@ -71,6 +71,8 @@ Recent decisions affecting current work:
 - **Phase 6 complete (06-03):** All three UI tabs extracted to modules - index.html finalized to 41-line script block with zero inline tab logic
 - **XLSX global usage (07-01):** Excel export modules use XLSX global directly (not via environment.js) for CDN compatibility
 - **Export parameterization (07-01):** Root info passed as parameters (not calling getRootPartNumber inside shared.js to avoid tree.js dependency)
+- **HTML export verbatim extraction (07-02):** All three HTML export functions extracted byte-for-byte from UI modules to preserve output format exactly
+- **Interactive HTML exports (07-02):** Hierarchy HTML includes embedded JavaScript (`toggleNode()` function) for expand/collapse functionality in exported reports
 
 ### Pending Todos
 
@@ -91,12 +93,15 @@ None yet.
 - ✅ Module boundaries established: UI modules own DOM/events, core modules own business logic
 
 **Phase 7 status:**
-- ✅ Plan 01 COMPLETE - Excel exports extracted to js/export/ modules
-- 📋 Plan 02 PENDING - HTML exports extraction
+- ✅ COMPLETE - All export functions extracted to js/export/ modules
+- ✅ Plan 01: Excel exports extracted (4.5m)
+- ✅ Plan 02: HTML exports extracted (8.7m)
 - Created js/export/shared.js (5 utility functions: date formatting, filename generation, blob download)
 - Created js/export/excel.js (3 Excel export functions: Flat BOM, Comparison, Hierarchy)
-- Updated all three UI modules to import+call pattern (removed 128 lines of inline Excel code)
+- Created js/export/html.js (3 HTML export functions with embedded CSS and interactive JavaScript)
+- Updated all three UI modules to import+call pattern (removed ~1144 lines of inline export code)
 - Tests stable at 2/4 baseline (zero regressions)
+- Total Phase 7 reduction: ~1144 lines removed from UI modules
 
 **IT constraint:**
 - Corporate IT blocks localhost web servers (python http.server, npx serve, etc.)
@@ -105,7 +110,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-09 (Phase 7 Plan 01 execution)
-Stopped at: Completed 07-01-PLAN.md (Excel exports extracted)
+Last session: 2026-02-09 (Phase 7 Plan 02 execution)
+Stopped at: Completed 07-02-PLAN.md (HTML exports extracted)
 Resume file: None
-Next: Phase 7 Plan 02 (HTML exports extraction - move HTML export to dedicated utilities)
+Next: Phase 8 (Browser Verification - validate all functionality in browser after modularization)
