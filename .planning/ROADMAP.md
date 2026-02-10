@@ -1,193 +1,40 @@
-# Roadmap: BOM Tool Multi-File Refactor
+# Roadmap: BOM Tool
 
-## Overview
+## Milestones
 
-Transform a production-validated 4400-line single-file HTML application into a maintainable multi-file codebase without changing any behavior. The BOM Tool is mission-critical for operations — it processes Bills of Materials for procurement and work orders. This refactor establishes a clean architecture foundation for future features (IFP Merge, vendor/procurement platform) while maintaining zero tolerance for output differences. Phases follow leaf-to-root extraction: test infrastructure first, then CSS, utilities, core logic, state management, UI modules, exports, entry point, and final validation. All automated tests must pass at every phase.
+- ✅ **v1.0 Multi-File Refactor** — Phases 1-10 (shipped 2026-02-10)
 
 ## Phases
 
-- [x] **Phase 1: Test Infrastructure** - Adapt test harness to validate modular structure
-- [x] **Phase 2: CSS Extraction** - Extract styling to separate file
-- [x] **Phase 3: Utilities Extraction** - Extract zero-dependency utility functions
-- [x] **Phase 4: Core Logic Extraction** - Extract business logic modules
-- [x] **Phase 5: State Management** - Centralize global state
-- [x] **Phase 6: UI Module Extraction** - Extract tab-specific UI logic
-- [x] **Phase 7: Export Module Extraction** - Extract Excel and HTML export functions
-- [x] **Phase 8: Entry Point Consolidation** - Wire modules together in main.js
-- [x] **Phase 9: Deployment** - GitHub Pages deployment and first browser verification
-- [x] **Phase 10: Final Validation** - Comprehensive testing before production
+<details>
+<summary>✅ v1.0 Multi-File Refactor (Phases 1-10) — SHIPPED 2026-02-10</summary>
 
-## Phase Details
+- [x] Phase 1: Test Infrastructure (2/2 plans) — completed 2026-02-07
+- [x] Phase 2: CSS Extraction (1/1 plan) — completed 2026-02-07
+- [x] Phase 3: Utilities Extraction (1/1 plan) — completed 2026-02-08
+- [x] Phase 4: Core Logic Extraction (1/1 plan) — completed 2026-02-08
+- [x] Phase 5: State Management (2/2 plans) — completed 2026-02-08
+- [x] Phase 6: UI Module Extraction (3/3 plans) — completed 2026-02-09
+- [x] Phase 7: Export Module Extraction (2/2 plans) — completed 2026-02-09
+- [x] Phase 8: Entry Point Consolidation (1/1 plan) — completed 2026-02-09
+- [x] Phase 9: Deployment (2/2 plans) — completed 2026-02-09
+- [x] Phase 10: Final Validation (2/2 plans) — completed 2026-02-09
 
-### Phase 1: Test Infrastructure
-**Goal**: Test harness validates refactored code at every step
-**Depends on**: Nothing (first phase)
-**Requirements**: TEST-01, TEST-02, TEST-03, TEST-04
-**Success Criteria** (what must be TRUE):
-  1. Test runner imports functions from multi-file structure instead of extracting from HTML
-  2. All 4 existing validation tests pass against current single-file codebase
-  3. Browser smoke test checklist exists for manual verification
-  4. Test execution time is under 10 seconds
-**Plans:** 2 plans
+Full details: `milestones/v1.0-ROADMAP.md`
 
-Plans:
-- [x] 01-01-PLAN.md — Extract core BOM functions into js/core/ ES6 module files
-- [x] 01-02-PLAN.md — Rewrite test harness imports, verify tests, create smoke test checklist
-
-### Phase 2: CSS Extraction
-**Goal**: Styling lives in separate file with zero visual changes
-**Depends on**: Phase 1
-**Requirements**: CSS-01, CSS-02
-**Success Criteria** (what must be TRUE):
-  1. All CSS extracted from index.html into css/styles.css
-  2. Visual appearance is pixel-identical in browser (all three tabs)
-  3. Print styles work identically (export HTML previews)
-  4. External fonts (Google Fonts) load correctly
-**Plans:** 1 plan
-
-Plans:
-- [x] 02-01-PLAN.md — Extract CSS to css/styles.css and verify visual parity
-
-### Phase 3: Utilities Extraction
-**Goal**: Zero-dependency utility functions work as ES6 modules
-**Depends on**: Phase 2
-**Requirements**: CORE-01
-**Success Criteria** (what must be TRUE):
-  1. parseLength(), decimalToFractional(), getParentLevel(), getCompositeKey(), createDiff() extracted to js/core/utils.js
-  2. All utility functions export correctly as named exports
-  3. Utility functions produce identical outputs to original implementation
-  4. Automated tests pass (no behavioral changes)
-**Plans:** 1 plan
-
-Plans:
-- [x] 03-01-PLAN.md — Add createDiff to utils.js, convert HTML to module, remove inline definitions
-
-### Phase 4: Core Logic Extraction
-**Goal**: Business logic modules handle parsing, tree building, flattening, comparison
-**Depends on**: Phase 3
-**Requirements**: CORE-02, CORE-03, CORE-04, CORE-05, CORE-06
-**Success Criteria** (what must be TRUE):
-  1. BOMNode class exported from js/core/tree.js
-  2. File parsers (parseCSV, parseXML) work from js/core/parser.js
-  3. Tree operations (buildTree) work from js/core/tree.js
-  4. BOM flattening (flattenBOM, getCompositeKey) works from js/core/flatten.js
-  5. BOM comparison (compareBOMs) works from js/core/compare.js
-  6. All 4 automated tests pass with identical outputs
-**Plans:** 1 plan
-
-Plans:
-- [x] 04-01-PLAN.md — Update modules to match HTML behavior, wire imports, remove inline definitions
-
-### Phase 5: State Management
-**Goal**: All global state centralized in single state module
-**Depends on**: Phase 4
-**Requirements**: STATE-01, STATE-02, STATE-03
-**Success Criteria** (what must be TRUE):
-  1. All ~20 global variables consolidated into js/ui/state.js
-  2. All tabs read/write state through centralized module
-  3. State values behave identically to original global variables
-  4. No functional regressions (tabs can still switch, data persists correctly)
-  5. Automated tests pass with state centralization
-**Plans:** 2 plans
-
-Plans:
-- [x] 05-01-PLAN.md — Create state module, migrate Flat BOM + Hierarchy tab state
-- [x] 05-02-PLAN.md — Migrate Comparison tab state (14 variables, ~156 references)
-
-### Phase 6: UI Module Extraction
-**Goal**: Tab-specific UI logic operates as independent modules
-**Depends on**: Phase 5
-**Requirements**: UI-01, UI-02, UI-03, UI-04
-**Success Criteria** (what must be TRUE):
-  1. Flat BOM tab logic works from js/ui/flat-bom.js
-  2. BOM Comparison tab logic works from js/ui/comparison.js
-  3. Hierarchy View tab logic works from js/ui/hierarchy.js
-  4. All event listeners bind correctly after DOMContentLoaded
-  5. Tab switching, file uploads, button clicks work identically
-  6. All three tabs render results correctly
-**Plans:** 3 plans
-
-Plans:
-- [x] 06-01-PLAN.md — Extract Flat BOM tab logic to js/ui/flat-bom.js module
-- [x] 06-02-PLAN.md — Extract Comparison tab logic to js/ui/comparison.js module
-- [x] 06-03-PLAN.md — Extract Hierarchy tab logic to js/ui/hierarchy.js, finalize index.html
-
-### Phase 7: Export Module Extraction
-**Goal**: Export functionality produces identical Excel and HTML files
-**Depends on**: Phase 6
-**Requirements**: EXPORT-01, EXPORT-02, EXPORT-03, EXPORT-04
-**Success Criteria** (what must be TRUE):
-  1. Excel export functions work from js/export/excel.js
-  2. HTML export functions work from js/export/html.js
-  3. Excel exports match control files exactly (validated by automated tests)
-  4. HTML exports render identically to current behavior
-  5. SheetJS dependency loads before export functions execute
-  6. All export filenames follow correct pattern
-**Plans:** 2 plans
-
-Plans:
-- [x] 07-01-PLAN.md — Extract shared utilities and Excel export functions to js/export/
-- [x] 07-02-PLAN.md — Extract HTML export functions to js/export/html.js
-
-### Phase 8: Entry Point Consolidation
-**Goal**: Application initializes correctly with modular architecture
-**Depends on**: Phase 7
-**Requirements**: ENTRY-01, ENTRY-02, ENTRY-03
-**Success Criteria** (what must be TRUE):
-  1. main.js initializes application and wires all modules together
-  2. index.html contains only HTML structure and module script tags
-  3. SheetJS CDN loads before any parsing code executes
-  4. Module load order ensures no undefined references
-  5. Application works in browser exactly as before refactor
-**Plans:** 1 plan
-
-Plans:
-- [x] 08-01-PLAN.md — Extract inline script to js/main.js, update index.html
-
-### Phase 9: Deployment
-**Goal**: Multi-file structure deploys and works correctly on GitHub Pages
-**Depends on**: Phase 8
-**Requirements**: DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04
-**Success Criteria** (what must be TRUE):
-  1. Rollback procedure documented for safety (can revert via git revert if needed)
-  2. GitHub Pages serves multi-file structure correctly (all JS/CSS files load with 200 status)
-  3. All three tabs render and function correctly in browser
-  4. Deployment validated and production-ready
-  5. First browser verification of entire refactor passes
-**Plans:** 2 plans
-
-Plans:
-- [x] 09-01-PLAN.md — Pre-flight verification and GitHub Pages deployment setup
-- [x] 09-02-PLAN.md — Browser verification and rollback documentation
-
-### Phase 10: Final Validation
-**Goal**: Refactored codebase validated and production-ready
-**Depends on**: Phase 9
-**Requirements**: VALID-01, VALID-02, VALID-03, VALID-04, VALID-05
-**Success Criteria** (what must be TRUE):
-  1. All 4 automated tests pass on final refactored codebase
-  2. All three tabs work correctly in browser (Flat BOM, Comparison, Hierarchy)
-  3. All export formats work (Excel and HTML for each tab)
-  4. Scoped comparison feature works correctly
-  5. Performance is not degraded (page loads and processes files at same speed)
-  6. Operations team validation complete (real-world BOM processing tested)
-**Plans:** 2 plans
-
-Plans:
-- [x] 10-01-PLAN.md — Fix automated test regressions by separating tree sorting from tree building
-- [x] 10-02-PLAN.md — Browser re-verification, project documentation update, UAT checklist
+</details>
 
 ## Progress
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Test Infrastructure | 2/2 | Complete | 2026-02-07 |
-| 2. CSS Extraction | 1/1 | Complete | 2026-02-07 |
-| 3. Utilities Extraction | 1/1 | Complete | 2026-02-08 |
-| 4. Core Logic Extraction | 1/1 | Complete | 2026-02-08 |
-| 5. State Management | 2/2 | Complete | 2026-02-08 |
-| 6. UI Module Extraction | 3/3 | Complete | 2026-02-09 |
-| 7. Export Module Extraction | 2/2 | Complete | 2026-02-09 |
-| 8. Entry Point Consolidation | 1/1 | Complete | 2026-02-09 |
-| 9. Deployment | 2/2 | Complete | 2026-02-09 |
-| 10. Final Validation | 2/2 | Complete | 2026-02-09 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Test Infrastructure | v1.0 | 2/2 | Complete | 2026-02-07 |
+| 2. CSS Extraction | v1.0 | 1/1 | Complete | 2026-02-07 |
+| 3. Utilities Extraction | v1.0 | 1/1 | Complete | 2026-02-08 |
+| 4. Core Logic Extraction | v1.0 | 1/1 | Complete | 2026-02-08 |
+| 5. State Management | v1.0 | 2/2 | Complete | 2026-02-08 |
+| 6. UI Module Extraction | v1.0 | 3/3 | Complete | 2026-02-09 |
+| 7. Export Module Extraction | v1.0 | 2/2 | Complete | 2026-02-09 |
+| 8. Entry Point Consolidation | v1.0 | 1/1 | Complete | 2026-02-09 |
+| 9. Deployment | v1.0 | 2/2 | Complete | 2026-02-09 |
+| 10. Final Validation | v1.0 | 2/2 | Complete | 2026-02-09 |

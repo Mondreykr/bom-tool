@@ -2,28 +2,25 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-07)
+See: .planning/PROJECT.md (updated 2026-02-10)
 
-**Core value:** Identical outputs after refactoring — zero tolerance for behavioral differences
-**Current focus:** Phase 10 — Final Validation (documentation and production readiness)
+**Core value:** Accurate BOM processing that Operations can trust
+**Current focus:** v1.0 shipped — next milestone not yet planned
 
 ## Current Position
 
-Phase: 10 of 10 (Final Validation) — COMPLETE
-Plan: 2 of 2 plans complete
-Status: All validation complete - refactor production-ready
-Last activity: 2026-02-09 — Completed 10-02-PLAN.md (Browser Re-verification & UAT Checklist)
+Milestone: v1.0 Multi-File Refactor — SHIPPED 2026-02-10
+Status: All 10 phases complete, deployed and verified on GitHub Pages
+Last activity: 2026-02-10 — Milestone v1.0 archived
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
-**Velocity:**
-- Total plans completed: 16
-- Average duration: ~11.3 minutes
-- Total execution time: ~3.25 hours
-
-**By Phase:**
+**v1.0 Milestone:**
+- Phases: 10 | Plans: 17 | Timeline: 11 days
+- Total execution time: ~3.2 hours
+- Average plan duration: ~11.3 minutes
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
@@ -38,186 +35,57 @@ Progress: [██████████] 100%
 | 09-deployment | 2 | 20m | 10m |
 | 10-final-validation | 2 | 10m | 5m |
 
-**Recent Trend:**
-- Last 5 plans: 08-01 (3.9m), 09-01 (15m), 09-02 (5m), 10-01 (5m)
-- Phase 6 COMPLETE: All three UI modules extracted
-- Phase 7 COMPLETE: All export functions extracted to dedicated modules (13.2m)
-- Phase 8 COMPLETE: Entry point extracted to js/main.js (3.9m)
-- Phase 9 COMPLETE: GitHub Pages deployed and browser-verified (2 of 2 plans, 20m total)
-- Phase 10 COMPLETE: All validation complete (2 of 2 plans, 10m total)
-
-*Updated after each plan completion*
-| Phase 10-final-validation P01 | 5 | 2 tasks | 3 files |
-| Phase 10-final-validation P02 | 5 | 3 tasks | 2 files |
-
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- Refactor before IFP Merge: Clean module boundaries make future features easier and less risky
-- Git branch workflow: Protects working main branch during structural changes
-- No build tools: Keeps deployment simple; native ES6 modules sufficient
-- Global functions initially: Avoids import/export complexity; can migrate later
-- Adapt test harness first: Tests are safety net for all subsequent work
-- **Root package.json (01-01):** Created root-level package.json with ES6 module dependencies for cross-environment imports
-- **Root info getter pattern (01-01):** Use module-level private variables + exported getters instead of global variables
-- **Async parseCSV (01-01):** Made parseCSV async to support conditional dynamic imports in ESM
-- **Test harness XLSX import (01-02):** Keep direct XLSX import in test file for reading validation baselines (separate from module XLSX usage)
-- **Async test functions (01-02):** All test functions async to support awaited parseCSV calls
-- **Verbatim CSS extraction (02-01):** No consolidation or reordering — extract CSS exactly as-is with indentation removal
-- **Browser test waived (03-01):** Corporate IT blocks localhost web servers; automated tests sufficient; browser verification deferred to Phase 9 (GitHub Pages)
-- **resetRootInfo location (04-01):** Export resetRootInfo() from tree.js instead of compare.js because tree.js owns the root info private variables
-- **Module function signatures (04-01):** compareBOMs signature is `compareBOMs(oldFlattened, newFlattened)` with return value, NOT reading from globals
-- **State object pattern (05-01):** Export single state object vs. 44+ getter/setter functions - keeps imports simple, code changes mechanical
-- **All 22 variables upfront (05-01):** Define complete state structure in Plan 01 so Plan 02 only migrates references without modifying state.js
-- **State module complete (05-02):** All 22 global state variables migrated - zero bare declarations remain, 182 state.xxx references throughout index.html
-- **Init function pattern (06-01):** All DOM queries inside exported init() function to avoid timing issues with ES6 module loading
-- **DOMContentLoaded pattern (06-01):** Central initializeUI() function calls all tab init functions after DOM is ready
-- **Phase 6 complete (06-03):** All three UI tabs extracted to modules - index.html finalized to 41-line script block with zero inline tab logic
-- **XLSX global usage (07-01):** Excel export modules use XLSX global directly (not via environment.js) for CDN compatibility
-- **Export parameterization (07-01):** Root info passed as parameters (not calling getRootPartNumber inside shared.js to avoid tree.js dependency)
-- **HTML export verbatim extraction (07-02):** All three HTML export functions extracted byte-for-byte from UI modules to preserve output format exactly
-- **Interactive HTML exports (07-02):** Hierarchy HTML includes embedded JavaScript (`toggleNode()` function) for expand/collapse functionality in exported reports
-- **Main.js as pure entry point (08-01):** No exports, private initializeUI function for internal initialization only
-- **Import path adjustment (08-01):** Changed from './js/ui/' (relative to index.html) to './ui/' (relative to js/main.js)
-- **GitHub Pages deployment (09-01):** Deploy from main branch root for first browser verification after 8 phases of Node-only testing
-- **Repository visibility (09-01):** Made repository public to enable free GitHub Pages (was private)
-- **Browser verification checklist (09-02):** 9-step systematic verification covering module loading, console errors, CSS, tabs, file processing, and exports
-- **Rollback procedure (09-02):** Use git revert (not reset) to preserve history and enable safe deployment rollback
-- **sortChildren extraction (10-01):** sortChildren extracted from buildTree to fix test regressions while preserving sorted UI display
-- **Unsorted tree baseline (10-01):** Flatten/compare operations use unsorted trees (matching Phase 1 baseline behavior)
-- **UI-only sorting (10-01):** Only UI display modules call sortChildren explicitly (hierarchy.js, comparison.js)
-- [Phase 10-01]: sortChildren extracted from buildTree to fix test regressions while preserving sorted UI display
-- [Phase 10-01]: Flatten/compare operations use unsorted trees (matching Phase 1 baseline behavior)
-- [Phase 10-01]: Only UI display modules call sortChildren explicitly (hierarchy.js, comparison.js)
-- [Phase 10-02]: Browser re-verification passed all 5 verification steps after test fix deployment
-- [Phase 10-02]: Operations team UAT checklist created for asynchronous business validation
+Full decision log archived in `milestones/v1.0-ROADMAP.md` and PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-**Phase 6 status:**
-- ✅ COMPLETE - All three UI tabs extracted to dedicated modules
-- ✅ Plan 01: Flat BOM tab → js/ui/flat-bom.js (~613 lines)
-- ✅ Plan 02: Comparison tab → js/ui/comparison.js (~1130 lines)
-- ✅ Plan 03: Hierarchy tab → js/ui/hierarchy.js (~893 lines)
-- ✅ index.html reduced from ~3055 to 434 lines (85.8% reduction)
-- ✅ Script block reduced from ~2600 to 41 lines (98.4% reduction)
-- ✅ All core imports removed from index.html (only UI module imports remain)
-- ✅ DOMContentLoaded initialization pattern with tab switching inside initializeUI()
-- ✅ Tests stable at 2/4 (baseline maintained throughout phase)
-- ✅ Module boundaries established: UI modules own DOM/events, core modules own business logic
-
-**Phase 7 status:**
-- ✅ COMPLETE - All export functions extracted to js/export/ modules
-- ✅ Plan 01: Excel exports extracted (4.5m)
-- ✅ Plan 02: HTML exports extracted (8.7m)
-- Created js/export/shared.js (5 utility functions: date formatting, filename generation, blob download)
-- Created js/export/excel.js (3 Excel export functions: Flat BOM, Comparison, Hierarchy)
-- Created js/export/html.js (3 HTML export functions with embedded CSS and interactive JavaScript)
-- Updated all three UI modules to import+call pattern (removed ~1144 lines of inline export code)
-- Tests stable at 2/4 baseline (zero regressions)
-- Total Phase 7 reduction: ~1144 lines removed from UI modules
-
-**Phase 8 status:**
-- ✅ COMPLETE - Entry point extracted to js/main.js
-- ✅ Plan 01: Entry point consolidation (3.9m)
-- Created js/main.js (39 lines) with application initialization and tab switching
-- Reduced index.html from 435 to 394 lines (41-line reduction)
-- Zero inline JavaScript remains in index.html (100% inline script removal)
-- CDN loading order preserved (SheetJS before ES6 modules)
-- Tests stable at 2/4 baseline (zero regressions)
-- Multi-file refactor now complete
-
-**Phase 9 status:**
-- ✅ COMPLETE - GitHub Pages deployment and browser verification
-- ✅ Plan 01: GitHub Pages deployment (15m) - COMPLETE
-- ✅ Plan 02: Browser functional verification (5m) - COMPLETE
-- Verified 2/4 test baseline maintained before deployment
-- Confirmed all file paths are relative (no leading slashes)
-- Enabled GitHub Pages: Deploy from main branch root
-- Site live at https://mondreykr.github.io/bom-tool/
-- Repository visibility set to public for free GitHub Pages
-- All 9 browser verification steps passed (module loading, console errors, CSS, tabs, file uploads, exports)
-- Rollback procedure documented for future deployment safety
-- Zero regressions discovered - multi-file refactor works perfectly in browser
-
-**Phase 10 status:**
-- ✅ COMPLETE - Final validation complete, refactor production-ready
-- ✅ Plan 01: Test regression fix (5m) - COMPLETE
-- ✅ Plan 02: Browser re-verification and UAT preparation (5m) - COMPLETE
-- VALID-01: ✅ All 4 automated tests passing (flatten XML/CSV, compare XML/CSV)
-- VALID-02: ✅ All three tabs work correctly in browser (Flat BOM, Comparison, Hierarchy View)
-- VALID-03: ✅ All export formats work (Excel and HTML exports for each tab)
-- VALID-04: ✅ Scoped comparison feature works (tree selection panel displays correctly)
-- VALID-05: ✅ Performance validated subjectively (no degradation observed in page load or file processing)
-- sortChildren architecture correct: unsorted core operations, sorted UI display
-- Browser re-verification passed all 5 verification steps after test fix deployment
-- Operations team UAT checklist created for asynchronous business validation
-- Multi-file refactor complete and production-ready
-
 **IT constraint:**
-- Corporate IT blocks localhost web servers (python http.server, npx serve, etc.)
-- Browser testing requires HTTP serving (ES6 modules don't work over file://)
-- All browser verification deferred to GitHub Pages deployment (Phase 9)
+- Corporate IT blocks localhost web servers
+- Browser testing requires GitHub Pages deployment
 
 ## Operations Team UAT
 
-**Purpose:** Asynchronous business validation with real-world BOM files. The tool has been technically validated (4/4 automated tests passing, browser verification complete). This UAT confirms the refactored tool meets operational needs for procurement and work order processing.
+**Purpose:** Asynchronous business validation with real-world BOM files. The tool has been technically validated (4/4 automated tests passing, browser verification complete). This UAT confirms the refactored tool meets operational needs.
 
 **URL:** https://mondreykr.github.io/bom-tool/
 
 **Test Scenarios:**
 
 1. **Flatten Current BOM**
-   - [ ] Upload current revision BOM (XML or CSV)
-   - [ ] Click "Flatten BOM" and verify results table displays correctly
-   - [ ] Export to Excel and verify file opens in Excel
+   - [ ] Upload current revision BOM (XML or CSV), flatten, export to Excel
    - [ ] Verify part numbers, descriptions, quantities match expectations
    - **Pass/Fail:** _____
 
 2. **Compare Revisions**
-   - [ ] Upload old revision BOM as "Old BOM"
-   - [ ] Upload new revision BOM as "New BOM"
-   - [ ] Click "Compare" and verify Added/Removed/Changed items display
-   - [ ] Export comparison to Excel and verify differences are clear
+   - [ ] Upload old + new revision BOMs, compare, export to Excel
+   - [ ] Verify Added/Removed/Changed items display correctly
    - **Pass/Fail:** _____
 
 3. **Scoped Comparison**
-   - [ ] After comparison, verify tree selection panel appears in Comparison tab
-   - [ ] Select a sub-assembly node (e.g., a specific assembly like "258730-01")
-   - [ ] Verify comparison table updates to show only that sub-assembly's changes
+   - [ ] Select a sub-assembly node in Comparison tab
+   - [ ] Verify comparison filters to that sub-assembly's changes
    - **Pass/Fail:** _____
 
 4. **Export and Share**
-   - [ ] Use Flat BOM tab to flatten a BOM
-   - [ ] Export to HTML and verify the HTML file opens in browser with interactive expand/collapse
-   - [ ] Use Comparison tab to compare two BOMs
-   - [ ] Export comparison to HTML and verify diff highlighting is clear
+   - [ ] Export Flat BOM and Comparison to HTML
+   - [ ] Verify HTML files open correctly with formatting
    - **Pass/Fail:** _____
 
 5. **Process Historical BOM**
-   - [ ] Upload a real historical BOM file used in past procurement/work orders
-   - [ ] Flatten and verify output matches expectations from legacy Excel tool
-   - [ ] Verify no missing parts, no incorrect quantities, no data corruption
+   - [ ] Upload real historical BOM file, flatten, verify against legacy Excel tool output
    - **Pass/Fail:** _____
-
-**Overall Assessment:**
-- All scenarios pass → Tool approved for production use
-- Any failures → Document specific issues and return to development
-
-**Notes:**
-_____________________
 
 ## Session Continuity
 
-Last session: 2026-02-09 (Phase 10 Plan 02 execution)
-Stopped at: Completed 10-02-PLAN.md (Browser re-verification and UAT checklist)
+Last session: 2026-02-10 (Milestone v1.0 completion)
+Stopped at: Milestone archived, git tag pending
 Resume file: None
-Next: Multi-file refactor complete - ready for IFP Merge planning (Phase 11+)
+Next: `/gsd:new-milestone` when ready for IFP Merge or next feature work
