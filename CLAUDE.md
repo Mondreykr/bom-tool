@@ -12,7 +12,29 @@
 
 - **Stack:** HTML5, CSS3, vanilla JavaScript ES6+, SheetJS (xlsx.js) v0.18.5 via CDN
 - **No build process** — native ES6 modules, no bundler, no framework
-- **Currently being refactored** from single-file to multi-file architecture
+- **Deployed:** https://mondreykr.github.io/bom-tool/ (GitHub Pages, main branch)
+
+## File Structure
+
+```
+index.html              — Page layout (HTML only, no inline JS)
+css/styles.css          — All styling
+js/main.js              — Entry point (starts app on page load)
+js/core/parser.js       — CSV and XML file parsing
+js/core/tree.js         — BOMNode class, buildTree, sortChildren
+js/core/flatten.js      — flattenBOM (tree → flat parts list)
+js/core/compare.js      — compareBOMs (diff two BOMs)
+js/core/utils.js        — Small helpers (parseLength, decimalToFractional, etc.)
+js/ui/state.js          — All shared state (what's loaded, selected, etc.)
+js/ui/flat-bom.js       — Flat BOM tab logic
+js/ui/comparison.js     — BOM Comparison tab logic
+js/ui/hierarchy.js      — Hierarchy View tab logic
+js/export/excel.js      — Excel export for all three tabs
+js/export/html.js       — HTML report export for all three tabs
+js/export/shared.js     — Export utilities (date formatting, file download)
+test/run-tests.js       — Automated test runner
+package.json            — Node.js dependencies (for tests only)
+```
 
 ## Project State
 
@@ -53,4 +75,4 @@ git log --oneline -10               # See recent history
 
 ## Environment Constraint
 
-Corporate IT blocks localhost web servers. ES6 modules require HTTP serving (not `file://`). Browser verification is deferred to GitHub Pages deployment.
+Corporate IT blocks localhost web servers. ES6 modules require HTTP serving (not `file://`). Use GitHub Pages deployment for browser testing.

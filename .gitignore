@@ -8,3 +8,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 ~$*
+nul
+
+# Generated output
+test-results/
