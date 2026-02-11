@@ -1,254 +1,201 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-02-07
+**Analysis Date:** 2026-02-10
 
 ## Directory Layout
 
 ```
 bom-tool/
-├── index.html                                    # Main application (4396 lines)
-├── CLAUDE.md                                     # Development guidelines and architecture reference
-├── BOM Tool Handoff 20251209.md                  # Comprehensive project documentation
-├── BOM Tool Enhancements 20260115.md             # Feature requirements (all complete)
-├── .planning/
-│   └── codebase/                                 # GSD planning documents
-│       ├── ARCHITECTURE.md                       # Architecture analysis
-│       └── STRUCTURE.md                          # This file
-├── archive/                                      # Historical documents (not in active use)
-│   ├── context-original-20251209.md
-│   ├── IFP Release Challenge.md
-│   ├── IFP BOM Merge Tool PRD.md
-│   └── IFP BOM Merge Tool - Codebase Reality Check.md
-├── test/                                         # Test harness for validation
-│   ├── run-tests.js                             # Node.js test runner (extracts functions from HTML)
-│   ├── inspect-excel.js                         # Excel inspection utility
-│   └── package.json                             # Dependencies: xlsx, xmldom
-└── test-data/                                    # Test inputs and baseline outputs
-    ├── BOM Tool 2.1 Validation Testing Plan 20260115.md
-    ├── 1032401-Rev1-20260105.XML
-    ├── 1032401-Rev2-20260112.XML
-    ├── 258730-Rev0-As Built.csv
-    ├── 258730-Rev1-As Built.csv
-    ├── 258730-Rev2-20260112.XML
-    ├── 258754-Rev0-20251220.XML
-    ├── 258754-Rev1-20260112.XML
-    └── [baseline Excel comparison files]
+├── index.html              # Page layout and structure (no inline JS)
+├── css/
+│   └── styles.css          # All styling, grid layout, theme variables
+├── js/
+│   ├── main.js             # Entry point - initializes all UI modules
+│   ├── core/               # Data processing logic (parsing, trees, flattening, comparison)
+│   │   ├── parser.js       # XML and CSV parsing
+│   │   ├── tree.js         # BOMNode class and tree building
+│   │   ├── flatten.js      # BOM flattening and sorting
+│   │   ├── compare.js      # BOM comparison logic
+│   │   ├── utils.js        # Helper functions (length parsing, compositing, diffs)
+│   │   └── environment.js  # Platform detection and dependency abstraction
+│   ├── ui/                 # User interface and state management
+│   │   ├── state.js        # Centralized app state object
+│   │   ├── flat-bom.js     # Flat BOM tab logic
+│   │   ├── comparison.js   # BOM Comparison tab logic
+│   │   └── hierarchy.js    # Hierarchy View tab logic
+│   └── export/             # Report generation
+│       ├── excel.js        # Excel export for all tabs
+│       ├── html.js         # HTML report export for all tabs
+│       └── shared.js       # Export utilities (filenames, formatting)
+├── test/
+│   ├── run-tests.js        # Automated validation test suite
+│   ├── inspect-excel.js    # Utility for debugging Excel output
+│   └── investigate-*.js    # Ad-hoc investigation scripts
+├── test-data/              # Test BOM files (CSV, XML)
+├── package.json            # Node.js dependencies (for testing only)
+└── .planning/              # Project planning documents (not part of app code)
 ```
 
 ## Directory Purposes
 
-**Root Directory:**
-- Purpose: Main application file and documentation
-- Contains: Single executable HTML file + guidance/reference docs
-- Key files:
-  - `index.html`: Complete application (no build step needed)
-  - `CLAUDE.md`: Developer reference for future modifications
-  - `.md` files: Business logic and feature documentation
+**js/core/:**
+- Purpose: All file parsing and BOM transformation logic, completely independent of UI
+- Contains: Parser implementations, tree data structure, algorithms for flattening and comparison
+- Key files: `parser.js` (handles XML + CSV), `tree.js` (BOMNode + buildTree), `flatten.js` (aggregation), `compare.js` (diff logic)
+- Testable: Yes - all exports used by `test/run-tests.js` in Node.js environment
 
-**.planning/codebase/:**
-- Purpose: GSD mapping outputs for code navigation and planning
-- Contains: ARCHITECTURE.md and STRUCTURE.md (this analysis)
-- Generated: Not committed (outputs from `/gsd:map-codebase`)
-- Used by: `/gsd:plan-phase` and `/gsd:execute-phase` commands
+**js/ui/:**
+- Purpose: User interaction, tab management, result rendering, state centralization
+- Contains: Event listeners, DOM manipulation, result table generation, message display
+- Key files: `state.js` (single state object), `flat-bom.js` (workflow 1), `comparison.js` (workflow 2), `hierarchy.js` (workflow 3)
+- Pattern: Each tab module (`flat-bom.js`, `comparison.js`, `hierarchy.js`) exports `init()` function called from `main.js`
 
-**archive/:**
-- Purpose: Historical context and future feature planning
-- Contains: Original project spec, problem statements for IFP Merge feature
-- Key files:
-  - `IFP BOM Merge Tool PRD.md`: Full specification for next major feature (~400 lines to implement)
-- Status: Reference only; not active
+**js/export/:**
+- Purpose: Generate downloadable reports in multiple formats
+- Contains: Excel workbook construction, HTML template generation, filename formatting
+- Key files: `excel.js` (XLSX workbook creation), `html.js` (HTML document generation), `shared.js` (utilities)
+- Dependency: SheetJS (XLSX) library via CDN or npm
+
+**css/:**
+- Purpose: All visual styling, layout, theme colors
+- Contains: CSS Grid layout for tables, Flexbox for buttons, color variables, responsive design
+- Key files: `styles.css` (single unified stylesheet, no preprocessor)
 
 **test/:**
-- Purpose: Automated validation of core business logic
-- Contains: Node.js test runner that extracts functions from HTML
-- Key files:
-  - `run-tests.js`: Test suite with baseline comparisons
-  - `package.json`: Dependencies (xlsx, xmldom for parsing)
-- How to run: `node run-tests.js` (requires Node.js + npm)
-
-**test-data/:**
-- Purpose: Test input files and baseline outputs for validation
-- Contains: Real SOLIDWORKS PDM exports (CSV and XML) + validation plan
-- Key files:
-  - XML files: Full hierarchical BOMs from SOLIDWORKS PDM
-  - CSV files: UTF-16LE encoded BOMs with BOM headers
-  - XLSX files: Baseline output files for comparison testing
-- Size: Real-world BOMs (27KB-400KB each)
+- Purpose: Automated validation and debugging
+- Contains: Test runner, test data paths, validation logic, comparison helpers
+- Key files: `run-tests.js` (main test suite with 4 validation tests)
+- Usage: Run via `cd test && node run-tests.js`
 
 ## Key File Locations
 
 **Entry Points:**
-
-- `index.html` (lines 844-856): Tab navigation buttons that switch between three modes
-  - `<button data-tab="flatten">` activates Flat BOM workflow
-  - `<button data-tab="compare">` activates BOM Comparison workflow
-  - `<button data-tab="hierarchy">` activates Hierarchy View workflow
+- `index.html`: Single HTML page, loads styles, imports SheetJS CDN, imports `js/main.js` as ES6 module
+- `js/main.js`: Imports all three UI module inits, sets up tab switching
 
 **Configuration:**
-
-- `index.html` (lines 17-32): CSS custom properties (colors, spacing)
-  - `--primary: #1e40af` (primary blue)
-  - `--gray-50` through `--gray-900` (color scale)
-  - Google Fonts imports (JetBrains Mono for data, Work Sans for UI)
+- No build config, no bundler, no environment variables (app is offline)
+- `package.json`: Only lists dev dependencies for testing
 
 **Core Logic:**
-
-**Flat BOM Processing:**
-- `parseXML()` (lines 1367-1478): Parse SOLIDWORKS XML exports
-- `buildTree()` (lines 1502-1573): Convert flat rows to BOMNode hierarchy
-- `flattenBOM()` (lines 1584-1642): Aggregate quantities by composite key
-- `decimalToFractional()` (lines 1645-1671): Convert decimals to 1/16" fractions
-- `sortBOM()` (lines 1673-1723): Sort flattened results
-- `displayResults()` (lines 1725-2170): Render table and statistics
-
-**BOM Comparison Processing:**
-- `renderSelectionTree()` (lines 2268-2274): Display tree selection UI
-- `handleNodeSelection()` (lines 2385-2419): Track node selection for scoping
-- `extractSubtree()` (lines 2434-2520): Clone selected subtree for scoped comparison
-- `handleCompareFile()` (lines 2522-2628): Parse and process comparison file
-- `compareBOMs()` (lines 2696-2791): Compare two flattened BOMs
-- `createDiff()` (lines 2864-2894): Generate word-level diffs for descriptions
-- `displayComparisonResults()` (lines 2800-2842): Render comparison table with filters
-
-**Hierarchy View Processing:**
-- `handleHierarchyFile()` (lines 3572-3621): Parse file for hierarchy view
-- `displayHierarchyTree()` (lines 3664-3685): Prepare tree for rendering
-- `renderTreeNode()` (lines 3687-3827): Recursively render tree with connectors
-  - Uses ancestorContinues array to track multi-level vertical lines
-  - Draws L-shaped and T-shaped connectors
-  - Handles expand/collapse toggle state
-
-**UI Utilities:**
-- `showMessage()` (lines 2172-2266): Display success/error messages
-- `showCompareMessage()` (lines 2630-2694): Display comparison-tab messages
-- `showHierarchyMessage()` (lines 3623-3662): Display hierarchy-tab messages
+- `js/core/parser.js`: Exports `parseXML()` and `parseCSV()` - entry points for file parsing
+- `js/core/tree.js`: Exports `BOMNode` class, `buildTree()`, root info getters
+- `js/core/flatten.js`: Exports `flattenBOM()` and `sortBOM()`
+- `js/core/compare.js`: Exports `compareBOMs()` and subtree operations
+- `js/core/utils.js`: Exports `parseLength()`, `decimalToFractional()`, `getCompositeKey()`, `createDiff()`
 
 **Testing:**
-- `test/run-tests.js`: Extracts core functions (parseXML, buildTree, flattenBOM, etc.) and runs validation against test-data/
+- `test/run-tests.js`: Test runner - runs 4 validation tests against baseline Excel files
+- `test-data/`: Contains test BOM files and baseline Excel outputs
+- Tests validate: XML parsing + flattening, CSV parsing + flattening, XML comparison, CSV comparison
+
+**UI Logic:**
+- `js/ui/state.js`: Single exported `state` object with all global state
+- `js/ui/flat-bom.js`: Flat BOM tab - file upload, flatten button, results table, exports
+- `js/ui/comparison.js`: Comparison tab - two file uploads, tree selection, compare button, filtering, exports
+- `js/ui/hierarchy.js`: Hierarchy tab - file upload, view tree structure, expand/collapse, exports
 
 ## Naming Conventions
 
 **Files:**
-
-- Main file: `index.html` (no version number in filename; tracked via git commits)
-- Test runner: `run-tests.js` (JavaScript Node.js script)
-- Test data: `{AssemblyPN}-Rev{N}-{YYYYMMDD}.{xml|csv}` (matches exported BOM naming)
-- Documentation: `{Description} {YYYYMMDD}.md` (date for version tracking)
-
-**Directories:**
-
-- `test/`: Test harness (lowercase, no underscore)
-- `test-data/`: Test input/output files (hyphenated)
-- `archive/`: Historical documents (lowercase)
-- `.planning/`: GSD planning outputs (dot-prefixed)
-
-**JavaScript Identifiers:**
-
-**Global Variables:**
-- Flat BOM tab: `csvData`, `flattenedBOM`, `treeRoot`, `rootPartNumber`, `rootRevision`, `rootDescription`, `uploadedFilename`
-- Comparison tab: `oldBomData`, `newBomData`, `oldBomFlattened`, `newBomFlattened`, `oldBomTree`, `newBomTree`, `oldSelectedNode`, `newSelectedNode`, `comparisonResults`, `currentFilter`
-- Hierarchy tab: `hierarchyTree`, `hierarchyRootInfo`, `hierarchyFilename`
-- UI elements: Prefixed with all lowercase or camelCase (e.g., `uploadZone`, `csvFile`, `flattenBtn`, `resultsBody`)
+- Kebab-case: `flat-bom.js`, `export-excel.js`
+- Descriptive names: `parser.js` (not `p.js`), `flatten.js` (not `flat.js`)
+- Module suffix only where needed: `compare.js` not `comparator.js`
 
 **Functions:**
-- camelCase: `handleFile()`, `parseXML()`, `buildTree()`, `flattenBOM()`, `decimalToFractional()`, `displayResults()`, `compareBOMs()`, `createDiff()`, `renderTreeNode()`, `toggleChildren()`
-- Single responsibility: Function names describe exact action (e.g., `getCompositeKey()`, `getParentLevel()`, `extractSubtree()`)
+- camelCase: `flattenBOM()`, `buildTree()`, `parseXML()`, `getCompositeKey()`
+- Verb-noun pattern: `parseLength()`, `extractSubtree()`, `createDiff()`, `showMessage()`
+- Getter pattern: `getRootPartNumber()`, `getRootRevision()`
 
-**Classes:**
-- PascalCase: `BOMNode` (single class in codebase)
+**Variables:**
+- camelCase: `flattenedBOM`, `treeRoot`, `uploadedFilename`
+- Boolean: `isXML`, `isNode`, `isBrowser`, `hasChildren`
+- Map/collection: `aggregatedItems`, `resultMap`, `nodesMap`
 
-**CSS Classes:**
-- kebab-case: `.upload-zone`, `.file-info`, `.tree-cell`, `.tree-toggle`, `.diff-removed`, `.diff-added`, `.card`, `.btn-primary`, `.filter-btn`
-- BEM-ish: `.tree-selection-panel`, `.tree-panel-header`, `.tree-panel-filename` (parent-child relationship)
-- Utility: `.active`, `.show`, `.has-file`, `.dragover`, `.expanded`, `.last-child` (state classes)
+**Types / Classes:**
+- PascalCase: `BOMNode`
 
-**Data Attributes:**
-- Kebab-case: `data-tab="flatten"`, `data-filter="Added"`
+**DOM IDs:**
+- Kebab-case: `uploadZone`, `flattenBtn`, `resultsBody`, `compareTab`
+- Descriptive: `oldBomFile` not `oldFile`, `newBomFile` not `newFile`
 
 ## Where to Add New Code
 
-**New Feature - Tab-Based Feature:**
-If adding a 4th feature tab:
-1. Add `<button class="tab-btn" data-tab="featureName">` to tab navigation (line ~854)
-2. Add `<div class="tab-content" id="featureTab">` section for UI (follow pattern of lines 859-1220)
-3. Add JavaScript event listeners and handlers after other tab code
-4. Add tab-switching CSS for `.tab-content.active` visibility
-5. Follow naming convention: `featureTab`, `handleFeatureFile()`, etc.
+**New Feature (e.g., new export format):**
+- Primary code: `js/export/[format].js` (new export module)
+- Update: `js/ui/flat-bom.js`, `js/ui/comparison.js`, `js/ui/hierarchy.js` to call new export function
+- Test: Add test case to `test/run-tests.js` if output needs validation
 
-**New Processing Function:**
-- Location: Add to main `<script>` block (after line 1227, before closing `</script>`)
-- Pattern: Match existing function style (camelCase, console logging, try-catch error handling)
-- Scope: Keep global state organized by tab (don't pollute other tab variables)
-- Example location for new flattening algorithm: ~line 1584 (near existing `flattenBOM()`)
+**New Data Processing Algorithm (e.g., BOM merging):**
+- Implementation: `js/core/[feature].js` (new module)
+- Exports: Pure functions with no side effects
+- Test: Add Node.js test before UI integration
 
-**New Export Format:**
-1. Create export function following pattern of `exportExcelBtn` click handler (~line 2155)
-2. Use SheetJS for Excel (already included via CDN at line 7)
-3. For non-Excel formats:
-   - Create HTML string with inline styles
-   - Use `document.createElement()` and table generation
-4. Use `URL.createObjectURL()` + `<a>` tag for download
+**New Tab / Workflow:**
+- Module: `js/ui/[workflow].js` with `init()` export
+- HTML: Add `<div class="tab-content" id="[workflow]Tab">` to `index.html`
+- CSS: Add styles to `css/styles.css`
+- Call: Import and call from `js/main.js`
 
-**New UI Component:**
-- Location: Add to appropriate `<div class="tab-content">` section
-- Pattern: Use `.card` wrapper, `.input-group` for forms, `.button-group` for buttons
-- Styling: Add to `<style>` block (lines 8-841)
-- CSS variables: Reference `var(--primary)`, `var(--gray-*)`
-- Fonts: Use `font-family: 'JetBrains Mono', monospace` for data; `'Work Sans'` for UI text
+**New Utility Function:**
+- Location: `js/core/utils.js` if used by multiple modules, otherwise inline in consuming module
+- Pattern: Pure function, no side effects, descriptive name
 
-**Utilities/Helpers:**
-- Location: Group near related functions
-- Example: `parseLength()` (line 1482), `getParentLevel()` (line 1495) near tree building
-
-**Test Coverage:**
-When adding features:
-1. Add test case to `test/run-tests.js`
-2. Create test input file in `test-data/` with expected output
-3. Run `node test/run-tests.js` to validate against baseline
-4. Commit baseline Excel output with test code
+**New UI Helper (message display, table rendering, etc.):**
+- Consider: Add as sub-function in consuming UI module first
+- Extract: Move to shared location only if used by 2+ UI modules
+- Avoid: Creating unnecessary shared modules
 
 ## Special Directories
 
-**.git/:**
-- Purpose: Git version control metadata
-- Generated: Yes (created by git init)
-- Committed: Yes (git internals, not code)
-- Contains: Commit history, branch info, hooks
+**test/:**
+- Purpose: Test infrastructure
+- Generated: No
+- Committed: Yes
+- Notes: Run tests with `cd test && node run-tests.js`. All 4 tests must pass after any code change.
 
-**.claude/:**
-- Purpose: Claude IDE settings (local, not shared)
-- Generated: Yes (created by Claude Code editor)
-- Committed: No (in .gitignore for local IDE config)
-- Contains: Editor preferences, local settings
+**test-data/:**
+- Purpose: Test BOM files (XML and CSV) and baseline Excel outputs for validation
+- Generated: No
+- Committed: Yes
+- Notes: Baseline files represent "correct" flattening/comparison output. Tests compare actual output against these baselines.
 
-**node_modules/ (in test/):**
-- Purpose: Test dependencies (xlsx, xmldom for Node.js parsing)
-- Generated: Yes (npm install)
-- Committed: No (not in git, only package-lock.json)
-- Contains: Package code for running tests outside browser
+**.planning/:**
+- Purpose: Project planning documents, roadmap, phase tracking
+- Generated: Yes (by GSD commands)
+- Committed: Yes
+- Notes: Not part of application code, used for development coordination
 
-**Screenshots/ (not documented in repo):**
-- Purpose: UI reference images (if added)
-- Generated: Manual (taken by user)
-- Committed: Yes (project documentation)
+**css/:**
+- Purpose: All styling
+- Generated: No
+- Committed: Yes
+- Notes: Single `styles.css` file, no preprocessor. CSS Grid and Flexbox for layout.
+
+## Module Import Patterns
+
+**Core modules import from core only:**
+```javascript
+import { parseLength, getParentLevel } from './utils.js';
+import { BOMNode } from './tree.js';
+```
+
+**UI modules import core + state:**
+```javascript
+import { state } from './state.js';
+import { parseXML } from '../core/parser.js';
+import { buildTree } from '../core/tree.js';
+import { flattenBOM } from '../core/flatten.js';
+```
+
+**Export modules import core + utils:**
+```javascript
+import { formatDateString } from './shared.js';
+import { decimalToFractional } from '../core/utils.js';
+```
+
+**No circular imports:** Core modules never import UI modules, export modules never import UI modules.
 
 ---
 
-## File Organization Summary
-
-**~4400 lines in single file, organized by:**
-
-| Section | Lines | Purpose |
-|---------|-------|---------|
-| DOCTYPE, meta, imports | 1-7 | HTML structure |
-| `<style>` CSS | 8-841 | All styling |
-| `<body>` HTML markup | 844-1220 | UI layout for 3 tabs |
-| Global variables | 1227-1235 | State variables |
-| **Tab 1: Flat BOM** | 1237-2170 | File upload, flatten, display, export |
-| **Tab 2: Comparison** | 2172-3570 | File uploads, compare, scoped selection, export |
-| **Tab 3: Hierarchy** | 3572-4260 | File upload, tree display, export |
-| Closing tags | 4261-4396 | `</script>`, `</body>`, `</html>` |
-
----
-
-*Structure analysis: 2026-02-07*
+*Structure analysis: 2026-02-10*

@@ -1,222 +1,161 @@
 # Architecture
 
-**Analysis Date:** 2026-02-07
+**Analysis Date:** 2026-02-10
 
 ## Pattern Overview
 
-**Overall:** Single-page application (SPA) with tab-based UI and three independent data processing workflows
+**Overall:** Layered modular architecture with clear separation of concerns: data processing core, UI presentation layer, and export functionality.
 
 **Key Characteristics:**
-- Monolithic single-file architecture (~4400 lines)
-- Three distinct feature tabs with isolated processing pipelines
-- Global state variables for each tab workflow
-- No framework dependencies—pure vanilla HTML5/CSS3/JavaScript ES6+
-- Client-side only processing (no backend)
-- Direct file I/O via browser File API and ArrayBuffer
+- No build process - vanilla ES6 modules loaded natively in browser
+- Core logic completely decoupled from UI (testable in Node.js environment)
+- Shared state management via centralized `state` object in `js/ui/state.js`
+- Tab-based single-page application with three independent workflows
+- Platform-agnostic parsing (browser and Node.js compatible via abstraction layer)
 
 ## Layers
 
-**Presentation Layer (UI):**
-- Purpose: Interactive tabbed interface for user workflows
-- Location: `index.html` lines 844-1220 (HTML markup)
-- Contains: Header, tab navigation, form controls, result tables, tree views, export buttons
-- Depends on: DOM element references, CSS styling, event handlers
-- Used by: User interactions trigger JavaScript event listeners
+**Data Processing Core (js/core/):**
+- Purpose: Parse files, build tree structures, flatten BOMs, compare BOMs
+- Location: `js/core/parser.js`, `js/core/tree.js`, `js/core/flatten.js`, `js/core/compare.js`, `js/core/utils.js`, `js/core/environment.js`
+- Contains: Parser logic, tree manipulation, BOM flattening algorithms, comparison logic, length conversions
+- Depends on: Nothing (zero external dependencies within core)
+- Used by: UI modules, test suite, export modules
 
-**Processing Layer (Core Business Logic):**
-- Purpose: Parse files, build tree structures, flatten BOMs, compare revisions, render trees
-- Location: `index.html` lines 1227-4260 (JavaScript functions)
-- Contains: File parsing, tree building, flattening, comparison, rendering functions
-- Depends on: Parsed data structures (csvData, treeRoot, etc.), external SheetJS library for Excel export
-- Used by: UI event handlers invoke processing functions, functions call each other
+**UI Presentation Layer (js/ui/):**
+- Purpose: Handle user interactions, render results, manage tab switching
+- Location: `js/ui/flat-bom.js`, `js/ui/comparison.js`, `js/ui/hierarchy.js`, `js/ui/state.js`, `js/main.js`
+- Contains: File upload handlers, result rendering, DOM manipulation, event listeners
+- Depends on: Data processing core (`js/core/*`), Export modules, Centralized state
+- Used by: Browser DOM
 
-**Styling Layer:**
-- Purpose: Visual design, layout, responsive behavior, animations
-- Location: `index.html` lines 8-841 (CSS in `<style>` block)
-- Contains: CSS custom properties, card-based layout, table styling, color scheme, tree connector lines
-- Depends on: External fonts (Google Fonts: JetBrains Mono, Work Sans)
-- Used by: Applied via CSS selectors to HTML elements
+**Export Layer (js/export/):**
+- Purpose: Generate downloadable reports in Excel and HTML formats
+- Location: `js/export/excel.js`, `js/export/html.js`, `js/export/shared.js`
+- Contains: Excel workbook generation, HTML report templates, filename formatting
+- Depends on: Data processing core, SheetJS (XLSX) library
+- Used by: UI modules
 
 ## Data Flow
 
 **Flat BOM Workflow:**
 
-1. User clicks upload zone or drags file
-2. `handleFile()` detects CSV vs XML format
-3. File parsed into `csvData` array:
-   - CSV: Decoded UTF-16LE with SheetJS → array of row objects
-   - XML: DOMParser recursively traverses hierarchy → array with Level column
-4. `buildTree(csvData)` converts flat array to `BOMNode` hierarchy
-   - Pass 1: Create all nodes from rows
-   - Pass 2: Link children to parents using Level string parsing
-   - Pass 3: Sort children recursively by ComponentType → Description → Length
-5. `flattenBOM(treeRoot, unitQty)` aggregates quantities:
-   - Recursive depth-first traversal
-   - Skip Assembly type items (containers, not purchasable)
-   - Create composite keys: `PartNumber|Length` or `PartNumber`
-   - Aggregate quantities across duplicate keys
-   - Return array of flattened items
-6. `displayResults()` renders table and statistics
-7. Export buttons write Excel (SheetJS) or standalone HTML
+1. User uploads CSV or XML file via `index.html` file input
+2. `js/ui/flat-bom.js` receives file, reads content via FileReader API
+3. `js/core/parser.js` parses XML (via DOMParser) or CSV (via XLSX) into row array
+4. `js/core/tree.js` builds tree structure (BOMNode hierarchy) from rows
+5. User enters unit quantity, clicks flatten
+6. `js/core/flatten.js` recursively traverses tree, aggregates quantities, produces flat parts list
+7. `js/core/flatten.js` sorts results by Component Type > Description > Length
+8. `js/ui/flat-bom.js` renders results table, updates stats display
+9. User can export: `js/export/excel.js` or `js/export/html.js` generate downloads
 
 **BOM Comparison Workflow:**
 
-1. Two files uploaded separately (Old BOM, New BOM)
-2. Each goes through file parsing → tree building → flattening
-3. After both loaded, user can:
-   - Click items in selection trees to scope comparison to sub-assemblies
-   - `extractSubtree()` clones selected branch with Qty 1 at root for scoped comparison
-   - `compareBOMs()` performs comparison on flattened results
-4. `compareBOMs()` creates result objects with change tracking:
-   - Create Maps of both BOMs using composite keys
-   - Compare item by item: Added, Removed, Changed
-   - For Changed items, track which attributes differ
-   - `createDiff()` performs word-level diff on descriptions (red strikethrough for removed, green highlight for added)
-5. `displayComparisonResults()` renders comparison table with filter buttons
-6. Export options include comparison metadata (old/new filenames, revisions, scope info)
+1. User uploads two files (old BOM and new BOM) via comparison tab
+2. Both files parsed and flattened using same pipeline as flat BOM
+3. Optional: User selects subtree in either BOM via tree selection panel for scoped comparison
+4. `js/core/compare.js` `compareBOMs()` creates map of parts from each BOM, identifies Added/Removed/Changed
+5. Changes categorized by type and attribute (Qty, Description, Purchase Description)
+6. `js/ui/comparison.js` renders results table, provides filtering by change type
+7. User can export comparison: `js/export/excel.js` or `js/export/html.js`
 
 **Hierarchy View Workflow:**
 
-1. Single file uploaded
-2. File parsed → tree built
-3. `displayHierarchyTree()` renders hierarchical structure
-4. `renderTreeNode()` recursively renders each node with tree connectors:
-   - Uses `ancestorContinues` array to track which ancestors have more siblings
-   - Draws vertical lines at correct depth positions
-   - Draws horizontal connectors at 1.5rem vertical position (text baseline alignment)
-   - Draws full-height parent downward line only when expanded
-5. Nodes have toggle buttons (plus/minus boxes) to collapse/expand children
-6. `toggleChildren()` shows/hides child rows and updates `.expanded` class
-7. Export options include Level column and interactive toggles
+1. User uploads single file via hierarchy tab
+2. File parsed and tree built using same pipeline
+3. Tree structure preserved (no flattening) for display
+4. `js/ui/hierarchy.js` renders expandable tree table showing assembly hierarchy
+5. User can expand/collapse nodes, expand all, collapse all
+6. User can export hierarchy: `js/export/excel.js` or `js/export/html.js`
 
 **State Management:**
 
-Global variables organized by tab:
-
-**Tab 1 - Flat BOM:**
-- `csvData`: Raw parsed rows (array of objects)
-- `flattenedBOM`: Result of flattening (array of flattened items)
-- `treeRoot`: Root BOMNode for hierarchy preservation
-- `rootPartNumber`, `rootRevision`, `rootDescription`: Assembly metadata
-- `uploadedFilename`: Filename for export naming
-
-**Tab 2 - BOM Comparison:**
-- `oldBomData`, `newBomData`: Raw parsed rows for each BOM
-- `oldBomTree`, `newBomTree`: Full hierarchies for selection UI
-- `oldBomFlattened`, `newBomFlattened`: Flattened results
-- `oldBomInfo`, `newBomInfo`: Metadata objects
-- `comparisonResults`: Array of comparison result objects
-- `currentFilter`: Current filter state ('all', 'Added', 'Removed', 'Changed')
-- `oldSelectedNode`, `newSelectedNode`: Nodes selected for scoped comparison (null = full GA)
-
-**Tab 3 - Hierarchy View:**
-- `hierarchyTree`: Root BOMNode from uploaded file
-- `hierarchyRootInfo`: Assembly metadata
-- `hierarchyFilename`: Uploaded filename
+State shared across all three tabs via `state` object in `js/ui/state.js`:
+- `csvData`: Parsed rows from input file
+- `flattenedBOM`: Output of flatten operation
+- `treeRoot`: Root BOMNode from tree construction
+- `uploadedFilename`: Original filename for export naming
+- For comparison: separate old/new BOM state objects (`oldBomData`, `oldBomTree`, `oldBomFlattened`, etc.)
+- For hierarchy: separate hierarchy-specific state (`hierarchyData`, `hierarchyTree`, etc.)
 
 ## Key Abstractions
 
-**BOMNode Class:**
-- Purpose: Represents a single item in the hierarchical structure
-- Location: `index.html` lines 1270-1282
-- Pattern: Class-based encapsulation with typed properties
-- Properties: level, partNumber, componentType, description, material, qty, length, uofm, state, purchaseDescription, nsItemType, revision, children[]
+**BOMNode:**
+- Purpose: Tree node representing single part in hierarchy
+- Examples: `js/core/tree.js` class definition (lines 23-39)
+- Pattern: Immutable once created, contains part attributes and children array
 
-**Flattened Item Object:**
-- Purpose: Represents aggregated purchasable item after flattening
-- Pattern: Plain JavaScript object (no class)
-- Key fields: partNumber, qty (aggregated), lengthDecimal, lengthFractional (1/16" increments), componentType, description (material concatenated)
+**Tree Building:**
+- Purpose: Transform flat row array into hierarchical structure
+- Examples: `js/core/tree.js` `buildTree()` function (lines 42-75)
+- Pattern: Two-pass algorithm - create all nodes, then link by parent-child relationship
 
-**Comparison Result Object:**
-- Purpose: Represents a single change between two BOMs
-- Pattern: Plain JavaScript object
-- Key fields: changeType ('Added'/'Removed'/'Changed'), partNumber, oldQty/newQty, oldDescription/newDescription, deltaQty, attributesChanged[]
+**Flattening:**
+- Purpose: Convert hierarchical tree to flat parts list with aggregated quantities
+- Examples: `js/core/flatten.js` `flattenBOM()` function (lines 6-51)
+- Pattern: Recursive tree traversal with multiplier propagation and Map-based deduplication
 
-**Composite Key Pattern:**
-- Purpose: Enable aggregation of same part at different lengths
-- Implementation: `PartNumber|Length` or `PartNumber` (if no length)
-- Location: `getCompositeKey()` function, used in flattening and comparison
-- Example: Part "ABC-123" at 2.5" and 3.5" are stored as separate keys
+**Comparison:**
+- Purpose: Diff two flattened BOMs to identify changes
+- Examples: `js/core/compare.js` `compareBOMs()` function (lines 7-99)
+- Pattern: Map-based keyed lookups to find Added (new only), Removed (old only), Changed (both with differences)
+
+**Composite Key:**
+- Purpose: Uniquely identify a part across length variants (some parts exist in multiple lengths)
+- Examples: `js/core/utils.js` `getCompositeKey()` function (lines 53-58)
+- Pattern: `partNumber` for parts without length, or `partNumber|lengthValue` for parts with length
 
 ## Entry Points
 
-**Flat BOM Tab:**
-- Location: `index.html` lines 1237-1270 (DOM event bindings)
-- Triggers: File upload via drag-drop or file input, Flatten BOM button click
-- Responsibilities:
-  - Bind upload zone drag-drop handlers
-  - Bind file input change handler
-  - Bind Flatten BOM button click
-  - Bind Reset button click
+**Browser Entry Point:**
+- Location: `index.html`
+- Triggers: Page load
+- Responsibilities: DOM structure, style loading, module script tag with `src="js/main.js"`
 
-**BOM Comparison Tab:**
-- Location: `index.html` lines ~2090-2200 (DOM event bindings for comparison)
-- Triggers: Two file uploads, Compare BOM button click, tree item clicks for scoping
-- Responsibilities:
-  - Manage two separate file upload zones
-  - Build selection trees for scope selection
-  - Handle comparison button click
-  - Manage filter buttons
+**Main Module Entry Point:**
+- Location: `js/main.js`
+- Triggers: `DOMContentLoaded` or immediate if already loaded
+- Responsibilities: Import three UI module inits, set up tab switching logic, prevent initial tab display
 
-**Hierarchy View Tab:**
-- Location: `index.html` lines ~3600-3700 (DOM event bindings for hierarchy)
-- Triggers: File upload, toggle button clicks for expand/collapse
-- Responsibilities:
-  - Handle file upload
-  - Bind toggle button click handlers
-  - Manage expand/collapse state
+**Tab UI Inits:**
+- Location: `js/ui/flat-bom.js`, `js/ui/comparison.js`, `js/ui/hierarchy.js` (each exports `init()`)
+- Triggers: Called from `js/main.js`
+- Responsibilities: Attach event listeners, set up file uploads, result rendering
 
 ## Error Handling
 
-**Strategy:** Try-catch blocks with user-facing messages via `showMessage()`, `showCompareMessage()`, `showHierarchyMessage()`
+**Strategy:** Try-catch with user-facing messages displayed in message div element
 
 **Patterns:**
-- File parsing errors (invalid CSV encoding, malformed XML) → caught and displayed as error message
-- Missing required data (no root node, invalid Level column) → thrown errors with descriptive text
-- UI validation (no file selected before flatten) → disabled buttons, error messages
-- Console logging for debugging: `console.log()` for trace, `console.error()` for failures
 
-**Sample:**
-```javascript
-try {
-    // Parse file
-    csvData = parseXML(xmlText);
-    showMessage(`XML loaded successfully: ${csvData.length} rows`, 'success');
-} catch (error) {
-    showMessage(`Error parsing file: ${error.message}`, 'error');
-    console.error('Parse error:', error);
-}
-```
+- **File Parsing Errors:** Invalid XML (`parsererror` element detected), missing elements ("No transaction element found")
+  - Caught in `js/ui/flat-bom.js` line 66-80, display via `showMessage(msg, 'error')`
+
+- **Tree Building Errors:** Missing parent node ("Parent {level} not found"), no root node ("No root node found")
+  - Thrown from `js/core/tree.js` lines 56-67, propagate to UI error handler
+
+- **Data Validation:** Empty files, incorrect headers
+  - Handled by parser returning empty array or throwing error
+
+- **File Type Detection:** Non-CSV/XML files rejected at upload
+  - UI layer validates filename extension before processing
 
 ## Cross-Cutting Concerns
 
-**Logging:** Console logging throughout processing pipeline:
-- File parsing milestones: "XML parsed: N rows"
-- Tree building: "Row X: Level=... PartNumber=..."
-- Flattening: "Processing: Level=..., Aggregating: key (was qty, adding qty)"
-- No external logging service; all to browser console
+**Logging:** Browser console only (`console.log()` statements in parsers and UI modules). No production logging framework.
 
-**Validation:**
-- File type: Accept only .csv and .xml files
-- Encoding: UTF-16LE for CSV with BOM detection; UTF-8 for XML
-- Required columns: Part Number, Level, Component Type, Qty (others optional)
-- Data types: Level parsed as string for hierarchy, Qty as integer, Length as decimal
-- User input: Unit Qty validated as positive integer (min=1, step=1)
+**Validation:** Implicit via parsing and tree construction - invalid data causes parser errors. No explicit schema validation layer.
 
-**Authentication:** Not applicable (no backend, no auth required)
+**Authentication:** Not applicable - browser-based offline tool, no user accounts or API calls.
 
-**UI State Synchronization:**
-- Disabled/enabled button states track loading status
-- Message boxes cleared before operations and populated with results
-- Results containers hidden until data available (display: none/block toggle)
-- Tab content show/hide via `.active` class toggling
+**File Type Detection:** Extension-based (.csv vs .xml) in UI layer, then semantic parsing (XML structure, CSV headers) in core.
 
-**Export Formatting:**
-- Excel export via SheetJS `XLSX.writeFile()` with formatted filenames
-- Filename pattern: `PartNumber-RevRevision-[Type]-YYYYMMDD.xlsx`
-- HTML export creates standalone document with embedded styles and Google Fonts via CDN
-- Line breaks: Native `\n` preserved in Excel; converted to `<br>` tags in HTML
+**Environment Abstraction:** `js/core/environment.js` handles browser vs Node.js runtime differences:
+- `DOMParser`: Native in browser, xmldom package in Node.js
+- `XLSX`: CDN global in browser, npm package in Node.js
+- `isNode` and `isBrowser` flags enable conditional imports
 
 ---
 
-*Architecture analysis: 2026-02-07*
+*Architecture analysis: 2026-02-10*

@@ -1,163 +1,156 @@
 # External Integrations
 
-**Analysis Date:** 2026-02-07
+**Analysis Date:** 2026-02-10
 
 ## APIs & External Services
 
-**File Parsing & Export:**
-- SheetJS Excel API (via xlsx library)
-  - SDK/Client: SheetJS v0.18.5
-  - What it does: Parses XLSX/CSV files, generates Excel exports
-  - Used in: `index.html` lines 7, 4000+
-  - Authentication: None (client-side library, no API calls)
+**None.**
 
-**Content Delivery:**
-- Cloudflare CDN
-  - Service: Hosts SheetJS JavaScript library
-  - URL: `https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js`
-  - Availability: Required for Excel functionality
-  - Failure mode: Excel import/export will not function if unavailable
-
-- Google Fonts CDN
-  - Service: Serves typeface files for JetBrains Mono and Work Sans
-  - URLs:
-    - API: `https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap`
-    - Assets: `https://fonts.gstatic.com`
-  - Failure mode: Graceful degradation to system fonts
-  - Preconnect optimization: Lines 1905-1906, 3133-3134, 4073-4074
+BOM Tool is a fully client-side application with zero external API dependencies. All processing occurs in the browser on user-uploaded files.
 
 ## Data Storage
 
 **Databases:**
-- Not applicable - No database integration
-- All processing is in-memory during session
-- No server-side persistence
+- Not applicable - No persistent server-side storage
+- All data processing in-memory only; state in `js/ui/state.js`
 
 **File Storage:**
-- Local filesystem only
-  - Browser File API used for file uploads (input type="file")
-  - No cloud storage integration
-  - No uploaded files persisted on any server
+- Input: Client-side via browser file upload
+  - Formats: CSV (UTF-16 from SOLIDWORKS PDM), XML hierarchical exports
+  - Stored: In-memory as parsed objects (`csvData`, trees, etc.)
 
-**Client-Side Storage:**
-- Session memory only
-  - Global variables store current BOM data during session
-  - No localStorage or sessionStorage usage detected
-  - Data cleared on page refresh
+- Output: Client-side Blob download
+  - Formats: Excel (.xlsx), HTML (.html)
+  - Mechanism: Blob API + `URL.createObjectURL()` in `js/export/shared.js`
+  - No server upload required
 
-**Test Data Files:**
-- Location: `test-data/` directory
-- Formats: XML, CSV, XLSX files
-- Used by: Node.js test harness (`test/run-tests.js`)
-- Not used by production application
+**Caching:**
+- None - No caching layer or service worker
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- Not applicable - No authentication system
-- Application is stateless with no user accounts
-- All processing is anonymous and client-side
-
-**Access Control:**
-- No access control (web application is publicly accessible)
-- No secrets or API keys required
+- Not applicable - No user accounts or authentication system
+- Application is public/unauthenticated
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- Not implemented - No error tracking service integrated
+- Not detected - No error tracking service (Sentry, DataDog, etc.)
+- Errors logged to browser console only
 
 **Logs:**
-- Browser console only
-  - Via native `console.log()`, `console.error()`
-  - User-accessible via browser DevTools
-  - No log aggregation or centralized logging
-
-**Analytics:**
-- Not implemented - No analytics service integrated
+- Console logging only
+- No centralized logging or analytics
 
 ## CI/CD & Deployment
 
 **Hosting:**
-- GitHub Pages (static hosting)
-- Repository: `https://github.com/amcallister/bom-tool`
-- Deployed via: Git push to main branch
+- GitHub Pages (static)
+- Repository: `mondreykr/bom-tool`
+- Branch: `main` (auto-deployed)
 
 **CI Pipeline:**
-- Not automated - No CI/CD pipeline configured
-- Manual testing required before deployment
-- Git hooks: Not detected
+- Not detected - No automated pipeline (.github/workflows not found)
+- Manual deployment via git push to main branch
 
-**Build Process:**
-- None required - Static HTML file
-- Direct distribution of `index.html` file
+**Test Validation:**
+- Local validation only: `npm test` (Node.js test runner)
+- Four automated baseline comparison tests in `test/run-tests.js`:
+  1. XML to Flat BOM
+  2. CSV to Flat BOM
+  3. XML Comparison
+  4. CSV Comparison
+- Tests validate against baseline Excel outputs in `test-data/` (all must pass)
 
 ## Environment Configuration
 
 **Required env vars:**
 - None - Application requires no environment variables
 
-**Secrets location:**
-- Not applicable - No secrets required
-- No API keys, credentials, or sensitive data
+**Configuration:**
+- Build-time: No configuration files (no build process)
+- Runtime: No runtime configuration needed
+- Deployment: Static file serving only
 
-**Configuration Methods:**
-- Hardcoded defaults in HTML/CSS/JavaScript
-- No configuration file needed
-- Design system colors defined in CSS `:root` variables (lines 17-32 in `index.html`)
+## Client-Side State
+
+**In-Memory State:**
+- Location: `js/ui/state.js`
+- Properties:
+  - `csvData`, `flattenedBOM`, `treeRoot` - Flat BOM tab data
+  - `oldBomData`, `newBomData`, `oldBomTree`, `newBomTree` - Comparison data
+  - `hierarchyData`, `hierarchyTree` - Hierarchy View data
+  - `comparisonResults`, `currentFilter` - Filtered comparison results
+- Lifecycle: Created on file upload, cleared on reset
+
+**No Persistence:**
+- localStorage not used
+- sessionStorage not used
+- IndexedDB not used
+- Data lost on page refresh
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- Not implemented - No webhook endpoints
+- None
 
 **Outgoing:**
-- Not implemented - No webhook callbacks to external services
+- None
 
-## No External Dependencies
+## Content Delivery
 
-**Critical to Note:**
-- Application has minimal external dependencies by design
-- Only SheetJS library is truly essential
-- All other integrations are optional convenience features (fonts from CDN)
-- Application could degrade gracefully if CDN is unavailable:
-  - Excel functionality would be lost (no fallback)
-  - Fonts would fall back to system fonts (graceful)
+**Static Assets:**
+```
+index.html              → GitHub Pages CDN
+css/styles.css          → GitHub Pages CDN
+js/**/*.js              → GitHub Pages CDN (ES6 modules)
+test/**/*.js            → Local Node.js only
+```
 
-## Data Flow
+**External Resources:**
+- Google Fonts (CSS @import)
+  - `https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@400;600;700&display=swap`
+- XLSX CDN (via `<script>` tag in `index.html`)
+  - `https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js`
 
-**Input Sources:**
-1. User uploads CSV/XML/XLSX file via HTML file input
-2. SheetJS library parses file to JavaScript objects
-3. DOMParser (browser native) parses XML structure
-4. Data stored in global variables during session
+## Third-Party Libraries
 
-**Output Destinations:**
-1. Interactive web interface (rendered in browser)
-2. Excel export via SheetJS `XLSX.writeFile()` (downloads to user's device)
-3. HTML export (static HTML file, downloads to user's device)
+**Browser Runtime:**
+- SheetJS v0.18.5 (XLSX library)
+  - Source: CDN
+  - Used by: `js/export/excel.js`
+  - Capabilities: Excel workbook generation, sheet manipulation
 
-**No External Data Transfer:**
-- All processing happens client-side
-- No data sent to external servers
-- No analytics or telemetry
-- No cloud synchronization
+**Node.js Testing:**
+- `xlsx` v0.18.5 (npm package)
+- `xmldom` v0.6.0 (npm package)
+- No other test dependencies (no Mocha, Jest, etc.)
 
-## File Handling
+## Data Processing
 
-**Upload Process:**
-- Uses HTML5 File API (`<input type="file">`)
-- No file size limits enforced by application
-- Files loaded entirely into browser memory
-- No temporary files created on server (no server)
+**Input Formats:**
+- CSV (UTF-16 from SOLIDWORKS PDM exports)
+  - Parsing: `js/core/parser.js` → `parseCSV()`
+  - Uses SheetJS to read binary format
 
-**Download Process:**
-- Browser native download for Excel files (SheetJS)
-- Browser native download for HTML files (JavaScript Blob download)
-- Filenames generated by application:
-  - Format: `[PartNumber]-Rev[Revision]-[Type]-[YYYYMMDD].[xlsx|html]`
-  - Example: `ASSY-12345-RevA-Flat BOM-20260207.xlsx`
+- XML (Hierarchical BOM structure from SOLIDWORKS)
+  - Parsing: `js/core/parser.js` → `parseXML()`
+  - Uses DOMParser (browser native or xmldom in Node)
+  - Expected structure: `<transaction><document>` with nested `<configuration>` elements
+
+**Processing Pipeline:**
+1. Parse file (CSV or XML) → Array of row objects
+2. Build tree: `js/core/tree.js` → `buildTree()` → BOMNode hierarchy
+3. Flatten tree: `js/core/flatten.js` → `flattenBOM()` → Flat parts list
+4. Compare: `js/core/compare.js` → `compareBOMs()` → Diff results
+5. Export: `js/export/excel.js` or `js/export/html.js` → File download
+
+**No Network Processing:**
+- All file I/O is local to the browser/Node process
+- No multipart/form-data uploads to server
+- No streaming or chunked processing
 
 ---
 
-*Integration audit: 2026-02-07*
+*Integration audit: 2026-02-10*
