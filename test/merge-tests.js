@@ -30,7 +30,7 @@ function makeNode({
         UofM: '',
         State: state,
         'Purchase Description': '',
-        'NS Item Type': componentType === 'Assembly' ? 'Assembly Item' : 'Inventory Item',
+        'NS Item Type': componentType === 'Assembly' ? 'Assembly' : 'Inventory',
         Revision: revision
     };
 

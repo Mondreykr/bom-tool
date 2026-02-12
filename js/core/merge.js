@@ -1,5 +1,7 @@
 // merge.js - IFP BOM Merge Engine
 
+import { isAssembly } from './validate.js';
+
 /**
  * Determines if an assembly state qualifies as "Released" (approved for production).
  * Uses a whitelist approach: only IFP and IFU are approved states.
@@ -25,7 +27,7 @@ export function buildPNIndex(rootNode) {
 
     function walk(node) {
         // Only index Assembly nodes
-        if (node.componentType === 'Assembly') {
+        if (isAssembly(node)) {
             // Store first occurrence only (B(n-1) is flat truth)
             if (!index.has(node.partNumber)) {
                 index.set(node.partNumber, node);
@@ -88,7 +90,7 @@ function createPlaceholder(sourceNode) {
         uofm: sourceNode.uofm,
         state: sourceNode.state,
         purchaseDescription: sourceNode.purchaseDescription,
-        nsItemType: sourceNode.nsItemType,
+        nsItemType: sourceNode.nsItemType, // Preserve NS Item Type
         revision: sourceNode.revision,
         level: sourceNode.level,
         children: []
@@ -141,7 +143,7 @@ function collectAllAssemblyPNs(rootNode) {
     const assemblyPNs = new Set();
 
     function walk(node) {
-        if (node.componentType === 'Assembly') {
+        if (isAssembly(node)) {
             assemblyPNs.add(node.partNumber);
         }
         node.children.forEach(child => walk(child));
@@ -195,7 +197,7 @@ export function mergeBOM(sourceRoot, priorRoot) {
      */
     function walkAndMerge(sourceNode) {
         // Check if this is a WIP assembly
-        if (sourceNode.componentType === 'Assembly' && !isReleased(sourceNode.state)) {
+        if (isAssembly(sourceNode) && !isReleased(sourceNode.state)) {
             // GRAFT LOGIC: Find this assembly in B(n-1)
             const priorNode = priorIndex.get(sourceNode.partNumber);
 
@@ -240,13 +242,13 @@ export function mergeBOM(sourceRoot, priorRoot) {
         result._source = 'current';
 
         // Count Released assemblies
-        if (sourceNode.componentType === 'Assembly') {
+        if (isAssembly(sourceNode)) {
             passedThroughCount++;
         }
 
         // Recurse to children
         result.children = sourceNode.children.map(child => {
-            if (child.componentType === 'Assembly') {
+            if (isAssembly(child)) {
                 // Recurse for assemblies (may trigger graft)
                 return walkAndMerge(child);
             } else {
