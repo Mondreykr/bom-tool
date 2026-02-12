@@ -96,6 +96,62 @@ function createPlaceholder(sourceNode) {
 }
 
 /**
+ * Compare fields between source node (X(n)) and prior node (B(n-1)).
+ * Returns array of changes for fields that differ.
+ *
+ * Note: State is NOT compared because it's inherently different (WIP vs Released)
+ * and is the reason we're grafting in the first place.
+ *
+ * @param {BOMNode} sourceNode - Node from X(n)
+ * @param {BOMNode} priorNode - Node from B(n-1)
+ * @returns {Array} - Array of change objects: {field, from, to}
+ */
+function computeChanges(sourceNode, priorNode) {
+    const changes = [];
+    const fieldsToCompare = [
+        'qty', 'description', 'revision', 'material',
+        'length', 'uofm', 'purchaseDescription'
+    ];
+
+    for (const field of fieldsToCompare) {
+        const sourceValue = sourceNode[field];
+        const priorValue = priorNode[field];
+
+        // Compare values (handle undefined/null/empty string)
+        if (sourceValue !== priorValue) {
+            changes.push({
+                field: field,
+                from: priorValue,
+                to: sourceValue
+            });
+        }
+    }
+
+    return changes;
+}
+
+/**
+ * Collect all assembly part numbers in a tree.
+ * Used to detect missing assemblies.
+ *
+ * @param {BOMNode} rootNode - Root of tree to walk
+ * @returns {Set<string>} - Set of assembly part numbers
+ */
+function collectAllAssemblyPNs(rootNode) {
+    const assemblyPNs = new Set();
+
+    function walk(node) {
+        if (node.componentType === 'Assembly') {
+            assemblyPNs.add(node.partNumber);
+        }
+        node.children.forEach(child => walk(child));
+    }
+
+    walk(rootNode);
+    return assemblyPNs;
+}
+
+/**
  * Recursively tag a node and all descendants with a source tag.
  * Used to mark grafted subtrees.
  *
@@ -119,12 +175,17 @@ function tagSource(node, source) {
  *
  * @param {BOMNode} sourceRoot - Root of X(n) (current/new BOM)
  * @param {BOMNode|null} priorRoot - Root of B(n-1) (prior IFP artifact), or null for REV0
- * @returns {{mergedTree: Object, warnings: string[]}} - Merged tree and warnings
+ * @returns {{mergedTree: Object, warnings: string[], summary: Object}} - Merged tree, warnings, and summary
  */
 export function mergeBOM(sourceRoot, priorRoot) {
     // Build PN index from B(n-1) for O(1) graft lookups
     const priorIndex = priorRoot ? buildPNIndex(priorRoot) : new Map();
     const warnings = [];
+
+    // Track summary statistics
+    let passedThroughCount = 0;
+    let graftedCount = 0;
+    let placeholderCount = 0;
 
     /**
      * Recursive walk-and-merge function.
@@ -142,8 +203,21 @@ export function mergeBOM(sourceRoot, priorRoot) {
                 // GRAFT: Clone entire subtree from B(n-1)
                 const grafted = deepClone(priorNode);
 
+                // Compute change annotations BEFORE updating qty
+                // (compare X(n) vs B(n-1) to show what changed)
+                const changes = computeChanges(sourceNode, priorNode);
+                if (changes.length > 0) {
+                    grafted._changes = changes;
+                }
+
+                // MERGE-07: Qty at graft point comes from X(n) (parent's declaration)
+                // All other fields (description, revision, children) stay from B(n-1)
+                grafted.qty = sourceNode.qty;
+
                 // Tag entire grafted subtree
                 tagSource(grafted, 'grafted');
+
+                graftedCount++;
 
                 return grafted;
             } else {
@@ -155,6 +229,8 @@ export function mergeBOM(sourceRoot, priorRoot) {
                     `${sourceNode.partNumber} [${sourceNode.state}] has no prior released BOM — included as empty placeholder`
                 );
 
+                placeholderCount++;
+
                 return placeholder;
             }
         }
@@ -162,6 +238,11 @@ export function mergeBOM(sourceRoot, priorRoot) {
         // RELEASED ASSEMBLY or PART: Include from current (X(n))
         const result = shallowCopy(sourceNode);
         result._source = 'current';
+
+        // Count Released assemblies
+        if (sourceNode.componentType === 'Assembly') {
+            passedThroughCount++;
+        }
 
         // Recurse to children
         result.children = sourceNode.children.map(child => {
@@ -182,5 +263,26 @@ export function mergeBOM(sourceRoot, priorRoot) {
     // Start merge from root
     const mergedTree = walkAndMerge(sourceRoot);
 
-    return { mergedTree, warnings };
+    // Detect missing assemblies (in B(n-1) but absent from X(n))
+    if (priorRoot) {
+        const priorAssemblies = collectAllAssemblyPNs(priorRoot);
+        const sourceAssemblies = collectAllAssemblyPNs(sourceRoot);
+
+        for (const priorPN of priorAssemblies) {
+            if (!sourceAssemblies.has(priorPN)) {
+                warnings.push(
+                    `Assembly ${priorPN} exists in B(n-1) but is absent from X(n) — may be deleted or suppressed`
+                );
+            }
+        }
+    }
+
+    // Build summary
+    const summary = {
+        passedThrough: passedThroughCount,
+        grafted: graftedCount,
+        placeholders: placeholderCount
+    };
+
+    return { mergedTree, warnings, summary };
 }
