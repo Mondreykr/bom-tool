@@ -192,3 +192,118 @@ export function suggestJobNumber(priorArtifact, rootPartNumber) {
     }
     return priorArtifact.metadata.jobNumber;
 }
+
+/**
+ * Strip stale _changes annotations from a node and all its children.
+ * _changes are specific to the merge that created the artifact; when the artifact
+ * becomes B(n-1) for the next merge, those old changes are stale and misleading.
+ * _source tags are preserved (they indicate content origin and are useful for display).
+ *
+ * @param {Object} node - Node to process
+ */
+function stripStaleAnnotations(node) {
+    delete node._changes;  // Stale from prior merge
+    if (node.children && Array.isArray(node.children)) {
+        node.children.forEach(child => stripStaleAnnotations(child));
+    }
+}
+
+/**
+ * Import a JSON artifact string and reconstruct the artifact object.
+ * Validates basic structure, strips stale _changes, ensures children arrays exist.
+ * The returned bom tree can be used directly as priorRoot in mergeBOM().
+ *
+ * @param {string} jsonString - JSON string of artifact
+ * @returns {Object} - Artifact object {formatVersion, metadata, bom}
+ * @throws {Error} - If JSON is invalid or missing required fields
+ */
+export function importArtifact(jsonString) {
+    // Parse JSON
+    let artifact;
+    try {
+        artifact = JSON.parse(jsonString);
+    } catch (e) {
+        throw new Error(`Invalid JSON: ${e.message}`);
+    }
+
+    // Validate basic structure
+    if (!artifact.formatVersion) {
+        throw new Error('Missing formatVersion field');
+    }
+    if (!artifact.metadata) {
+        throw new Error('Missing metadata field');
+    }
+    if (!artifact.bom) {
+        throw new Error('Missing bom field');
+    }
+
+    // Strip stale _changes from all nodes (stale from the merge that created this artifact)
+    stripStaleAnnotations(artifact.bom);
+
+    // Ensure all nodes have children arrays (replace undefined with empty array)
+    function ensureChildren(node) {
+        if (!node.children) {
+            node.children = [];
+        }
+        if (Array.isArray(node.children)) {
+            node.children.forEach(child => ensureChildren(child));
+        }
+    }
+    ensureChildren(artifact.bom);
+
+    return artifact;
+}
+
+/**
+ * Validate an imported artifact.
+ * Checks hash integrity (hard block), GA part number match (warning), and revision gaps (warning).
+ *
+ * @param {Object} artifact - Imported artifact object
+ * @param {Object} [options] - Validation options
+ * @param {string} [options.expectedGA] - Expected GA part number from X(n) root
+ * @param {number} [options.expectedRevision] - Expected revision number for next artifact
+ * @returns {Promise<Object>} - {valid: boolean, errors: string[], warnings: string[]}
+ */
+export async function validateArtifact(artifact, options = {}) {
+    const errors = [];
+    const warnings = [];
+
+    // Hash verification (ARTF-03) - hard block on mismatch
+    const storedHash = artifact.metadata.hash;
+    const computedHash = await computeHash(artifact.bom);
+
+    if (storedHash !== computedHash) {
+        errors.push(
+            `Integrity check failed: stored hash ${storedHash}, computed hash ${computedHash}`
+        );
+    }
+
+    // GA part number validation (ARTF-04) - warning only
+    if (options.expectedGA) {
+        const actualGA = artifact.bom.partNumber;
+        if (options.expectedGA !== actualGA) {
+            warnings.push(
+                `GA part number mismatch: X(n) root is ${options.expectedGA}, B(n-1) root is ${actualGA}`
+            );
+        }
+    }
+
+    // Revision gap detection - warning only
+    if (options.expectedRevision !== undefined) {
+        const priorRevision = artifact.metadata.revision;
+        const expectedNext = priorRevision + 1;
+
+        if (options.expectedRevision > expectedNext) {
+            warnings.push(
+                `Revision gap: B(n-1) is REV${priorRevision}, next would be REV${expectedNext}, but REV${options.expectedRevision} was specified`
+            );
+        }
+    }
+
+    // Valid only if no errors (only errors block; warnings are informational)
+    return {
+        valid: errors.length === 0,
+        errors,
+        warnings
+    };
+}
