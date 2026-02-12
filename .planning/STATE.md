@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 11 of 15 (Core Merge Engine)
-Plan: Ready to plan
-Status: Ready to plan
-Last activity: 2026-02-11 — Roadmap created for v2.0 IFP BOM Merge milestone
+Plan: 02 (next to plan)
+Status: In progress
+Last activity: 2026-02-11 — Core merge engine implemented with TDD (plan 11-01 complete)
 
 Progress: [██████░░░░░░░░░░░░░░] 33% (10 of 15 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
-- Average duration: 11 min
+- Total plans completed: 18
+- Average duration: 10 min
 - Total execution time: 3.2 hours
 
 **By Phase (v1.0 complete):**
@@ -37,10 +37,11 @@ Progress: [██████░░░░░░░░░░░░░░] 33% (10
 | 8 | 1 | 8 min | 8 min |
 | 9 | 2 | 62 min | 31 min |
 | 10 | 2 | 17 min | 9 min |
+| 11 | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 9, 12, 38, 15, 26 min
-- Trend: Stable (complexity-dependent)
+- Last 5 plans: 12, 38, 15, 26, 2 min
+- Trend: Fast execution for pure algorithm work with comprehensive TDD
 
 *Updated after each plan completion*
 
@@ -55,6 +56,8 @@ Recent decisions affecting current work:
 - **B(n) format: JSON with SHA-256 hash**: Machine-readable, reimportable, tamper-detectable; browser has native crypto APIs
 - **4th tab for IFP Merge**: Distinct workflow from existing 3 tabs; Engineering uses it, Operations ignores it
 - **State whitelist (IFP/IFU = Released)**: Only two approved states; everything else is WIP by exclusion; future-proof
+- **WIP assembly node tagged as 'grafted'**: At graft points, the WIP assembly node itself is tagged grafted (not current), because its metadata comes from B(n-1)
+- **Empty placeholders for never-released WIP**: WIP assemblies with no prior release become empty nodes with zero children, preserving tree structure and making gaps visible
 
 ### Pending Todos
 
@@ -68,11 +71,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-11 (roadmap creation)
-Stopped at: ROADMAP.md, STATE.md, and REQUIREMENTS.md traceability written for v2.0
+Last session: 2026-02-11 (plan 11-01 execution)
+Stopped at: Completed 11-01-PLAN.md (Core Merge Engine) — js/core/merge.js and test/merge-tests.js created, all tests passing
 Resume file: None
 
-Next action: `/gsd:plan-phase 11` to create execution plan for Core Merge Engine
+Next action: Continue with next plan in Phase 11, or proceed to Phase 12 (Artifact Format) if Phase 11 is complete
 
 ---
-*Last updated: 2026-02-11 after v2.0 roadmap creation*
+*Last updated: 2026-02-11 after plan 11-01 completion*
