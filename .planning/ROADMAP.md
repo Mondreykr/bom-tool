@@ -43,8 +43,8 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Core merge engine TDD: state detection, tree walk, grafting, REV0, placeholders, source tags
-- [ ] 11-02-PLAN.md — Graft boundary rules, change annotations, missing assembly warnings, merge summary
+- [x] 11-01-PLAN.md — Core merge engine TDD: state detection, tree walk, grafting, REV0, placeholders, source tags
+- [x] 11-02-PLAN.md — Graft boundary rules, change annotations, missing assembly warnings, merge summary
 
 #### Phase 12: JSON Artifact Format
 **Goal**: IFP artifacts export/import as JSON with integrity verification and all metadata
@@ -125,11 +125,11 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 8. Entry Point Consolidation | v1.0 | 1/1 | Complete | 2026-02-09 |
 | 9. Deployment | v1.0 | 2/2 | Complete | 2026-02-09 |
 | 10. Final Validation | v1.0 | 2/2 | Complete | 2026-02-09 |
-| 11. Core Merge Engine | v2.0 | 0/2 | Planned | - |
+| 11. Core Merge Engine | v2.0 | 2/2 | Complete | 2026-02-11 |
 | 12. JSON Artifact Format | v2.0 | 0/? | Not started | - |
 | 13. Validation System | v2.0 | 0/? | Not started | - |
 | 14. IFP Merge Tab UI | v2.0 | 0/? | Not started | - |
 | 15. Cross-Tab Integration | v2.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-02-11 after Phase 11 planning*
+*Last updated: 2026-02-11 after Phase 11 execution complete*
