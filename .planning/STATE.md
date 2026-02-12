@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Accurate BOM processing that Operations can trust
-**Current focus:** Phase 11 - Core Merge Engine
+**Current focus:** Phase 12 - JSON Artifact Format
 
 ## Current Position
 
-Phase: 11 of 15 (Core Merge Engine)
-Plan: 2 of 2
-Status: Complete
-Last activity: 2026-02-12 — Complete merge engine with graft boundary rules, change annotations, missing assembly warnings, and merge summary (plan 11-02 complete)
+Phase: 12 of 15 (JSON Artifact Format)
+Plan: 1 of 2
+Status: In Progress
+Last activity: 2026-02-12 — JSON artifact export implemented with SHA-256 integrity hash, canonical serialization, and company filename conventions (plan 12-01 complete)
 
 Progress: [███████░░░░░░░░░░░░░] 73% (11 of 15 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19
+- Total plans completed: 20
 - Average duration: 9 min
 - Total execution time: 3.3 hours
 
@@ -38,10 +38,11 @@ Progress: [███████░░░░░░░░░░░░░] 73% (11
 | 9 | 2 | 62 min | 31 min |
 | 10 | 2 | 17 min | 9 min |
 | 11 | 2 | 5 min | 3 min |
+| 12 | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 38, 15, 26, 2, 3 min
-- Trend: Fast execution for pure algorithm work with comprehensive TDD
+- Last 5 plans: 15, 26, 2, 3, 2 min
+- Trend: Very fast execution for pure algorithm work with comprehensive TDD
 
 *Updated after each plan completion*
 
@@ -54,6 +55,8 @@ Recent decisions affecting current work:
 
 - **Feature branch for v2.2+**: Protects production (main) during development; merge when milestone is complete
 - **B(n) format: JSON with SHA-256 hash**: Machine-readable, reimportable, tamper-detectable; browser has native crypto APIs
+- **Canonical JSON with sorted keys**: Ensures deterministic hashing across JS engines regardless of property insertion order
+- **formatVersion field in artifacts**: Enables future format evolution without breaking imports
 - **4th tab for IFP Merge**: Distinct workflow from existing 3 tabs; Engineering uses it, Operations ignores it
 - **State whitelist (IFP/IFU = Released)**: Only two approved states; everything else is WIP by exclusion; future-proof
 - **WIP assembly node tagged as 'grafted'**: At graft points, the WIP assembly node itself is tagged grafted (not current), because its metadata comes from B(n-1)
@@ -75,11 +78,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-12 (plan 11-02 execution)
-Stopped at: Completed 11-02-PLAN.md (Graft Boundary Rules and Annotations) — Phase 11 complete, merge engine fully implemented with all 7 MERGE requirements
+Last session: 2026-02-12 (plan 12-01 execution)
+Stopped at: Completed 12-01-PLAN.md (JSON Artifact Export) — Artifact format v1.0 with SHA-256 hash, canonical serialization, filename generation, and revision logic
 Resume file: None
 
-Next action: Proceed to Phase 12 (Artifact Format) — define JSON structure for B(n) with SHA-256 hash
+Next action: Proceed to plan 12-02 (Artifact Import) — implement JSON parsing, hash verification, and validation
 
 ---
-*Last updated: 2026-02-12 after plan 11-02 completion*
+*Last updated: 2026-02-12 after plan 12-01 completion*
