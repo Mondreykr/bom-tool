@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Accurate BOM processing that Operations can trust
-**Current focus:** Phase 12 - JSON Artifact Format
+**Current focus:** Phase 13 - Validation System
 
 ## Current Position
 
-Phase: 12 of 15 (JSON Artifact Format)
-Plan: 2 of 2 (Phase Complete)
-Status: Complete
-Last activity: 2026-02-12 — JSON artifact import and validation implemented with hash verification, GA validation, and round-trip merge workflow (plan 12-02 complete)
+Phase: 13 of 15 (Validation System)
+Plan: 1 of 2 (In Progress)
+Status: In Progress
+Last activity: 2026-02-12 — Pre-merge validation system implemented with nsItemType-based assembly identification (plan 13-01 complete)
 
-Progress: [████████░░░░░░░░░░░░] 80% (12 of 15 phases complete)
+Progress: [████████░░░░░░░░░░░░] 86% (13 of 15 phases, 1 of 2 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
+- Total plans completed: 22
 - Average duration: 9 min
-- Total execution time: 3.4 hours
+- Total execution time: 3.5 hours
 
 **By Phase (v1.0 complete):**
 
@@ -39,10 +39,11 @@ Progress: [████████░░░░░░░░░░░░] 80% (12
 | 10 | 2 | 17 min | 9 min |
 | 11 | 2 | 5 min | 3 min |
 | 12 | 2 | 5 min | 3 min |
+| 13 | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 26, 2, 3, 2, 3 min
-- Trend: Very fast execution for pure algorithm work with comprehensive TDD
+- Last 5 plans: 2, 3, 2, 3, 5 min
+- Trend: Consistent fast execution for TDD algorithm work
 
 *Updated after each plan completion*
 
@@ -65,6 +66,7 @@ Recent decisions affecting current work:
 - **Change annotations are informational**: Field differences between X(n) and B(n-1) at graft points are stored but do not block merge
 - **State field excluded from change comparison**: State is inherently different (WIP vs Released), so it's excluded from change annotations to reduce noise
 - **Missing assemblies generate warnings only**: Assemblies in B(n-1) but absent from X(n) generate warnings but are NOT carried forward
+- [Phase 13]: Assembly identification uses NS Item Type field (not Component Type) as authoritative source
 
 ### Pending Todos
 
@@ -78,11 +80,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-12 (plan 12-02 execution)
-Stopped at: Completed 12-02-PLAN.md (JSON Artifact Import and Validation) — Phase 12 complete: round-trip JSON workflow with hash verification, GA validation, and stale annotation stripping
+Last session: 2026-02-12 (plan 13-01 execution)
+Stopped at: Completed 13-01-PLAN.md (Validation System and Assembly Identification) — Pre-merge validation with nsItemType-based assembly detection, Rule 0/1/2 validation, full error collection
 Resume file: None
 
-Next action: Proceed to Phase 13 (IFP Merge UI Implementation) — build 4th tab with file selection, validation feedback, and artifact download
+Next action: Proceed to Phase 13 Plan 02 — UI integration for validation feedback
 
 ---
-*Last updated: 2026-02-12 after plan 12-02 completion (Phase 12 complete)*
+*Last updated: 2026-02-12 after plan 13-01 completion*
