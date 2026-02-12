@@ -80,7 +80,7 @@ Accurate BOM processing that Operations can trust. The tool is the only BOM proc
 **Reference documents:**
 - `docs/IFP BOM Merge Tool PRD 20250211.md` — Full specification (algorithm, edge cases, process flow)
 - `docs/IFP BOM Merge Tool - Codebase Reality Check 20250205.md` — PRD validated against codebase
-- `archive/IFP Release Challenge 20250205.md` — Problem statement and solution options
+- `docs\Release Gate Model Walkthrough 20260211.md` — Full explanatory walkthrough of the intent
 
 **Future roadmap:**
 1. ~~IFP BOM Merge Tool~~ — v2.0 (in progress)

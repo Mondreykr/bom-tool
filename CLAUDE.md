@@ -8,11 +8,12 @@
 
 ## Project
 
-**BOM Tool 2.1** — A web application for flattening, comparing, and visualizing hierarchical Bills of Materials (BOMs) from SOLIDWORKS PDM exports. Production-ready, validated against legacy Excel tools, used by Operations for procurement and work orders.
+**BOM Tool** — A web application for flattening, comparing, and visualizing hierarchical Bills of Materials (BOMs) from SOLIDWORKS PDM exports. Production-ready, validated against legacy Excel tools, used by Operations for procurement and work orders.
 
 - **Stack:** HTML5, CSS3, vanilla JavaScript ES6+, SheetJS (xlsx.js) v0.18.5 via CDN
 - **No build process** — native ES6 modules, no bundler, no framework
-- **Deployed:** https://mondreykr.github.io/bom-tool/ (GitHub Pages, main branch)
+- **Deployed:** https://mondreykr.github.io/bom-tool/ (GitHub Pages, serves from main branch)
+- **Development branch:** `v2.2-ifp-merge` — all new work happens here, merge to main only when ready to deploy
 
 ## File Structure
 
@@ -57,13 +58,21 @@ Tests validate BOM flattening (XML + CSV) and comparison (XML + CSV) against bas
 
 ## Git Workflow
 
+**Branch strategy:** Develop on `v2.2-ifp-merge`, keep main stable for production. Only merge to main when a milestone is complete and tested.
+
 Always commit before and after changes (safety net for non-technical user).
 
 ```bash
 git status                          # Check current state
+git branch                          # Confirm you're on v2.2-ifp-merge (not main)
 git add <files>                     # Stage specific files
 git commit -m "description"         # Commit with clear message
 git log --oneline -10               # See recent history
+```
+
+**Never commit directly to main.** If you find yourself on main, switch back:
+```bash
+git checkout v2.2-ifp-merge
 ```
 
 ## Working Principles
