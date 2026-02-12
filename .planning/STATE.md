@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 11 of 15 (Core Merge Engine)
-Plan: 02 (next to plan)
-Status: In progress
-Last activity: 2026-02-11 — Core merge engine implemented with TDD (plan 11-01 complete)
+Plan: 2 of 2
+Status: Complete
+Last activity: 2026-02-12 — Complete merge engine with graft boundary rules, change annotations, missing assembly warnings, and merge summary (plan 11-02 complete)
 
-Progress: [██████░░░░░░░░░░░░░░] 33% (10 of 15 phases complete)
+Progress: [███████░░░░░░░░░░░░░] 73% (11 of 15 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18
-- Average duration: 10 min
-- Total execution time: 3.2 hours
+- Total plans completed: 19
+- Average duration: 9 min
+- Total execution time: 3.3 hours
 
 **By Phase (v1.0 complete):**
 
@@ -37,10 +37,10 @@ Progress: [██████░░░░░░░░░░░░░░] 33% (10
 | 8 | 1 | 8 min | 8 min |
 | 9 | 2 | 62 min | 31 min |
 | 10 | 2 | 17 min | 9 min |
-| 11 | 1 | 2 min | 2 min |
+| 11 | 2 | 5 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 12, 38, 15, 26, 2 min
+- Last 5 plans: 38, 15, 26, 2, 3 min
 - Trend: Fast execution for pure algorithm work with comprehensive TDD
 
 *Updated after each plan completion*
@@ -58,6 +58,10 @@ Recent decisions affecting current work:
 - **State whitelist (IFP/IFU = Released)**: Only two approved states; everything else is WIP by exclusion; future-proof
 - **WIP assembly node tagged as 'grafted'**: At graft points, the WIP assembly node itself is tagged grafted (not current), because its metadata comes from B(n-1)
 - **Empty placeholders for never-released WIP**: WIP assemblies with no prior release become empty nodes with zero children, preserving tree structure and making gaps visible
+- **Qty at graft point comes from X(n)**: At graft boundaries, qty is sourced from X(n) (parent's approved declaration), while all other fields and children come from B(n-1)
+- **Change annotations are informational**: Field differences between X(n) and B(n-1) at graft points are stored but do not block merge
+- **State field excluded from change comparison**: State is inherently different (WIP vs Released), so it's excluded from change annotations to reduce noise
+- **Missing assemblies generate warnings only**: Assemblies in B(n-1) but absent from X(n) generate warnings but are NOT carried forward
 
 ### Pending Todos
 
@@ -71,11 +75,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-11 (plan 11-01 execution)
-Stopped at: Completed 11-01-PLAN.md (Core Merge Engine) — js/core/merge.js and test/merge-tests.js created, all tests passing
+Last session: 2026-02-12 (plan 11-02 execution)
+Stopped at: Completed 11-02-PLAN.md (Graft Boundary Rules and Annotations) — Phase 11 complete, merge engine fully implemented with all 7 MERGE requirements
 Resume file: None
 
-Next action: Continue with next plan in Phase 11, or proceed to Phase 12 (Artifact Format) if Phase 11 is complete
+Next action: Proceed to Phase 12 (Artifact Format) — define JSON structure for B(n) with SHA-256 hash
 
 ---
-*Last updated: 2026-02-11 after plan 11-01 completion*
+*Last updated: 2026-02-12 after plan 11-02 completion*
