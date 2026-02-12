@@ -1,5 +1,6 @@
 import { BOMNode } from '../js/core/tree.js';
-import { exportArtifact, computeHash, generateFilename, suggestRevision, suggestJobNumber } from '../js/core/artifact.js';
+import { exportArtifact, computeHash, generateFilename, suggestRevision, suggestJobNumber, importArtifact, validateArtifact } from '../js/core/artifact.js';
+import { mergeBOM } from '../js/core/merge.js';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -436,6 +437,442 @@ async function test14() {
     console.log('');
 }
 
+// Test 15: importArtifact parses JSON string to artifact object
+async function test15() {
+    console.log('Test 15: importArtifact parses JSON string to artifact object');
+
+    const root = makeNode({ partNumber: 'ROOT', _source: 'current' });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 1,
+        jobNumber: '1J123456',
+        sourceFiles: { xn: 'test.xml', bn1: null }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    assert(imported.formatVersion !== undefined, 'imported artifact has formatVersion');
+    assert(imported.metadata !== undefined, 'imported artifact has metadata');
+    assert(imported.bom !== undefined, 'imported artifact has bom');
+    assert(imported.bom.partNumber === 'ROOT', 'imported bom tree has correct root partNumber');
+    assert(Array.isArray(imported.bom.children), 'imported bom root has children array');
+
+    console.log('');
+}
+
+// Test 16: importArtifact reconstructs tree with all BOMNode fields
+async function test16() {
+    console.log('Test 16: importArtifact reconstructs tree with all BOMNode fields');
+
+    const child = makeNode({
+        partNumber: 'CHILD-1',
+        componentType: 'Part',
+        description: 'Test Part',
+        qty: 5,
+        _source: 'current'
+    });
+
+    const root = makeNode({
+        partNumber: 'ROOT',
+        componentType: 'Assembly',
+        description: 'Test Assembly',
+        qty: 1,
+        children: [child],
+        _source: 'current'
+    });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 1,
+        jobNumber: '1J123456',
+        sourceFiles: { xn: 'test.xml', bn1: null }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    // Check root node has all fields
+    assert(imported.bom.partNumber !== undefined, 'root has partNumber');
+    assert(imported.bom.componentType !== undefined, 'root has componentType');
+    assert(imported.bom.description !== undefined, 'root has description');
+    assert(imported.bom.material !== undefined, 'root has material');
+    assert(imported.bom.qty !== undefined, 'root has qty');
+    assert(imported.bom.length !== undefined, 'root has length');
+    assert(imported.bom.uofm !== undefined, 'root has uofm');
+    assert(imported.bom.state !== undefined, 'root has state');
+    assert(imported.bom.purchaseDescription !== undefined, 'root has purchaseDescription');
+    assert(imported.bom.nsItemType !== undefined, 'root has nsItemType');
+    assert(imported.bom.revision !== undefined, 'root has revision');
+    assert(Array.isArray(imported.bom.children), 'root has children array');
+
+    // Check child node
+    assert(imported.bom.children[0].partNumber === 'CHILD-1', 'child has partNumber');
+    assert(Array.isArray(imported.bom.children[0].children), 'child has children array');
+
+    console.log('');
+}
+
+// Test 17: importArtifact strips stale _changes from B(n-1) nodes
+async function test17() {
+    console.log('Test 17: importArtifact strips stale _changes from B(n-1) nodes');
+
+    const child = makeNode({
+        partNumber: 'CHILD-1',
+        qty: 5,
+        _source: 'grafted',
+        _changes: [{ field: 'qty', from: 3, to: 5 }]
+    });
+
+    const root = makeNode({
+        partNumber: 'ROOT',
+        children: [child],
+        _source: 'current',
+        _changes: [{ field: 'description', from: 'Old', to: 'New' }]
+    });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 1, placeholders: 0 },
+        revision: 1,
+        jobNumber: '1J123456',
+        sourceFiles: { xn: 'test.xml', bn1: null }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    // _changes should be stripped (stale from prior merge)
+    assert(imported.bom._changes === undefined, 'root _changes stripped');
+    assert(imported.bom.children[0]._changes === undefined, 'child _changes stripped');
+
+    console.log('');
+}
+
+// Test 18: importArtifact preserves _source tags
+async function test18() {
+    console.log('Test 18: importArtifact preserves _source tags');
+
+    const child = makeNode({
+        partNumber: 'CHILD-1',
+        _source: 'grafted'
+    });
+
+    const root = makeNode({
+        partNumber: 'ROOT',
+        children: [child],
+        _source: 'current'
+    });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 1, placeholders: 0 },
+        revision: 1,
+        jobNumber: '1J123456',
+        sourceFiles: { xn: 'test.xml', bn1: null }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    // _source should be preserved (useful for cross-tab display)
+    assertEqual(imported.bom._source, 'current', 'root _source preserved');
+    assertEqual(imported.bom.children[0]._source, 'grafted', 'child _source preserved');
+
+    console.log('');
+}
+
+// Test 19: validateArtifact passes for unmodified artifact (ARTF-03)
+async function test19() {
+    console.log('Test 19: validateArtifact passes for unmodified artifact (ARTF-03)');
+
+    const root = makeNode({ partNumber: 'ROOT', _source: 'current' });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 1,
+        jobNumber: '1J123456',
+        sourceFiles: { xn: 'test.xml', bn1: null }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    const result = await validateArtifact(imported);
+
+    assertEqual(result.valid, true, 'unmodified artifact is valid');
+    assertEqual(result.errors.length, 0, 'no errors for unmodified artifact');
+    assertEqual(result.warnings.length, 0, 'no warnings for unmodified artifact');
+
+    console.log('');
+}
+
+// Test 20: validateArtifact detects hash mismatch (ARTF-03)
+async function test20() {
+    console.log('Test 20: validateArtifact detects hash mismatch (ARTF-03)');
+
+    const root = makeNode({ partNumber: 'ROOT', qty: 1, _source: 'current' });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 1,
+        jobNumber: '1J123456',
+        sourceFiles: { xn: 'test.xml', bn1: null }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = JSON.parse(jsonString);
+
+    // Tamper with the bom data
+    imported.bom.qty = 99;
+
+    const result = await validateArtifact(imported);
+
+    assertEqual(result.valid, false, 'tampered artifact is invalid');
+    assert(result.errors.length > 0, 'errors array has items');
+
+    // Error should contain both expected and actual hash
+    const errorMsg = result.errors[0];
+    assert(errorMsg.includes('expected') || errorMsg.includes('stored'), 'error mentions expected/stored hash');
+    assert(errorMsg.includes('computed') || errorMsg.includes('actual'), 'error mentions computed/actual hash');
+
+    console.log('');
+}
+
+// Test 21: validateArtifact detects hash mismatch from added node (ARTF-03)
+async function test21() {
+    console.log('Test 21: validateArtifact detects hash mismatch from added node (ARTF-03)');
+
+    const root = makeNode({ partNumber: 'ROOT', _source: 'current' });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 1,
+        jobNumber: '1J123456',
+        sourceFiles: { xn: 'test.xml', bn1: null }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = JSON.parse(jsonString);
+
+    // Add a child node to tamper with the tree
+    const newChild = {
+        partNumber: 'FAKE-CHILD',
+        componentType: 'Part',
+        description: '',
+        material: '',
+        qty: 1,
+        length: '',
+        uofm: '',
+        state: 'Issued for Purchasing',
+        purchaseDescription: '',
+        nsItemType: 'Inventory Item',
+        revision: 'A',
+        children: []
+    };
+    imported.bom.children.push(newChild);
+
+    const result = await validateArtifact(imported);
+
+    assertEqual(result.valid, false, 'artifact with added node is invalid');
+    assert(result.errors.length > 0, 'errors array has items for added node');
+
+    console.log('');
+}
+
+// Test 22: validateArtifact validates GA part number match (ARTF-04)
+async function test22() {
+    console.log('Test 22: validateArtifact validates GA part number match (ARTF-04)');
+
+    const root = makeNode({ partNumber: '258758', _source: 'current' });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 2,
+        jobNumber: '1J258758',
+        sourceFiles: { xn: 'test.xml', bn1: 'prior.json' }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    const result = await validateArtifact(imported, { expectedGA: '258758' });
+
+    assertEqual(result.valid, true, 'matching GA part number passes');
+    assertEqual(result.warnings.length, 0, 'no warnings for matching GA');
+
+    console.log('');
+}
+
+// Test 23: validateArtifact warns on GA part number mismatch (ARTF-04)
+async function test23() {
+    console.log('Test 23: validateArtifact warns on GA part number mismatch (ARTF-04)');
+
+    const root = makeNode({ partNumber: '258758', _source: 'current' });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 2,
+        jobNumber: '1J258758',
+        sourceFiles: { xn: 'test.xml', bn1: 'prior.json' }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    const result = await validateArtifact(imported, { expectedGA: '258730' });
+
+    assertEqual(result.valid, true, 'GA mismatch warns but does not block');
+    assert(result.warnings.length > 0, 'warnings array has items for GA mismatch');
+
+    const warningMsg = result.warnings[0];
+    assert(warningMsg.includes('258730'), 'warning mentions X(n) GA (258730)');
+    assert(warningMsg.includes('258758'), 'warning mentions B(n-1) GA (258758)');
+
+    console.log('');
+}
+
+// Test 24: validateArtifact warns on revision gap (ARTF-06 related)
+async function test24() {
+    console.log('Test 24: validateArtifact warns on revision gap (ARTF-06 related)');
+
+    const root = makeNode({ partNumber: '258758', _source: 'current' });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 2,
+        jobNumber: '1J258758',
+        sourceFiles: { xn: 'test.xml', bn1: 'prior.json' }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    // Expected revision should be 3 (sequential), but we're passing 5 (gap)
+    const result = await validateArtifact(imported, { expectedRevision: 5 });
+
+    assertEqual(result.valid, true, 'revision gap warns but does not block');
+    assert(result.warnings.length > 0, 'warnings array has items for revision gap');
+
+    const warningMsg = result.warnings.find(w => w.includes('gap') || w.includes('REV'));
+    assert(warningMsg !== undefined, 'warning mentions revision gap');
+
+    console.log('');
+}
+
+// Test 25: validateArtifact passes for sequential revision (no gap warning)
+async function test25() {
+    console.log('Test 25: validateArtifact passes for sequential revision (no gap warning)');
+
+    const root = makeNode({ partNumber: '258758', _source: 'current' });
+
+    const artifact = await exportArtifact({
+        mergedTree: root,
+        summary: { passedThrough: 1, grafted: 0, placeholders: 0 },
+        revision: 2,
+        jobNumber: '1J258758',
+        sourceFiles: { xn: 'test.xml', bn1: 'prior.json' }
+    });
+
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    // Sequential revision (2 -> 3)
+    const result = await validateArtifact(imported, { expectedRevision: 3 });
+
+    assertEqual(result.valid, true, 'sequential revision is valid');
+
+    // Should have no revision-related warnings
+    const revisionWarning = result.warnings.find(w => w.includes('gap') || w.includes('REV'));
+    assert(revisionWarning === undefined, 'no revision gap warning for sequential revisions');
+
+    console.log('');
+}
+
+// Test 26: importArtifact output is usable as priorRoot in mergeBOM
+async function test26() {
+    console.log('Test 26: importArtifact output is usable as priorRoot in mergeBOM');
+
+    // Create an initial B(n-1) tree with a released assembly
+    const releasedChild = makeNode({
+        partNumber: 'SUB-ASSY',
+        componentType: 'Assembly',
+        state: 'Issued for Purchasing',
+        qty: 2,
+        description: 'Released Subassembly',
+        children: [
+            makeNode({
+                partNumber: 'PART-1',
+                componentType: 'Part',
+                state: 'Issued for Purchasing',
+                qty: 3
+            })
+        ],
+        _source: 'current'
+    });
+
+    const bn1Root = makeNode({
+        partNumber: '258758',
+        componentType: 'Assembly',
+        state: 'Issued for Purchasing',
+        children: [releasedChild],
+        _source: 'current'
+    });
+
+    // Export B(n-1) to artifact
+    const artifact = await exportArtifact({
+        mergedTree: bn1Root,
+        summary: { passedThrough: 2, grafted: 0, placeholders: 0 },
+        revision: 1,
+        jobNumber: '1J258758',
+        sourceFiles: { xn: '258758-Rev1.xml', bn1: null }
+    });
+
+    // Round-trip: stringify -> import
+    const jsonString = JSON.stringify(artifact);
+    const imported = importArtifact(jsonString);
+
+    // Create X(n) with SUB-ASSY as WIP (should graft from B(n-1))
+    const wipChild = makeNode({
+        partNumber: 'SUB-ASSY',
+        componentType: 'Assembly',
+        state: 'Work in Progress',
+        qty: 4,
+        description: 'WIP Subassembly'
+    });
+
+    const xnRoot = makeNode({
+        partNumber: '258758',
+        componentType: 'Assembly',
+        state: 'Issued for Purchasing',
+        children: [wipChild]
+    });
+
+    // Merge with imported B(n-1) as priorRoot
+    const mergeResult = mergeBOM(xnRoot, imported.bom);
+
+    assert(mergeResult !== undefined, 'mergeBOM returns result');
+    assert(mergeResult.mergedTree !== undefined, 'mergeResult has mergedTree');
+    assert(mergeResult.summary.grafted > 0, 'graft occurred from imported B(n-1)');
+
+    // Verify the grafted content came from B(n-1)
+    const mergedChild = mergeResult.mergedTree.children[0];
+    assert(mergedChild._source === 'grafted', 'SUB-ASSY marked as grafted');
+    assert(mergedChild.children.length === 1, 'grafted SUB-ASSY has children from B(n-1)');
+    assert(mergedChild.children[0].partNumber === 'PART-1', 'grafted child content matches B(n-1)');
+
+    console.log('');
+}
+
 // ============================================================================
 // RUN ALL TESTS
 // ============================================================================
@@ -456,6 +893,18 @@ async function test14() {
         await test12();
         await test13();
         await test14();
+        await test15();
+        await test16();
+        await test17();
+        await test18();
+        await test19();
+        await test20();
+        await test21();
+        await test22();
+        await test23();
+        await test24();
+        await test25();
+        await test26();
 
         console.log('=================================');
         console.log(`✓ Passed: ${passCount}`);
