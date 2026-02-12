@@ -830,6 +830,552 @@ function test11_PNBasedMatching() {
     return errors;
 }
 
+function test12_QuantitySourcingAtGraftBoundary() {
+    console.log('  Testing: Quantity sourcing at graft boundary (MERGE-07)');
+    const errors = [];
+
+    // Build X(n): GA[IFP] -> A1[IFU] -> A5[Under Revision](qty 3 in X(n))
+    const A5_current = makeNode({
+        partNumber: 'A5',
+        state: 'Under Revision',
+        qty: 3,
+        description: 'Assembly Rev B',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 10 })
+        ]
+    });
+    const A1_current = makeNode({
+        partNumber: 'A1',
+        state: 'Issued for Use',
+        children: [A5_current]
+    });
+    const GA_current = makeNode({
+        partNumber: 'GA',
+        state: 'Issued for Purchasing',
+        children: [A1_current]
+    });
+
+    // Build B(n-1): GA -> A1 -> A5(qty 2) with children C1(3), C2(2)
+    const A5_prior = makeNode({
+        partNumber: 'A5',
+        qty: 2,
+        description: 'Assembly Rev A',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 3 }),
+            makeNode({ partNumber: 'C2', componentType: 'Part', qty: 2 })
+        ]
+    });
+    const A1_prior = makeNode({
+        partNumber: 'A1',
+        children: [A5_prior]
+    });
+    const GA_prior = makeNode({
+        partNumber: 'GA',
+        children: [A1_prior]
+    });
+
+    // Merge
+    const { mergedTree, warnings } = mergeBOM(GA_current, GA_prior);
+
+    // Assert: A5 appears in result under A1 with qty 3 (from X(n))
+    const mergedA1 = mergedTree.children[0];
+    const mergedA5 = mergedA1.children[0];
+
+    if (mergedA5.qty !== 3) {
+        errors.push(`Expected A5 qty from X(n) = 3, got ${mergedA5.qty}`);
+    }
+
+    // Assert: A5's children are from B(n-1): C1(3), C2(2)
+    if (mergedA5.children.length !== 2) {
+        errors.push(`Expected A5 to have 2 children from B(n-1), got ${mergedA5.children.length}`);
+    } else {
+        const C1 = mergedA5.children.find(c => c.partNumber === 'C1');
+        const C2 = mergedA5.children.find(c => c.partNumber === 'C2');
+
+        if (!C1 || C1.qty !== 3) {
+            errors.push(`Expected C1 qty from B(n-1) = 3, got ${C1?.qty}`);
+        }
+        if (!C2 || C2.qty !== 2) {
+            errors.push(`Expected C2 qty from B(n-1) = 2, got ${C2?.qty}`);
+        }
+    }
+
+    // Assert: A5's metadata (description) comes from B(n-1), not X(n)
+    if (mergedA5.description !== 'Assembly Rev A') {
+        errors.push(`Expected A5 description from B(n-1) = "Assembly Rev A", got "${mergedA5.description}"`);
+    }
+
+    return errors;
+}
+
+function test13_QuantitySourcingRootLevelWIP() {
+    console.log('  Testing: Quantity sourcing — root-level WIP (MERGE-07)');
+    const errors = [];
+
+    // Build X(n): GA[IFP] -> A1[Under Revision](qty 1)
+    const A1_current = makeNode({
+        partNumber: 'A1',
+        state: 'Under Revision',
+        qty: 1,
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 5 })
+        ]
+    });
+    const GA_current = makeNode({
+        partNumber: 'GA',
+        state: 'Issued for Purchasing',
+        children: [A1_current]
+    });
+
+    // Build B(n-1): GA -> A1(qty 1) with children C1(5)
+    const A1_prior = makeNode({
+        partNumber: 'A1',
+        qty: 1,
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 5 })
+        ]
+    });
+    const GA_prior = makeNode({
+        partNumber: 'GA',
+        children: [A1_prior]
+    });
+
+    // Merge
+    const { mergedTree, warnings } = mergeBOM(GA_current, GA_prior);
+
+    // Assert: A1's qty in result is 1 (from X(n)'s GA declaration)
+    const mergedA1 = mergedTree.children[0];
+    if (mergedA1.qty !== 1) {
+        errors.push(`Expected A1 qty from X(n) = 1, got ${mergedA1.qty}`);
+    }
+
+    // Assert: A1's children from B(n-1)
+    if (mergedA1.children.length !== 1) {
+        errors.push(`Expected A1 to have 1 child from B(n-1), got ${mergedA1.children.length}`);
+    } else {
+        const C1 = mergedA1.children[0];
+        if (C1.qty !== 5) {
+            errors.push(`Expected C1 qty from B(n-1) = 5, got ${C1.qty}`);
+        }
+    }
+
+    return errors;
+}
+
+function test14_ChangeAnnotationsAtGraftPoint() {
+    console.log('  Testing: Change annotations at graft point (locked decision)');
+    const errors = [];
+
+    // Build X(n): GA[IFP] -> A1[IFU] -> A5[WIP](qty 3, description "Assembly Rev B")
+    const A5_current = makeNode({
+        partNumber: 'A5',
+        state: 'Under Revision',
+        qty: 3,
+        description: 'Assembly Rev B',
+        revision: 'C',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 10 })
+        ]
+    });
+    const A1_current = makeNode({
+        partNumber: 'A1',
+        state: 'Issued for Use',
+        children: [A5_current]
+    });
+    const GA_current = makeNode({
+        partNumber: 'GA',
+        state: 'Issued for Purchasing',
+        children: [A1_current]
+    });
+
+    // Build B(n-1): GA -> A1 -> A5(qty 2, description "Assembly Rev A") with children
+    const A5_prior = makeNode({
+        partNumber: 'A5',
+        qty: 2,
+        description: 'Assembly Rev A',
+        revision: 'A',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 3 })
+        ]
+    });
+    const A1_prior = makeNode({
+        partNumber: 'A1',
+        children: [A5_prior]
+    });
+    const GA_prior = makeNode({
+        partNumber: 'GA',
+        children: [A1_prior]
+    });
+
+    // Merge
+    const { mergedTree, warnings } = mergeBOM(GA_current, GA_prior);
+
+    // Assert: Grafted A5 node has _changes property
+    const mergedA1 = mergedTree.children[0];
+    const mergedA5 = mergedA1.children[0];
+
+    if (!mergedA5._changes) {
+        errors.push('Expected A5 to have _changes property');
+    } else {
+        // _changes should be an array
+        if (!Array.isArray(mergedA5._changes)) {
+            errors.push('Expected _changes to be an array');
+        } else {
+            // Check for qty difference
+            const qtyChange = mergedA5._changes.find(c => c.field === 'qty');
+            if (!qtyChange) {
+                errors.push('Expected _changes to include qty difference');
+            } else {
+                if (qtyChange.from !== 2 || qtyChange.to !== 3) {
+                    errors.push(`Expected qty change from 2 to 3, got from ${qtyChange.from} to ${qtyChange.to}`);
+                }
+            }
+
+            // Check for description difference
+            const descChange = mergedA5._changes.find(c => c.field === 'description');
+            if (!descChange) {
+                errors.push('Expected _changes to include description difference');
+            } else {
+                if (descChange.from !== 'Assembly Rev A' || descChange.to !== 'Assembly Rev B') {
+                    errors.push(`Expected description change from "Assembly Rev A" to "Assembly Rev B", got from "${descChange.from}" to "${descChange.to}"`);
+                }
+            }
+
+            // Check for revision difference
+            const revChange = mergedA5._changes.find(c => c.field === 'revision');
+            if (!revChange) {
+                errors.push('Expected _changes to include revision difference');
+            } else {
+                if (revChange.from !== 'A' || revChange.to !== 'C') {
+                    errors.push(`Expected revision change from "A" to "C", got from "${revChange.from}" to "${revChange.to}"`);
+                }
+            }
+        }
+    }
+
+    // Assert: Changes are informational — merge still succeeds (no blocking)
+    if (mergedTree.children.length === 0) {
+        errors.push('Merge should succeed despite changes');
+    }
+
+    return errors;
+}
+
+function test15_NoChangeAnnotationsWhenFieldsMatch() {
+    console.log('  Testing: No change annotations when fields match (locked decision)');
+    const errors = [];
+
+    // Build X(n) with WIP assembly having identical fields to B(n-1) version
+    const A5_current = makeNode({
+        partNumber: 'A5',
+        state: 'Under Revision',
+        qty: 2,
+        description: 'Assembly Rev A',
+        revision: 'A',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 3 })
+        ]
+    });
+    const A1_current = makeNode({
+        partNumber: 'A1',
+        state: 'Issued for Use',
+        children: [A5_current]
+    });
+    const GA_current = makeNode({
+        partNumber: 'GA',
+        state: 'Issued for Purchasing',
+        children: [A1_current]
+    });
+
+    // Build B(n-1) with identical A5
+    const A5_prior = makeNode({
+        partNumber: 'A5',
+        qty: 2,
+        description: 'Assembly Rev A',
+        revision: 'A',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 3 })
+        ]
+    });
+    const A1_prior = makeNode({
+        partNumber: 'A1',
+        children: [A5_prior]
+    });
+    const GA_prior = makeNode({
+        partNumber: 'GA',
+        children: [A1_prior]
+    });
+
+    // Merge
+    const { mergedTree, warnings } = mergeBOM(GA_current, GA_prior);
+
+    // Assert: _changes is empty or absent on the grafted node
+    const mergedA1 = mergedTree.children[0];
+    const mergedA5 = mergedA1.children[0];
+
+    if (mergedA5._changes && Array.isArray(mergedA5._changes) && mergedA5._changes.length > 0) {
+        errors.push(`Expected _changes to be empty when fields match, got ${mergedA5._changes.length} changes`);
+    }
+
+    return errors;
+}
+
+function test16_MissingAssemblyWarningAbsentFromXn() {
+    console.log('  Testing: Missing assembly warning — in B(n-1) but absent from X(n) (locked decision)');
+    const errors = [];
+
+    // Build B(n-1): GA -> A1, A2, A3 (all assemblies)
+    const A1_prior = makeNode({ partNumber: 'A1' });
+    const A2_prior = makeNode({ partNumber: 'A2' });
+    const A3_prior = makeNode({ partNumber: 'A3' });
+    const GA_prior = makeNode({
+        partNumber: 'GA',
+        children: [A1_prior, A2_prior, A3_prior]
+    });
+
+    // Build X(n): GA[IFP] -> A1[IFP], A3[IFP] (A2 missing — deleted or suppressed)
+    const A1_current = makeNode({
+        partNumber: 'A1',
+        state: 'Issued for Purchasing'
+    });
+    const A3_current = makeNode({
+        partNumber: 'A3',
+        state: 'Issued for Purchasing'
+    });
+    const GA_current = makeNode({
+        partNumber: 'GA',
+        state: 'Issued for Purchasing',
+        children: [A1_current, A3_current]
+    });
+
+    // Merge
+    const { mergedTree, warnings } = mergeBOM(GA_current, GA_prior);
+
+    // Assert: warnings include message about A2 being in B(n-1) but absent from X(n)
+    const hasA2Warning = warnings.some(w => w.includes('A2') && (w.includes('absent') || w.includes('missing')));
+    if (!hasA2Warning) {
+        errors.push('Expected warning for A2 being in B(n-1) but absent from X(n)');
+    }
+
+    // Assert: A2 is NOT carried forward into the merged result
+    const mergedA2 = mergedTree.children.find(c => c.partNumber === 'A2');
+    if (mergedA2) {
+        errors.push('A2 should not be carried forward (warning is informational only)');
+    }
+
+    // Assert: A1 and A3 pass through normally
+    const mergedA1 = mergedTree.children.find(c => c.partNumber === 'A1');
+    const mergedA3 = mergedTree.children.find(c => c.partNumber === 'A3');
+    if (!mergedA1 || mergedA1._source !== 'current') {
+        errors.push('A1 should pass through from X(n)');
+    }
+    if (!mergedA3 || mergedA3._source !== 'current') {
+        errors.push('A3 should pass through from X(n)');
+    }
+
+    return errors;
+}
+
+function test17_MissingAssemblyWarningDeepAssemblyAbsent() {
+    console.log('  Testing: Missing assembly warning — deep assembly absent (locked decision)');
+    const errors = [];
+
+    // Build B(n-1): GA -> A1 -> A5, A6
+    const A5_prior = makeNode({ partNumber: 'A5' });
+    const A6_prior = makeNode({ partNumber: 'A6' });
+    const A1_prior = makeNode({
+        partNumber: 'A1',
+        children: [A5_prior, A6_prior]
+    });
+    const GA_prior = makeNode({
+        partNumber: 'GA',
+        children: [A1_prior]
+    });
+
+    // Build X(n): GA[IFP] -> A1[IFP] -> A5[IFP] (A6 absent)
+    const A5_current = makeNode({
+        partNumber: 'A5',
+        state: 'Issued for Purchasing'
+    });
+    const A1_current = makeNode({
+        partNumber: 'A1',
+        state: 'Issued for Purchasing',
+        children: [A5_current]
+    });
+    const GA_current = makeNode({
+        partNumber: 'GA',
+        state: 'Issued for Purchasing',
+        children: [A1_current]
+    });
+
+    // Merge
+    const { mergedTree, warnings } = mergeBOM(GA_current, GA_prior);
+
+    // Assert: warning about A6 missing
+    const hasA6Warning = warnings.some(w => w.includes('A6') && (w.includes('absent') || w.includes('missing')));
+    if (!hasA6Warning) {
+        errors.push('Expected warning for A6 being in B(n-1) but absent from X(n)');
+    }
+
+    // Assert: A6 not in result
+    const mergedA1 = mergedTree.children[0];
+    const mergedA6 = mergedA1.children.find(c => c.partNumber === 'A6');
+    if (mergedA6) {
+        errors.push('A6 should not be carried forward');
+    }
+
+    return errors;
+}
+
+function test18_MergeSummaryStatistics() {
+    console.log('  Testing: Merge summary statistics (for downstream UI)');
+    const errors = [];
+
+    // Build tree with mix of Released assemblies, grafted WIP assemblies, and one placeholder
+    // GA[IFP] -> A1[IFU], A2[Under Revision] (graft), A3[In Design] (placeholder)
+    const A1_current = makeNode({
+        partNumber: 'A1',
+        state: 'Issued for Use',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part' })
+        ]
+    });
+    const A2_current = makeNode({
+        partNumber: 'A2',
+        state: 'Under Revision',
+        children: [
+            makeNode({ partNumber: 'C2', componentType: 'Part', qty: 10 })
+        ]
+    });
+    const A3_current = makeNode({
+        partNumber: 'A3',
+        state: 'In Design',
+        children: [
+            makeNode({ partNumber: 'C3', componentType: 'Part', qty: 5 })
+        ]
+    });
+    const GA_current = makeNode({
+        partNumber: 'GA',
+        state: 'Issued for Purchasing',
+        children: [A1_current, A2_current, A3_current]
+    });
+
+    // Build B(n-1) with A2 only (A3 not present — will be placeholder)
+    const A2_prior = makeNode({
+        partNumber: 'A2',
+        children: [
+            makeNode({ partNumber: 'C2', componentType: 'Part', qty: 3 })
+        ]
+    });
+    const GA_prior = makeNode({
+        partNumber: 'GA',
+        children: [A2_prior]
+    });
+
+    // Merge
+    const result = mergeBOM(GA_current, GA_prior);
+
+    // Assert: return value includes summary object
+    if (!result.summary) {
+        errors.push('Expected result to include summary object');
+        return errors;
+    }
+
+    const { summary } = result;
+
+    // Assert: summary has required counts
+    if (typeof summary.passedThrough !== 'number') {
+        errors.push('Expected summary.passedThrough to be a number');
+    }
+    if (typeof summary.grafted !== 'number') {
+        errors.push('Expected summary.grafted to be a number');
+    }
+    if (typeof summary.placeholders !== 'number') {
+        errors.push('Expected summary.placeholders to be a number');
+    }
+
+    // Expected counts:
+    // passedThrough: GA (root), A1 = 2
+    // grafted: A2 = 1
+    // placeholders: A3 = 1
+    if (summary.passedThrough !== 2) {
+        errors.push(`Expected passedThrough = 2, got ${summary.passedThrough}`);
+    }
+    if (summary.grafted !== 1) {
+        errors.push(`Expected grafted = 1, got ${summary.grafted}`);
+    }
+    if (summary.placeholders !== 1) {
+        errors.push(`Expected placeholders = 1, got ${summary.placeholders}`);
+    }
+
+    return errors;
+}
+
+function test19_RevisionMismatchStillGrafts() {
+    console.log('  Testing: Revision mismatch — still grafts (locked decision)');
+    const errors = [];
+
+    // Build X(n) with A5[WIP] revision "C"
+    const A5_current = makeNode({
+        partNumber: 'A5',
+        state: 'Under Revision',
+        revision: 'C',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 10 })
+        ]
+    });
+    const A1_current = makeNode({
+        partNumber: 'A1',
+        state: 'Issued for Use',
+        children: [A5_current]
+    });
+    const GA_current = makeNode({
+        partNumber: 'GA',
+        state: 'Issued for Purchasing',
+        children: [A1_current]
+    });
+
+    // Build B(n-1) with A5 revision "A"
+    const A5_prior = makeNode({
+        partNumber: 'A5',
+        revision: 'A',
+        children: [
+            makeNode({ partNumber: 'C1', componentType: 'Part', qty: 3 })
+        ]
+    });
+    const A1_prior = makeNode({
+        partNumber: 'A1',
+        children: [A5_prior]
+    });
+    const GA_prior = makeNode({
+        partNumber: 'GA',
+        children: [A1_prior]
+    });
+
+    // Merge
+    const { mergedTree, warnings } = mergeBOM(GA_current, GA_prior);
+
+    // Assert: A5 is still grafted (no additional warning for rev mismatch)
+    const mergedA1 = mergedTree.children[0];
+    const mergedA5 = mergedA1.children[0];
+
+    if (mergedA5._source !== 'grafted') {
+        errors.push(`Expected A5 to be grafted despite revision mismatch, got source '${mergedA5._source}'`);
+    }
+
+    // Assert: Graft happened (children from B(n-1))
+    if (mergedA5.children.length !== 1) {
+        errors.push(`Expected A5 to have children from B(n-1), got ${mergedA5.children.length} children`);
+    } else {
+        const C1 = mergedA5.children[0];
+        if (C1.qty !== 3) {
+            errors.push(`Expected C1 qty from B(n-1) = 3, got ${C1.qty}`);
+        }
+    }
+
+    return errors;
+}
+
 // ============================================================================
 // RUN ALL TESTS
 // ============================================================================
@@ -851,6 +1397,14 @@ results.push(runTest('Test 8: Source tags on every node', test8_SourceTagsOnEver
 results.push(runTest('Test 9: Same WIP assembly at multiple locations', test9_SameWIPAtMultipleLocations));
 results.push(runTest('Test 10: All assemblies released — passthrough', test10_AllAssembliesReleasedPassthrough));
 results.push(runTest('Test 11: PN-based matching', test11_PNBasedMatching));
+results.push(runTest('Test 12: Quantity sourcing at graft boundary', test12_QuantitySourcingAtGraftBoundary));
+results.push(runTest('Test 13: Quantity sourcing — root-level WIP', test13_QuantitySourcingRootLevelWIP));
+results.push(runTest('Test 14: Change annotations at graft point', test14_ChangeAnnotationsAtGraftPoint));
+results.push(runTest('Test 15: No change annotations when fields match', test15_NoChangeAnnotationsWhenFieldsMatch));
+results.push(runTest('Test 16: Missing assembly warning — absent from X(n)', test16_MissingAssemblyWarningAbsentFromXn));
+results.push(runTest('Test 17: Missing assembly warning — deep assembly absent', test17_MissingAssemblyWarningDeepAssemblyAbsent));
+results.push(runTest('Test 18: Merge summary statistics', test18_MergeSummaryStatistics));
+results.push(runTest('Test 19: Revision mismatch — still grafts', test19_RevisionMismatchStillGrafts));
 
 // Summary
 console.log('\n' + '='.repeat(60));
