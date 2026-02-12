@@ -57,10 +57,11 @@ Plans:
   4. Tool validates GA part number matches between X(n) and B(n-1) before merge
   5. Exported filename follows pattern: `1J{GA_PN}-IFP REV{n} (MMM D, YYYY).json`
   6. IFP revision number auto-suggests B(n-1) + 1, user can override
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 12-01: TBD
+- [ ] 12-01-PLAN.md — JSON artifact export: tree serialization, SHA-256 hash, filename generation, revision numbering
+- [ ] 12-02-PLAN.md — JSON artifact import and validation: hash verification, GA PN match, revision gap detection
 
 #### Phase 13: Validation System
 **Goal**: Safety checks prevent invalid merges before they happen
@@ -126,10 +127,10 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 9. Deployment | v1.0 | 2/2 | Complete | 2026-02-09 |
 | 10. Final Validation | v1.0 | 2/2 | Complete | 2026-02-09 |
 | 11. Core Merge Engine | v2.0 | 2/2 | Complete | 2026-02-11 |
-| 12. JSON Artifact Format | v2.0 | 0/? | Not started | - |
+| 12. JSON Artifact Format | v2.0 | 0/2 | Not started | - |
 | 13. Validation System | v2.0 | 0/? | Not started | - |
 | 14. IFP Merge Tab UI | v2.0 | 0/? | Not started | - |
 | 15. Cross-Tab Integration | v2.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-02-11 after Phase 11 execution complete*
+*Last updated: 2026-02-12 after Phase 12 planning complete*
