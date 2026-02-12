@@ -2,13 +2,13 @@
 
 ## Milestones
 
-- ✅ **v1.0 Multi-File Refactor** - Phases 1-10 (shipped 2026-02-10)
-- 🚧 **v2.0 IFP BOM Merge** - Phases 11-15 (in progress)
+- v1.0 Multi-File Refactor - Phases 1-10 (shipped 2026-02-10)
+- v2.0 IFP BOM Merge - Phases 11-15 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 Multi-File Refactor (Phases 1-10) - SHIPPED 2026-02-10</summary>
+<summary>v1.0 Multi-File Refactor (Phases 1-10) - SHIPPED 2026-02-10</summary>
 
 **Delivered:** Transformed a production-validated 4400-line single-file HTML application into 14 modular ES6 files with zero behavioral changes, deployed and verified on GitHub Pages.
 
@@ -24,7 +24,7 @@
 
 </details>
 
-### 🚧 v2.0 IFP BOM Merge (In Progress)
+### v2.0 IFP BOM Merge (In Progress)
 
 **Milestone Goal:** Add IFP Merge capability — detect WIP assemblies in PDM exports, graft last-known-good content from prior IFP artifacts, and produce official IFP BOM revision artifacts.
 
@@ -40,10 +40,11 @@
   5. WIP assemblies with no prior release create empty placeholders with warnings
   6. Deep WIP detection works at any tree depth (L2, L3, etc.)
   7. Parent-child quantities come from X(n), grafted subtree internals come from B(n-1)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 11-01: TBD
+- [ ] 11-01-PLAN.md — Core merge engine TDD: state detection, tree walk, grafting, REV0, placeholders, source tags
+- [ ] 11-02-PLAN.md — Graft boundary rules, change annotations, missing assembly warnings, merge summary
 
 #### Phase 12: JSON Artifact Format
 **Goal**: IFP artifacts export/import as JSON with integrity verification and all metadata
@@ -110,7 +111,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 11 → 12 → 13 → 14 → 15
+Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -124,11 +125,11 @@ Phases execute in numeric order: 11 → 12 → 13 → 14 → 15
 | 8. Entry Point Consolidation | v1.0 | 1/1 | Complete | 2026-02-09 |
 | 9. Deployment | v1.0 | 2/2 | Complete | 2026-02-09 |
 | 10. Final Validation | v1.0 | 2/2 | Complete | 2026-02-09 |
-| 11. Core Merge Engine | v2.0 | 0/? | Not started | - |
+| 11. Core Merge Engine | v2.0 | 0/2 | Planned | - |
 | 12. JSON Artifact Format | v2.0 | 0/? | Not started | - |
 | 13. Validation System | v2.0 | 0/? | Not started | - |
 | 14. IFP Merge Tab UI | v2.0 | 0/? | Not started | - |
 | 15. Cross-Tab Integration | v2.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-02-11 during v2.0 roadmap creation*
+*Last updated: 2026-02-11 after Phase 11 planning*
