@@ -1,10 +1,10 @@
-# IFP BOM Merge Tool — Product Requirements Document
+# The Release Gate Model — Product Requirements Document
 
 ## Document Purpose
 
-This document specifies an approach to solving the BOM release management problem described in the companion specification ("BOM Reference Chain Model Specification"). Rather than building a new reference chain database, this approach **modifies the existing BOM comparison tool** so that it can ingest a raw PDM export, detect WIP assemblies by their PDM state metadata, graft last-known-good branches from the prior official IFP artifact, and produce a new official IFP BOM artifact.
+This document specifies the **Release Gate Model**, an approach to solving the BOM release management problem described in the companion specification ("BOM Reference Chain Model Specification"). Rather than building a new reference chain database, this approach **modifies the existing BOM comparison tool** so that it can ingest a raw PDM export, detect WIP assemblies by their PDM state metadata, graft last-known-good branches from the prior official IFP artifact, and produce a new official IFP BOM artifact.
 
-The result is **functionally equivalent to the reference chain model** — WIP branches freeze at their last-released state, references persist, and no false "Removed" signals are generated — but achieved entirely within the existing XML export workflow, with intelligence added to the tool.
+The released state of each assembly acts as a **gate**: released assemblies pass current content through; WIP assemblies close the gate, and the tool substitutes prior approved content. The result is **functionally equivalent to the reference chain model** — WIP branches freeze at their last-released state, references persist, and no false "Removed" signals are generated — but achieved entirely within the existing XML export workflow, with intelligence added to the tool.
 
 ---
 
@@ -121,7 +121,7 @@ The comparison is decoupled from the construction. The tool produces B(n); a use
 
 ## 3.4 Key Process Change: No Suppression of WIP Assemblies
 
-Under this model, **WIP assemblies must NOT be suppressed** in the CAD model prior to GA export. They must remain unsuppressed so that:
+Under the Release Gate Model, **WIP assemblies must NOT be suppressed** in the CAD model prior to GA export. They must remain unsuppressed so that:
 
 1. They appear in the Source Export X(n) with their PDM state metadata
 2. The tool can detect them and apply the grafting logic
@@ -236,6 +236,14 @@ GA [IFP]
 Result: A2 is included with its released structure from X(n), but A6 within A2 is grafted from B(0). This is correct: A6's last-approved content is preserved even though A6 has since gone back into revision.
 
 PDM permits moving a previously-released assembly back into revision at any time. This can happen at any depth — L2, L3, L4, or deeper. The algorithm must walk the full depth of every branch to catch it wherever it occurs.
+
+## 4.6 The Release Chain Requirement
+
+For any assembly's current approved content to flow into B(n), every assembly on the path from that assembly up to the GA must be released. Each parent is the container for its child — it declares what children it has and in what quantities. If a container is WIP, its declarations are unapproved, and the tool will graft its branch from B(n-1) before ever reaching the children inside.
+
+This means that when releasing an assembly for an IFP, its entire path up to the GA must also be released. If A5 (L2) is being released with new content, then A1 (its parent at L1) must be released, and GA (L0) must be released. This release chain is what allows current content to flow from A5 up through A1 and into the IFP BOM. A break at any point in the chain — a single WIP assembly on the path — closes the gate and freezes everything below it.
+
+This is not a new constraint introduced by the Release Gate Model; it is inherent in PDM's bottom-up validation (you cannot release a parent unless its children are released). What the Release Gate Model makes explicit is that this same chain is the mechanism by which approved content flows into the IFP BOM, and any break in the chain results in a graft from the prior artifact. The person conducting the IFP release must verify that every assembly intended to contribute new content has a complete release chain up to the GA.
 
 ---
 
@@ -646,9 +654,11 @@ The source indicator is strongly recommended. It makes it immediately visible to
 |--------|-------------|
 | **No WIP Suppression** | Engineers must not suppress WIP assemblies prior to GA export. WIP assemblies remain unsuppressed. Suppression is reserved for true scope removal only. |
 | **WIP State Hygiene** | Assemblies not approved for release must be in a non-IFP/IFU state. This is already enforced by PDM workflow — but the SOP should explicitly state the dependency. |
+| **Release Chain Verification** | Before export, verify that every assembly intended to contribute new content has a complete chain of released assemblies up to the GA. A WIP assembly anywhere on the path will gate (freeze) everything below it. |
 | **DC Bypass Continues** | Document Control continues to bypass bottom-up validation to release GA when children are WIP. This is unchanged from current practice. |
 | **Source Export Retention** | X(n) files should be retained alongside B(n) for audit trail purposes. |
 | **B(n) as Official Artifact** | B(n), not X(n), is the IFP BOM delivered to Operations and used for all downstream purposes. |
+| **Post-Run Review** | After the tool produces B(n), review grafted branches to confirm they correspond to intentionally-WIP assemblies, not missed releases. |
 
 ## 8.3 Artifact Storage
 
@@ -666,11 +676,11 @@ The source indicator is strongly recommended. It makes it immediately visible to
 
 ---
 
-# 9. Functional Equivalence to Reference Chain Model
+# 9. Functional Equivalence: Release Gate Model ↔ Reference Chain Model
 
-This section maps the concepts to demonstrate that this approach achieves the same outcomes as the reference chain model described in the companion specification.
+This section maps the concepts to demonstrate that the Release Gate Model achieves the same outcomes as the Reference Chain Model described in the companion specification.
 
-| Reference Chain Concept | Merge Tool Equivalent |
+| Reference Chain Concept | Release Gate Model Equivalent |
 |-------------------------|----------------------|
 | Immediate-children records stored per assembly per release | Each assembly's children within B(n) serve as that assembly's "record" for this revision |
 | Resolution at query time by walking the chain | The top-down branch walk during B(n) construction is the resolution step |
@@ -679,7 +689,7 @@ This section maps the concepts to demonstrate that this approach achieves the sa
 | True deletion: assembly absent from parent's immediate children | Assembly absent from Source Export X(n) because it was deleted from CAD |
 | New unreleased assembly: empty record | Empty placeholder in B(n) with warning |
 
-The key architectural difference: the reference chain model stores granular per-assembly records and resolves on demand; the merge tool materializes the full tree at each release. Both produce identical outputs for all scenarios enumerated in the companion specification and in this document.
+The key architectural difference: the Reference Chain Model stores granular per-assembly records and resolves on demand; the Release Gate Model materializes the full tree at each release. Both produce identical outputs for all scenarios enumerated in the companion specification and in this document.
 
 The chain of B(n) files *is* the database.
 
@@ -687,18 +697,20 @@ The chain of B(n) files *is* the database.
 
 # 10. Summary
 
-The IFP BOM Merge Tool approach solves the WIP assembly problem by:
+The Release Gate Model solves the WIP assembly problem by:
 
 1. **Leaving WIP assemblies unsuppressed** so they appear in the Source Export with their PDM state metadata.
-2. **Walking the tree top-down**, using PDM state as the automatic WIP detection — no manual flagging needed. The tool checks only for the two approved states (IFP, IFU); everything else is WIP by exclusion.
+2. **Walking the tree top-down**, using PDM state as the gate on each branch — released assemblies pass content through; WIP assemblies close the gate. The tool checks only for the two approved states (IFP, IFU); everything else is WIP by exclusion.
 3. **Grafting WIP branches from the prior IFP BOM B(n-1)**, preserving last-known-good content.
 4. **Producing an official IFP BOM artifact B(n)** that correctly represents the approved state of the product, with WIP branches frozen at their last-released content.
 5. **Carrying forward frozen content automatically** through the N-1 dependency chain — no special logic required.
 
-The approach is functionally equivalent to the reference chain model, achieves the same outcomes for all identified edge cases, and operates within the existing PDM export workflow with modifications only to the BOM tool and the suppression SOP.
+The release chain — a continuous path of released assemblies from the GA down to any given assembly — is the structural backbone that makes this work. It is the same backbone that makes the Reference Chain Model work. The mechanism differs; the outcome is identical.
+
+The approach operates within the existing PDM export workflow with modifications only to the BOM tool and the suppression SOP.
 
 ---
 
-*Document Version: 2.0*
-*Companion to: BOM Reference Chain Model Specification*
+*Document Version: 3.0 — Release Gate Model*
+*Companion to: BOM Reference Chain Model Specification, Release Gate Model Walkthrough*
 *Status: Draft — for review and refinement*
