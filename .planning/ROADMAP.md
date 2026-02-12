@@ -64,17 +64,18 @@ Plans:
 - [x] 12-02-PLAN.md — JSON artifact import and validation: hash verification, GA PN match, revision gap detection
 
 #### Phase 13: Validation System
-**Goal**: Safety checks prevent invalid merges before they happen
+**Goal**: Safety checks prevent invalid merges before they happen, using NS Item Type as authoritative assembly identifier
 **Depends on**: Phase 11
 **Requirements**: VALID-01, VALID-02, VALID-03
 **Success Criteria** (what must be TRUE):
   1. WIP component under Released parent assembly blocks merge with error message
   2. WIP GA (root node) blocks merge with error message
   3. Every node has source indicator marking "current" (from X(n)) or "grafted" (from B(n-1))
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 13-01: TBD
+- [ ] 13-01-PLAN.md — Assembly identification fix (nsItemType) + pre-merge validation rules (TDD)
+- [ ] 13-02-PLAN.md — Validation logic reference document
 
 #### Phase 14: IFP Merge Tab UI
 **Goal**: New IFP Merge tab provides state-aware hierarchy view, merge controls, and B(n) export
@@ -128,9 +129,9 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 10. Final Validation | v1.0 | 2/2 | Complete | 2026-02-09 |
 | 11. Core Merge Engine | v2.0 | 2/2 | Complete | 2026-02-11 |
 | 12. JSON Artifact Format | v2.0 | 2/2 | Complete | 2026-02-12 |
-| 13. Validation System | v2.0 | 0/? | Not started | - |
+| 13. Validation System | v2.0 | 0/2 | Not started | - |
 | 14. IFP Merge Tab UI | v2.0 | 0/? | Not started | - |
 | 15. Cross-Tab Integration | v2.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-02-12 after Phase 12 execution complete*
+*Last updated: 2026-02-12 after Phase 13 planning complete*
