@@ -78,42 +78,43 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MERGE-01 | — | Pending |
-| MERGE-02 | — | Pending |
-| MERGE-03 | — | Pending |
-| MERGE-04 | — | Pending |
-| MERGE-05 | — | Pending |
-| MERGE-06 | — | Pending |
-| MERGE-07 | — | Pending |
-| ARTF-01 | — | Pending |
-| ARTF-02 | — | Pending |
-| ARTF-03 | — | Pending |
-| ARTF-04 | — | Pending |
-| ARTF-05 | — | Pending |
-| ARTF-06 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| UI-03 | — | Pending |
-| UI-04 | — | Pending |
-| UI-05 | — | Pending |
-| UI-06 | — | Pending |
-| UI-07 | — | Pending |
-| UI-08 | — | Pending |
-| UI-09 | — | Pending |
-| UI-10 | — | Pending |
-| UI-11 | — | Pending |
-| VALID-01 | — | Pending |
-| VALID-02 | — | Pending |
-| VALID-03 | — | Pending |
-| INTEG-01 | — | Pending |
-| INTEG-02 | — | Pending |
-| INTEG-03 | — | Pending |
+| MERGE-01 | Phase 11 | Pending |
+| MERGE-02 | Phase 11 | Pending |
+| MERGE-03 | Phase 11 | Pending |
+| MERGE-04 | Phase 11 | Pending |
+| MERGE-05 | Phase 11 | Pending |
+| MERGE-06 | Phase 11 | Pending |
+| MERGE-07 | Phase 11 | Pending |
+| ARTF-01 | Phase 12 | Pending |
+| ARTF-02 | Phase 12 | Pending |
+| ARTF-03 | Phase 12 | Pending |
+| ARTF-04 | Phase 12 | Pending |
+| ARTF-05 | Phase 12 | Pending |
+| ARTF-06 | Phase 12 | Pending |
+| VALID-01 | Phase 13 | Pending |
+| VALID-02 | Phase 13 | Pending |
+| VALID-03 | Phase 13 | Pending |
+| UI-01 | Phase 14 | Pending |
+| UI-02 | Phase 14 | Pending |
+| UI-03 | Phase 14 | Pending |
+| UI-04 | Phase 14 | Pending |
+| UI-05 | Phase 14 | Pending |
+| UI-06 | Phase 14 | Pending |
+| UI-07 | Phase 14 | Pending |
+| UI-08 | Phase 14 | Pending |
+| UI-09 | Phase 14 | Pending |
+| UI-10 | Phase 14 | Pending |
+| UI-11 | Phase 14 | Pending |
+| INTEG-01 | Phase 15 | Pending |
+| INTEG-02 | Phase 15 | Pending |
+| INTEG-03 | Phase 15 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 30 total
-- Mapped to phases: 0
-- Unmapped: 30
+- Mapped to phases: 30
+- Unmapped: 0
+- Coverage: 100% ✓
 
 ---
 *Requirements defined: 2026-02-11*
-*Last updated: 2026-02-11 after initial definition*
+*Last updated: 2026-02-11 after roadmap creation*
