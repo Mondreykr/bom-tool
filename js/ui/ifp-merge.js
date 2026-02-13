@@ -655,6 +655,67 @@ export function init() {
     });
 
     // ========================================
+    // EXPORT B(n) BUTTON
+    // ========================================
+
+    ifpExportBtn.addEventListener('click', async () => {
+        try {
+            // Validate merged tree exists
+            if (!state.ifpMergedTree) {
+                showMessage('No merged BOM available to export', 'error');
+                return;
+            }
+
+            // Read user inputs
+            const revision = parseInt(ifpRevisionInput.value) || 0;
+            const jobNumber = ifpJobNumber.value.trim();
+
+            if (!jobNumber) {
+                showMessage('Job number is required', 'error');
+                return;
+            }
+
+            // Build source files metadata
+            const sourceFiles = {
+                xn: state.ifpSourceFilename,
+                bn1: state.ifpPriorFilename || null
+            };
+
+            // Export artifact
+            const artifact = await exportArtifact({
+                mergedTree: state.ifpMergedTree,
+                summary: state.ifpMergeSummary,
+                revision: revision,
+                jobNumber: jobNumber,
+                sourceFiles: sourceFiles
+            });
+
+            // Generate filename
+            const filename = generateFilename(jobNumber, revision);
+
+            // Convert to JSON string
+            const jsonString = JSON.stringify(artifact, null, 2);
+
+            // Trigger download using Save As behavior
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Show success message
+            showMessage(`Exported: ${filename}`, 'success');
+        } catch (error) {
+            showMessage(`Export failed: ${error.message}`, 'error');
+            console.error('Export error:', error);
+        }
+    });
+
+    // ========================================
     // RESET/START OVER
     // ========================================
 
