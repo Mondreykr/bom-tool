@@ -998,3 +998,67 @@ tr.child-row.collapsed {
     display: none;
 }
 
+/* Grafted Hidden Rows */
+.grafted-hidden {
+    display: none;
+}
+
+/* Stat Card Colors */
+.ifp-stat-passed {
+    border-left: 4px solid #10b981;
+}
+
+.ifp-stat-passed .stat-value {
+    color: #10b981;
+}
+
+.ifp-stat-grafted {
+    border-left: 4px solid #f59e0b;
+}
+
+.ifp-stat-grafted .stat-value {
+    color: #f59e0b;
+}
+
+.ifp-stat-placeholders {
+    border-left: 4px solid #f97316;
+}
+
+.ifp-stat-placeholders .stat-value {
+    color: #f97316;
+}
+
+/* Merge Warnings Display */
+.ifp-warnings {
+    display: none;
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    color: #92400e;
+    line-height: 1.6;
+}
+
+.ifp-warnings.show {
+    display: block;
+}
+
+.ifp-warnings .warning-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.ifp-warnings .warning-item {
+    padding: 0.25rem 0;
+    padding-left: 1rem;
+    border-left: 2px solid #fcd34d;
+    margin-bottom: 0.25rem;
+}
+

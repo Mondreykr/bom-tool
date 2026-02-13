@@ -4,9 +4,9 @@
 import { state } from './state.js';
 import { parseXML } from '../core/parser.js';
 import { buildTree, sortChildren } from '../core/tree.js';
-import { isReleased } from '../core/merge.js';
+import { mergeBOM, isReleased } from '../core/merge.js';
 import { isAssembly, validateBOM } from '../core/validate.js';
-import { importArtifact, validateArtifact, suggestRevision, suggestJobNumber } from '../core/artifact.js';
+import { importArtifact, validateArtifact, suggestRevision, suggestJobNumber, exportArtifact, generateFilename } from '../core/artifact.js';
 
 export function init() {
     // ========================================
@@ -54,6 +54,10 @@ export function init() {
     const ifpRevisionInput = document.getElementById('ifpRevisionInput');
     const ifpJobNumber = document.getElementById('ifpJobNumber');
     const ifpExportBtn = document.getElementById('ifpExportBtn');
+
+    // Warnings display
+    const ifpSummaryStats = document.getElementById('ifpSummaryStats');
+    const ifpWarnings = document.getElementById('ifpWarnings');
 
     // ========================================
     // REV0 TOGGLE
@@ -393,13 +397,17 @@ export function init() {
         }
         stateCell.appendChild(pill);
 
-        // Source cell (will be populated after merge)
+        // Source cell (show "B(n-1)" for grafted, blank for current)
         const sourceCell = document.createElement('td');
-        sourceCell.textContent = node._source || 'current';
-
-        // Highlight grafted rows
         if (node._source === 'grafted') {
+            sourceCell.textContent = 'B(n-1)';
+            sourceCell.style.color = '#78716c'; // Subtle grey text
+            sourceCell.style.fontSize = '0.8125rem';
             row.classList.add('ifp-row-grafted');
+            row.dataset.source = 'grafted';
+        } else {
+            sourceCell.textContent = ''; // Current is default, keep blank for cleaner display
+            row.dataset.source = 'current';
         }
 
         row.appendChild(partCell);
@@ -579,11 +587,71 @@ export function init() {
     });
 
     // ========================================
-    // MERGE BUTTON (PLACEHOLDER)
+    // HIDE B(n-1) SUBSTITUTIONS TOGGLE
+    // ========================================
+
+    ifpHideGraftedToggle.addEventListener('click', () => {
+        ifpHideGraftedToggle.classList.toggle('active');
+
+        const isActive = ifpHideGraftedToggle.classList.contains('active');
+
+        if (isActive) {
+            // Hide all grafted rows
+            document.querySelectorAll('#ifpTreeBody tr[data-source="grafted"]').forEach(row => {
+                row.classList.add('grafted-hidden');
+            });
+        } else {
+            // Show all grafted rows
+            document.querySelectorAll('#ifpTreeBody .grafted-hidden').forEach(row => {
+                row.classList.remove('grafted-hidden');
+            });
+        }
+    });
+
+    // ========================================
+    // MERGE BUTTON
     // ========================================
 
     ifpMergeBtn.addEventListener('click', () => {
-        showMessage('Merge execution coming in next update (Plan 14-02)', 'success');
+        try {
+            // Get priorRoot
+            let priorRoot = null;
+            if (!state.ifpIsRev0 && state.ifpPriorArtifact) {
+                priorRoot = state.ifpPriorArtifact.bom;
+            }
+
+            // Execute merge
+            const { mergedTree, warnings, summary } = mergeBOM(state.ifpSourceTree, priorRoot);
+
+            // Store results
+            state.ifpMergedTree = mergedTree;
+            state.ifpMergeSummary = summary;
+            state.ifpMergeWarnings = warnings;
+
+            // Re-render tree with merged data
+            displayIfpTree(state.ifpMergedTree);
+
+            // Display merge summary stat cards
+            displayMergeSummary(summary);
+
+            // Display warnings if any
+            displayMergeWarnings(warnings);
+
+            // Enable export button
+            ifpExportBtn.disabled = false;
+
+            // Show success message
+            const warningNote = warnings.length > 0 ? ` (${warnings.length} warning${warnings.length > 1 ? 's' : ''})` : '';
+            showMessage(`Merge completed successfully${warningNote}`, 'success');
+
+            // Scroll to summary
+            if (ifpSummaryStats) {
+                ifpSummaryStats.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        } catch (error) {
+            showMessage(`Merge failed: ${error.message}`, 'error');
+            console.error('Merge error:', error);
+        }
     });
 
     // ========================================
@@ -615,6 +683,7 @@ export function init() {
 
         ifpRev0Toggle.checked = false;
         ifpMergeBtn.disabled = true;
+        ifpExportBtn.disabled = true;
         ifpResults.classList.remove('show');
         ifpMessage.classList.remove('show');
         ifpValidationErrors.classList.remove('show');
@@ -626,11 +695,68 @@ export function init() {
         ifpRevisionInput.value = 0;
         ifpJobNumber.value = '';
 
-        // Hide WIP toggle off
+        // Hide WIP and grafted toggles off
         ifpHideWipToggle.classList.remove('active');
+        ifpHideGraftedToggle.classList.remove('active');
+
+        // Clear summary and warnings
+        if (ifpSummaryStats) {
+            ifpSummaryStats.classList.remove('show');
+        }
+        if (ifpWarnings) {
+            ifpWarnings.classList.remove('show');
+            ifpWarnings.innerHTML = '';
+        }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+
+    // ========================================
+    // HELPER: DISPLAY MERGE SUMMARY
+    // ========================================
+
+    function displayMergeSummary(summary) {
+        // Show summary stats container
+        if (ifpSummaryStats) {
+            ifpSummaryStats.classList.add('show');
+        }
+
+        // Update stat card values
+        ifpPassedCount.textContent = summary.passedThrough;
+        ifpGraftedCount.textContent = summary.grafted;
+        ifpPlaceholderCount.textContent = summary.placeholders;
+
+        // Add color classes to stat cards
+        const passedCard = ifpPassedCount.closest('.stat-card');
+        const graftedCard = ifpGraftedCount.closest('.stat-card');
+        const placeholderCard = ifpPlaceholderCount.closest('.stat-card');
+
+        if (passedCard) passedCard.classList.add('ifp-stat-passed');
+        if (graftedCard) graftedCard.classList.add('ifp-stat-grafted');
+        if (placeholderCard) placeholderCard.classList.add('ifp-stat-placeholders');
+    }
+
+    // ========================================
+    // HELPER: DISPLAY MERGE WARNINGS
+    // ========================================
+
+    function displayMergeWarnings(warnings) {
+        if (!ifpWarnings) return;
+
+        if (warnings.length === 0) {
+            ifpWarnings.classList.remove('show');
+            ifpWarnings.innerHTML = '';
+        } else {
+            ifpWarnings.classList.add('show');
+
+            let html = '<div class="warning-title">Merge Warnings</div>';
+            warnings.forEach(warning => {
+                html += `<div class="warning-item">${warning}</div>`;
+            });
+
+            ifpWarnings.innerHTML = html;
+        }
+    }
 
     // ========================================
     // HELPER: SHOW MESSAGE
