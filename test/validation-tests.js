@@ -17,15 +17,17 @@ import { isAssembly, validateBOM } from '../js/core/validate.js';
 function makeNode({
     partNumber,
     componentType = 'Assembly',
-    nsItemType = undefined, // Explicit parameter for NS Item Type
+    nsItemType, // Explicit parameter for NS Item Type (no default)
     state = 'Issued for Purchasing',
     qty = 1,
     description = '',
     revision = 'A',
     children = []
 }) {
-    // If nsItemType not specified, derive from componentType for backward compat
-    const derivedNsItemType = nsItemType !== undefined
+    // If nsItemType not provided at all (arguments doesn't include it), derive from componentType
+    // If nsItemType is explicitly provided (even as undefined/null), use that value
+    const hasNsItemTypeArg = arguments[0] && 'nsItemType' in arguments[0];
+    const finalNsItemType = hasNsItemTypeArg
         ? nsItemType
         : (componentType === 'Assembly' ? 'Assembly' : 'Inventory');
 
@@ -41,7 +43,7 @@ function makeNode({
         UofM: '',
         State: state,
         'Purchase Description': '',
-        'NS Item Type': derivedNsItemType,
+        'NS Item Type': finalNsItemType,
         Revision: revision
     };
 
