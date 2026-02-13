@@ -19,6 +19,7 @@
             <button class="tab-btn active" data-tab="flatten">Flat BOM</button>
             <button class="tab-btn" data-tab="compare">BOM Comparison</button>
             <button class="tab-btn" data-tab="hierarchy">Hierarchy View</button>
+            <button class="tab-btn" data-tab="ifpMerge">IFP Merge</button>
         </div>
         
         <!-- Tab 1: Flat BOM Content -->
@@ -387,6 +388,153 @@
 
         </div>
         <!-- End Tab 3: Hierarchy View -->
+
+        <!-- Tab 4: IFP Merge -->
+        <div class="tab-content" id="ifpMergeTab">
+
+        <div class="card">
+            <h2 class="card-title">IFP Merge</h2>
+            <p style="color: var(--gray-600); font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">Upload a source BOM export and optional prior IFP artifact to create a merged IFP BOM</p>
+
+            <!-- REV0 Toggle -->
+            <div class="ifp-rev0-toggle">
+                <input type="checkbox" id="ifpRev0Toggle">
+                <label for="ifpRev0Toggle">First IFP (REV0)</label>
+            </div>
+
+            <!-- Upload Grid -->
+            <div class="upload-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
+                <!-- X(n) Source Export Upload -->
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">Source Export X(n)</label>
+                    <input type="file" id="ifpSourceFile" accept=".xml" style="display: none;">
+                    <div class="upload-zone" id="ifpSourceZone">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Click or drag file here</div>
+                        <div class="upload-hint">SOLIDWORKS PDM XML export</div>
+                    </div>
+                    <div class="file-info" id="ifpSourceInfo">
+                        <div class="file-info-icon">✓</div>
+                        <div class="file-info-details">
+                            <div class="file-info-name" id="ifpSourceName"></div>
+                            <div class="file-info-meta" id="ifpSourceMeta"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- B(n-1) Prior Artifact Upload -->
+                <div id="ifpPriorContainer">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">Prior IFP Artifact B(n-1)</label>
+                    <input type="file" id="ifpPriorFile" accept=".json" style="display: none;">
+                    <div class="upload-zone" id="ifpPriorZone">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Click or drag file here</div>
+                        <div class="upload-hint">Previously exported IFP JSON</div>
+                    </div>
+                    <div class="file-info" id="ifpPriorInfo">
+                        <div class="file-info-icon">✓</div>
+                        <div class="file-info-details">
+                            <div class="file-info-name" id="ifpPriorName"></div>
+                            <div class="file-info-meta" id="ifpPriorMeta"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ifpMessage" class="message"></div>
+
+            <!-- Validation Error Banner -->
+            <div id="ifpValidationErrors" class="ifp-validation-banner"></div>
+
+            <div class="button-group">
+                <button class="btn-primary" id="ifpMergeBtn" disabled>
+                    <span>⚙ Merge BOM</span>
+                </button>
+                <button class="btn-secondary" id="ifpResetBtn">
+                    <span>↻ Start Over</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="ifpResults">
+            <div class="card">
+                <h2 class="card-title">Merged IFP BOM</h2>
+
+                <!-- Assembly Info -->
+                <div class="assembly-info" id="ifpAssemblyInfo" style="background: var(--gray-100); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: var(--gray-600); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">Assembly</div>
+                    <div style="font-size: 1.125rem; font-weight: 600; color: var(--gray-900);" id="ifpAssemblyFilenameDisplay"></div>
+                    <div style="font-size: 0.875rem; color: var(--gray-700); margin-top: 0.25rem;" id="ifpAssemblyPartNumDesc"></div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--gray-600); margin-top: 0.5rem;">Revision: <span id="ifpAssemblyRev"></span></div>
+                </div>
+
+                <!-- Merge Summary Stats -->
+                <div id="ifpSummaryStats" class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="stat-card" style="border-left: 4px solid #10b981;">
+                        <div class="stat-value" style="color: #10b981;" id="ifpPassedCount">0</div>
+                        <div class="stat-label">Passed Through</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #f59e0b;">
+                        <div class="stat-value" style="color: #f59e0b;" id="ifpGraftedCount">0</div>
+                        <div class="stat-label">Grafted</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #f97316;">
+                        <div class="stat-value" style="color: #f97316;" id="ifpPlaceholderCount">0</div>
+                        <div class="stat-label">Placeholders</div>
+                    </div>
+                </div>
+
+                <!-- Control Bar -->
+                <div id="ifpControlBar" class="ifp-control-bar">
+                    <button class="btn-secondary" id="ifpExpandAllBtn">
+                        <span>⊞ Expand All</span>
+                    </button>
+                    <button class="btn-secondary" id="ifpCollapseAllBtn">
+                        <span>⊟ Collapse All</span>
+                    </button>
+                    <div class="separator"></div>
+                    <button class="filter-btn" id="ifpHideWipToggle">Hide WIP Content</button>
+                    <button class="filter-btn" id="ifpHideGraftedToggle">Hide B(n-1) Substitutions</button>
+                </div>
+
+                <!-- Tree Table -->
+                <div class="table-container">
+                    <table id="ifpHierarchyTable">
+                        <thead>
+                            <tr>
+                                <th>Part Number</th>
+                                <th class="numeric">Qty</th>
+                                <th>Description</th>
+                                <th>Revision</th>
+                                <th>State</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ifpTreeBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Export Controls -->
+                <div class="ifp-export-group">
+                    <div class="input-group">
+                        <label for="ifpRevisionInput">IFP Revision</label>
+                        <input type="number" id="ifpRevisionInput" min="0" value="0" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="ifpJobNumber">Job Number</label>
+                        <input type="text" id="ifpJobNumber" placeholder="1J258758" style="width: 200px; padding: 0.75rem 1rem; background: white; border: 1px solid var(--gray-300); border-radius: 6px; color: var(--gray-900); font-family: 'JetBrains Mono', monospace; font-size: 1rem;">
+                    </div>
+                    <button class="btn-primary" id="ifpExportBtn" disabled>
+                        <span>📄 Export B(n)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        </div>
+        <!-- End Tab 4: IFP Merge -->
 
     </div>
 

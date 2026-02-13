@@ -1,6 +1,7 @@
 import { init as initFlatBom } from './ui/flat-bom.js';
 import { init as initComparison } from './ui/comparison.js';
 import { init as initHierarchy } from './ui/hierarchy.js';
+import { init as initIfpMerge } from './ui/ifp-merge.js';
 
 // Initialize UI modules after DOM is ready
 if (document.readyState === 'loading') {
@@ -13,6 +14,7 @@ function initializeUI() {
     initFlatBom();
     initComparison();
     initHierarchy();
+    initIfpMerge();
 
     // Tab switching
     const tabBtns = document.querySelectorAll('.tab-btn');

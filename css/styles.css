@@ -832,3 +832,169 @@ tr.child-row.collapsed {
 }
 
 /* Hierarchy Table Styles */
+
+/* ==============================================
+   IFP MERGE TAB STYLES
+   ============================================== */
+
+/* State Pills */
+.state-pill {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.state-pill.released {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.state-pill.wip {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Grafted Row Highlighting */
+.ifp-row-grafted {
+    background-color: #fef9c3 !important;
+}
+
+.ifp-row-grafted:hover {
+    background-color: #fef08a !important;
+}
+
+/* Validation Error Banner */
+.ifp-validation-banner {
+    display: none;
+    background: #fef2f2;
+    border: 1px solid #ef4444;
+    border-left: 4px solid #ef4444;
+    border-radius: 6px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #991b1b;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.ifp-validation-banner.show {
+    display: block;
+}
+
+.ifp-validation-banner .banner-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+
+.ifp-validation-banner .error-item {
+    padding: 0.25rem 0;
+    padding-left: 1rem;
+    border-left: 2px solid #fca5a5;
+    margin-bottom: 0.25rem;
+}
+
+/* REV0 Toggle */
+.ifp-rev0-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+}
+
+.ifp-rev0-toggle input[type="checkbox"] {
+    display: block;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.ifp-rev0-toggle label {
+    margin-bottom: 0;
+    cursor: pointer;
+    text-transform: none;
+    font-size: 0.9375rem;
+}
+
+/* Disabled Prior Upload Container */
+.ifp-prior-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    filter: grayscale(0.5);
+}
+
+/* Control Bar */
+.ifp-control-bar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.ifp-control-bar .separator {
+    width: 1px;
+    height: 24px;
+    background: var(--gray-300);
+    margin: 0 0.5rem;
+}
+
+/* IFP Results Section */
+#ifpResults {
+    display: none;
+    margin-top: 2rem;
+}
+
+#ifpResults.show {
+    display: block;
+}
+
+/* IFP Tree Table - Tree Lines */
+#ifpTreeBody .tree-cell {
+    position: relative;
+}
+
+#ifpTreeBody tr.has-children.expanded .tree-cell::before {
+    content: '';
+    position: absolute;
+    left: calc(1rem + var(--this-depth, 0) * 24px + 7px);
+    top: 1.5rem;
+    bottom: 0;
+    width: 1px;
+    background: var(--gray-300);
+    z-index: 1;
+}
+
+/* Export Controls Group */
+.ifp-export-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.ifp-export-group .input-group {
+    margin-bottom: 0;
+}
+
+/* WIP Hidden Rows */
+.wip-hidden {
+    display: none;
+}
+
