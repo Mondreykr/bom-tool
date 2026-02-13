@@ -4,14 +4,14 @@ import { isAssembly } from './validate.js';
 
 /**
  * Determines if an assembly state qualifies as "Released" (approved for production).
- * Uses a whitelist approach: only IFP and IFU are approved states.
+ * Uses a whitelist approach: IFP, IFU, and Released are approved states.
  * Everything else is considered WIP (Work In Progress).
  *
  * @param {string} state - The state value from BOM data
  * @returns {boolean} - true if Released, false if WIP
  */
 export function isReleased(state) {
-    return state === 'Issued for Purchasing' || state === 'Issued for Use';
+    return state === 'Issued for Purchasing' || state === 'Issued for Use' || state === 'Released';
 }
 
 /**
