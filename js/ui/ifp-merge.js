@@ -1,0 +1,646 @@
+// ifp-merge.js - IFP Merge tab UI logic
+// Created for Phase 14 - IFP Merge Tab UI
+
+import { state } from './state.js';
+import { parseXML } from '../core/parser.js';
+import { buildTree, sortChildren } from '../core/tree.js';
+import { isReleased } from '../core/merge.js';
+import { isAssembly, validateBOM } from '../core/validate.js';
+import { importArtifact, validateArtifact, suggestRevision, suggestJobNumber } from '../core/artifact.js';
+
+export function init() {
+    // ========================================
+    // DOM ELEMENT REFERENCES
+    // ========================================
+
+    // Upload zones and file inputs
+    const ifpSourceZone = document.getElementById('ifpSourceZone');
+    const ifpSourceFile = document.getElementById('ifpSourceFile');
+    const ifpSourceInfo = document.getElementById('ifpSourceInfo');
+    const ifpSourceName = document.getElementById('ifpSourceName');
+    const ifpSourceMeta = document.getElementById('ifpSourceMeta');
+
+    const ifpPriorZone = document.getElementById('ifpPriorZone');
+    const ifpPriorFile = document.getElementById('ifpPriorFile');
+    const ifpPriorInfo = document.getElementById('ifpPriorInfo');
+    const ifpPriorName = document.getElementById('ifpPriorName');
+    const ifpPriorMeta = document.getElementById('ifpPriorMeta');
+    const ifpPriorContainer = document.getElementById('ifpPriorContainer');
+
+    // Controls
+    const ifpRev0Toggle = document.getElementById('ifpRev0Toggle');
+    const ifpMessage = document.getElementById('ifpMessage');
+    const ifpValidationErrors = document.getElementById('ifpValidationErrors');
+    const ifpMergeBtn = document.getElementById('ifpMergeBtn');
+    const ifpResetBtn = document.getElementById('ifpResetBtn');
+
+    // Results section
+    const ifpResults = document.getElementById('ifpResults');
+    const ifpTreeBody = document.getElementById('ifpTreeBody');
+    const ifpExpandAllBtn = document.getElementById('ifpExpandAllBtn');
+    const ifpCollapseAllBtn = document.getElementById('ifpCollapseAllBtn');
+    const ifpHideWipToggle = document.getElementById('ifpHideWipToggle');
+    const ifpHideGraftedToggle = document.getElementById('ifpHideGraftedToggle');
+
+    // Stats and info
+    const ifpPassedCount = document.getElementById('ifpPassedCount');
+    const ifpGraftedCount = document.getElementById('ifpGraftedCount');
+    const ifpPlaceholderCount = document.getElementById('ifpPlaceholderCount');
+    const ifpAssemblyFilenameDisplay = document.getElementById('ifpAssemblyFilenameDisplay');
+    const ifpAssemblyPartNumDesc = document.getElementById('ifpAssemblyPartNumDesc');
+    const ifpAssemblyRev = document.getElementById('ifpAssemblyRev');
+
+    // Export controls
+    const ifpRevisionInput = document.getElementById('ifpRevisionInput');
+    const ifpJobNumber = document.getElementById('ifpJobNumber');
+    const ifpExportBtn = document.getElementById('ifpExportBtn');
+
+    // ========================================
+    // REV0 TOGGLE
+    // ========================================
+
+    ifpRev0Toggle.addEventListener('change', () => {
+        if (ifpRev0Toggle.checked) {
+            // REV0 mode: disable prior artifact upload
+            state.ifpIsRev0 = true;
+            ifpPriorContainer.classList.add('ifp-prior-disabled');
+
+            // Clear any loaded B(n-1)
+            state.ifpPriorArtifact = null;
+            state.ifpPriorFilename = null;
+            ifpPriorZone.classList.remove('has-file');
+            ifpPriorInfo.classList.remove('show');
+            ifpPriorFile.value = '';
+
+            // Auto-suggest REV0 values if source tree exists
+            if (state.ifpSourceTree) {
+                ifpRevisionInput.value = 0;
+                ifpJobNumber.value = '1J' + state.ifpSourceTree.partNumber;
+            }
+        } else {
+            // Normal mode: enable prior artifact upload
+            state.ifpIsRev0 = false;
+            ifpPriorContainer.classList.remove('ifp-prior-disabled');
+        }
+
+        updateMergeReadiness();
+    });
+
+    // ========================================
+    // X(n) SOURCE EXPORT UPLOAD
+    // ========================================
+
+    ifpSourceZone.addEventListener('click', () => ifpSourceFile.click());
+
+    ifpSourceZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        ifpSourceZone.classList.add('dragover');
+    });
+
+    ifpSourceZone.addEventListener('dragleave', () => {
+        ifpSourceZone.classList.remove('dragover');
+    });
+
+    ifpSourceZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        ifpSourceZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        const fileName = file ? file.name.toLowerCase() : '';
+        if (file && fileName.endsWith('.xml')) {
+            handleSourceFile(file);
+        } else {
+            showMessage('Please upload an XML file', 'error');
+        }
+    });
+
+    ifpSourceFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleSourceFile(file);
+        }
+    });
+
+    function handleSourceFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                // Parse XML
+                const decoder = new TextDecoder('utf-8');
+                const xmlText = decoder.decode(e.target.result);
+                state.ifpSourceData = parseXML(xmlText);
+                state.ifpSourceFilename = file.name;
+
+                // Build tree
+                state.ifpSourceTree = buildTree(state.ifpSourceData);
+                sortChildren(state.ifpSourceTree);
+
+                // Validate immediately
+                state.ifpValidationResult = validateBOM(state.ifpSourceTree);
+
+                // Display tree
+                displayIfpTree(state.ifpSourceTree);
+
+                // Display validation errors if any
+                displayValidationErrors(state.ifpValidationResult);
+
+                // Update UI
+                ifpSourceZone.classList.add('has-file');
+                ifpSourceName.textContent = file.name;
+                ifpSourceMeta.textContent = `${state.ifpSourceData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
+                ifpSourceInfo.classList.add('show');
+
+                // Auto-suggest revision if REV0
+                if (state.ifpIsRev0) {
+                    ifpRevisionInput.value = 0;
+                    ifpJobNumber.value = '1J' + state.ifpSourceTree.partNumber;
+                }
+
+                updateMergeReadiness();
+                showMessage(`XML loaded successfully: ${state.ifpSourceData.length} rows`, 'success');
+            } catch (error) {
+                showMessage(`Error parsing XML: ${error.message}`, 'error');
+                console.error('Parse error:', error);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // ========================================
+    // B(n-1) PRIOR ARTIFACT UPLOAD
+    // ========================================
+
+    ifpPriorZone.addEventListener('click', () => ifpPriorFile.click());
+
+    ifpPriorZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        ifpPriorZone.classList.add('dragover');
+    });
+
+    ifpPriorZone.addEventListener('dragleave', () => {
+        ifpPriorZone.classList.remove('dragover');
+    });
+
+    ifpPriorZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        ifpPriorZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        const fileName = file ? file.name.toLowerCase() : '';
+        if (file && fileName.endsWith('.json')) {
+            handlePriorFile(file);
+        } else {
+            showMessage('Please upload a JSON file', 'error');
+        }
+    });
+
+    ifpPriorFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handlePriorFile(file);
+        }
+    });
+
+    async function handlePriorFile(file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const jsonString = e.target.result;
+
+                // Import artifact
+                state.ifpPriorArtifact = importArtifact(jsonString);
+                state.ifpPriorFilename = file.name;
+
+                // Validate artifact
+                const expectedGA = state.ifpSourceTree ? state.ifpSourceTree.partNumber : undefined;
+                const result = await validateArtifact(state.ifpPriorArtifact, { expectedGA });
+
+                if (!result.valid) {
+                    // Hash mismatch - reject the file
+                    showMessage(`Artifact validation failed: ${result.errors.join(', ')}`, 'error');
+                    state.ifpPriorArtifact = null;
+                    state.ifpPriorFilename = null;
+                    ifpPriorFile.value = '';
+                    return;
+                }
+
+                // Show warnings if any (non-blocking)
+                if (result.warnings.length > 0) {
+                    showMessage(`Artifact loaded with warnings: ${result.warnings.join('; ')}`, 'success');
+                }
+
+                // Auto-suggest revision and job number
+                if (state.ifpSourceTree) {
+                    ifpRevisionInput.value = suggestRevision(state.ifpPriorArtifact);
+                    ifpJobNumber.value = suggestJobNumber(state.ifpPriorArtifact, state.ifpSourceTree.partNumber);
+                }
+
+                // Update UI
+                ifpPriorZone.classList.add('has-file');
+                ifpPriorName.textContent = file.name;
+                const rev = state.ifpPriorArtifact.metadata.revision;
+                const job = state.ifpPriorArtifact.metadata.jobNumber;
+                ifpPriorMeta.textContent = `REV${rev} • Job ${job}`;
+                ifpPriorInfo.classList.add('show');
+
+                updateMergeReadiness();
+
+                if (result.warnings.length === 0) {
+                    showMessage(`Prior artifact loaded: REV${rev}, Job ${job}`, 'success');
+                }
+            } catch (error) {
+                showMessage(`Error loading artifact: ${error.message}`, 'error');
+                console.error('Import error:', error);
+                state.ifpPriorArtifact = null;
+                state.ifpPriorFilename = null;
+                ifpPriorFile.value = '';
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // ========================================
+    // STATE-AWARE TREE RENDERING
+    // ========================================
+
+    function displayIfpTree(root) {
+        // Update assembly info
+        ifpAssemblyFilenameDisplay.textContent = state.ifpSourceFilename || 'N/A';
+        ifpAssemblyPartNumDesc.textContent = `${root.partNumber} - ${root.description}`;
+        ifpAssemblyRev.textContent = root.revision || 'N/A';
+
+        // Render tree
+        ifpTreeBody.innerHTML = '';
+        renderTreeNode(root, ifpTreeBody, 0, false, []);
+
+        // Show results section
+        ifpResults.classList.add('show');
+
+        // Scroll to results
+        ifpResults.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderTreeNode(node, container, depth = 0, isLastChild = false, ancestorContinues = []) {
+        const row = document.createElement('tr');
+        row.dataset.level = node.level;
+        row.dataset.depth = depth;
+
+        const hasChildren = node.children.length > 0;
+        const indent = depth * 24;
+        const baseIndent = 16;
+
+        // Check if this is a WIP assembly (for hiding children)
+        const isWipAssembly = isAssembly(node) && !isReleased(node.state);
+        if (isWipAssembly) {
+            row.dataset.wipAssembly = 'true';
+        }
+
+        // Part Number cell (with tree lines and toggle)
+        const partCell = document.createElement('td');
+        partCell.className = 'tree-cell';
+        partCell.style.paddingLeft = `${1 + indent / 16}rem`;
+
+        // Tree lines for non-root nodes
+        if (depth > 0) {
+            const linesContainer = document.createElement('div');
+            linesContainer.className = 'tree-lines';
+
+            // Vertical lines for ancestors with more siblings
+            for (let i = 0; i < depth - 1; i++) {
+                if (ancestorContinues[i]) {
+                    const vertLine = document.createElement('div');
+                    vertLine.className = 'tree-line-vertical';
+                    vertLine.style.left = `${baseIndent + i * 24 + 7}px`;
+                    linesContainer.appendChild(vertLine);
+                }
+            }
+
+            // Vertical line for immediate parent
+            const parentVertLine = document.createElement('div');
+            parentVertLine.className = 'tree-line-vertical';
+            if (isLastChild) {
+                parentVertLine.classList.add('last-child');
+            }
+            parentVertLine.style.left = `${baseIndent + (depth - 1) * 24 + 7}px`;
+            linesContainer.appendChild(parentVertLine);
+
+            // Horizontal line
+            const horizLine = document.createElement('div');
+            horizLine.className = 'tree-line-horizontal';
+            const horizStart = baseIndent + (depth - 1) * 24 + 7;
+            const horizEnd = baseIndent + depth * 24;
+            horizLine.style.left = `${horizStart}px`;
+            horizLine.style.width = `${horizEnd - horizStart}px`;
+            linesContainer.appendChild(horizLine);
+
+            partCell.appendChild(linesContainer);
+        }
+
+        // Toggle or spacer
+        if (hasChildren) {
+            const toggle = document.createElement('span');
+            toggle.className = 'tree-toggle';
+
+            // Default to first level expanded (depth 0 = root, depth 1 = direct children)
+            if (depth === 0) {
+                toggle.classList.add('expanded');
+                toggle.textContent = '-';
+                row.classList.add('expanded');
+            } else {
+                toggle.classList.add('collapsed');
+                toggle.textContent = '+';
+            }
+
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleChildren(row);
+            });
+
+            partCell.appendChild(toggle);
+        } else {
+            const spacer = document.createElement('span');
+            spacer.style.display = 'inline-block';
+            spacer.style.width = '14px';
+            spacer.style.marginRight = '6px';
+            partCell.appendChild(spacer);
+        }
+
+        const partText = document.createTextNode(node.partNumber);
+        partCell.appendChild(partText);
+
+        // Qty cell
+        const qtyCell = document.createElement('td');
+        qtyCell.className = 'numeric';
+        qtyCell.textContent = node.qty;
+
+        // Description cell
+        const descCell = document.createElement('td');
+        descCell.className = 'description';
+        descCell.textContent = node.description;
+
+        // Revision cell
+        const revCell = document.createElement('td');
+        revCell.textContent = node.revision || '';
+
+        // State pill cell
+        const stateCell = document.createElement('td');
+        const pill = document.createElement('span');
+        pill.className = 'state-pill';
+        if (isReleased(node.state)) {
+            pill.classList.add('released');
+            pill.textContent = 'Released';
+        } else {
+            pill.classList.add('wip');
+            pill.textContent = 'WIP';
+        }
+        stateCell.appendChild(pill);
+
+        // Source cell (will be populated after merge)
+        const sourceCell = document.createElement('td');
+        sourceCell.textContent = node._source || 'current';
+
+        // Highlight grafted rows
+        if (node._source === 'grafted') {
+            row.classList.add('ifp-row-grafted');
+        }
+
+        row.appendChild(partCell);
+        row.appendChild(qtyCell);
+        row.appendChild(descCell);
+        row.appendChild(revCell);
+        row.appendChild(stateCell);
+        row.appendChild(sourceCell);
+
+        container.appendChild(row);
+
+        // Render children
+        if (hasChildren) {
+            row.classList.add('has-children');
+            partCell.style.setProperty('--this-depth', depth);
+
+            node.children.forEach((child, index) => {
+                const isLast = index === node.children.length - 1;
+                const childAncestorContinues = [...ancestorContinues, !isLastChild];
+                const childRow = renderTreeNode(child, container, depth + 1, isLast, childAncestorContinues);
+                childRow.classList.add('child-row');
+
+                // First level is expanded by default (depth 1 = direct children of root)
+                if (depth === 0) {
+                    // Don't add collapsed class - these are visible
+                } else {
+                    childRow.classList.add('collapsed');
+                }
+
+                childRow.dataset.parentLevel = node.level;
+            });
+        }
+
+        return row;
+    }
+
+    function toggleChildren(parentRow) {
+        const toggle = parentRow.querySelector('.tree-toggle');
+        const parentLevel = parentRow.dataset.level;
+        const parentDepth = parseInt(parentRow.dataset.depth);
+
+        let nextRow = parentRow.nextElementSibling;
+        let childRows = [];
+
+        while (nextRow) {
+            const nextDepth = parseInt(nextRow.dataset.depth);
+            if (nextDepth <= parentDepth) break;
+            if (nextRow.dataset.parentLevel === parentLevel) {
+                childRows.push(nextRow);
+            }
+            nextRow = nextRow.nextElementSibling;
+        }
+
+        const isCollapsed = toggle.classList.contains('collapsed');
+
+        childRows.forEach(childRow => {
+            if (isCollapsed) {
+                // Expanding
+                childRow.classList.remove('collapsed');
+                toggle.textContent = '-';
+                toggle.classList.remove('collapsed');
+                toggle.classList.add('expanded');
+                parentRow.classList.add('expanded');
+            } else {
+                // Collapsing
+                childRow.classList.add('collapsed');
+                const childToggle = childRow.querySelector('.tree-toggle');
+                if (childToggle && childToggle.classList.contains('expanded')) {
+                    toggleChildren(childRow);
+                }
+                toggle.textContent = '+';
+                toggle.classList.remove('expanded');
+                toggle.classList.add('collapsed');
+                parentRow.classList.remove('expanded');
+            }
+        });
+    }
+
+    // ========================================
+    // VALIDATION ERROR DISPLAY
+    // ========================================
+
+    function displayValidationErrors(validationResult) {
+        if (validationResult.valid) {
+            // Hide banner
+            ifpValidationErrors.classList.remove('show');
+            ifpValidationErrors.innerHTML = '';
+        } else {
+            // Show banner with errors
+            ifpValidationErrors.classList.add('show');
+
+            let html = '<div class="banner-title">Validation Errors — Merge Blocked</div>';
+            validationResult.errors.forEach(error => {
+                html += `<div class="error-item">${error.message}</div>`;
+            });
+
+            ifpValidationErrors.innerHTML = html;
+        }
+    }
+
+    // ========================================
+    // UPDATE MERGE READINESS
+    // ========================================
+
+    function updateMergeReadiness() {
+        const hasSource = state.ifpSourceTree !== null;
+        const validationPassed = state.ifpValidationResult?.valid === true;
+        const hasPriorOrRev0 = state.ifpIsRev0 || state.ifpPriorArtifact !== null;
+
+        const canMerge = hasSource && validationPassed && hasPriorOrRev0;
+
+        ifpMergeBtn.disabled = !canMerge;
+    }
+
+    // ========================================
+    // EXPAND/COLLAPSE ALL
+    // ========================================
+
+    ifpExpandAllBtn.addEventListener('click', () => {
+        document.querySelectorAll('#ifpTreeBody .child-row').forEach(row => {
+            row.classList.remove('collapsed');
+        });
+        document.querySelectorAll('#ifpTreeBody .tree-toggle').forEach(toggle => {
+            toggle.classList.remove('collapsed');
+            toggle.classList.add('expanded');
+            toggle.textContent = '-';
+        });
+        document.querySelectorAll('#ifpTreeBody tr.has-children').forEach(row => {
+            row.classList.add('expanded');
+        });
+    });
+
+    ifpCollapseAllBtn.addEventListener('click', () => {
+        document.querySelectorAll('#ifpTreeBody .child-row').forEach(row => {
+            row.classList.add('collapsed');
+        });
+        document.querySelectorAll('#ifpTreeBody .tree-toggle').forEach(toggle => {
+            toggle.classList.remove('expanded');
+            toggle.classList.add('collapsed');
+            toggle.textContent = '+';
+        });
+        document.querySelectorAll('#ifpTreeBody tr.has-children').forEach(row => {
+            row.classList.remove('expanded');
+        });
+    });
+
+    // ========================================
+    // HIDE WIP CONTENT TOGGLE
+    // ========================================
+
+    ifpHideWipToggle.addEventListener('click', () => {
+        ifpHideWipToggle.classList.toggle('active');
+
+        const isActive = ifpHideWipToggle.classList.contains('active');
+
+        if (isActive) {
+            // Hide children of WIP assemblies
+            document.querySelectorAll('#ifpTreeBody tr[data-wip-assembly="true"]').forEach(wipRow => {
+                const wipDepth = parseInt(wipRow.dataset.depth);
+                let nextRow = wipRow.nextElementSibling;
+
+                while (nextRow) {
+                    const nextDepth = parseInt(nextRow.dataset.depth);
+                    if (nextDepth <= wipDepth) break;
+
+                    // Hide all descendants
+                    nextRow.classList.add('wip-hidden');
+                    nextRow = nextRow.nextElementSibling;
+                }
+            });
+        } else {
+            // Show all WIP content
+            document.querySelectorAll('#ifpTreeBody .wip-hidden').forEach(row => {
+                row.classList.remove('wip-hidden');
+            });
+        }
+    });
+
+    // ========================================
+    // MERGE BUTTON (PLACEHOLDER)
+    // ========================================
+
+    ifpMergeBtn.addEventListener('click', () => {
+        showMessage('Merge execution coming in next update (Plan 14-02)', 'success');
+    });
+
+    // ========================================
+    // RESET/START OVER
+    // ========================================
+
+    ifpResetBtn.addEventListener('click', () => {
+        // Clear all state
+        state.ifpSourceData = null;
+        state.ifpSourceTree = null;
+        state.ifpSourceFilename = null;
+        state.ifpPriorArtifact = null;
+        state.ifpPriorFilename = null;
+        state.ifpMergedTree = null;
+        state.ifpMergeSummary = null;
+        state.ifpMergeWarnings = [];
+        state.ifpValidationResult = null;
+        state.ifpIsRev0 = false;
+
+        // Reset UI
+        ifpSourceZone.classList.remove('has-file');
+        ifpSourceInfo.classList.remove('show');
+        ifpSourceFile.value = '';
+
+        ifpPriorZone.classList.remove('has-file');
+        ifpPriorInfo.classList.remove('show');
+        ifpPriorFile.value = '';
+        ifpPriorContainer.classList.remove('ifp-prior-disabled');
+
+        ifpRev0Toggle.checked = false;
+        ifpMergeBtn.disabled = true;
+        ifpResults.classList.remove('show');
+        ifpMessage.classList.remove('show');
+        ifpValidationErrors.classList.remove('show');
+
+        // Clear tree
+        ifpTreeBody.innerHTML = '';
+
+        // Reset inputs
+        ifpRevisionInput.value = 0;
+        ifpJobNumber.value = '';
+
+        // Hide WIP toggle off
+        ifpHideWipToggle.classList.remove('active');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ========================================
+    // HELPER: SHOW MESSAGE
+    // ========================================
+
+    function showMessage(text, type) {
+        ifpMessage.textContent = text;
+        ifpMessage.className = `message ${type} show`;
+        setTimeout(() => {
+            ifpMessage.classList.remove('show');
+        }, 5000);
+    }
+}
