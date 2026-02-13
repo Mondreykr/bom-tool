@@ -92,10 +92,11 @@ Plans:
   8. Toggle hides/shows B(n-1) substitutions
   9. Merge summary displays counts: assemblies passed through, grafted, placeholders created
   10. "Export B(n)" button downloads JSON artifact with auto-generated filename
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 14-01: TBD
+- [ ] 14-01-PLAN.md — Tab shell, uploads, state-aware tree rendering with state pills, validation display, view controls
+- [ ] 14-02-PLAN.md — Merge execution, grafted highlighting, summary stats, export B(n), visual verification
 
 #### Phase 15: Cross-Tab Integration
 **Goal**: JSON files work across all tabs, B(n) auto-loads after merge for evaluation
@@ -130,8 +131,8 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 11. Core Merge Engine | v2.0 | 2/2 | Complete | 2026-02-11 |
 | 12. JSON Artifact Format | v2.0 | 2/2 | Complete | 2026-02-12 |
 | 13. Validation System | v2.0 | 2/2 | Complete | 2026-02-12 |
-| 14. IFP Merge Tab UI | v2.0 | 0/? | Not started | - |
+| 14. IFP Merge Tab UI | v2.0 | 0/2 | Not started | - |
 | 15. Cross-Tab Integration | v2.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-02-12 after Phase 13 execution complete*
+*Last updated: 2026-02-13 after Phase 14 planning complete*
