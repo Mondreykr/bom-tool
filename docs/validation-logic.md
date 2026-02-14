@@ -48,6 +48,10 @@ This inconsistency occurs because Component Type is a legacy field that may not 
 
 These rules are checked automatically by the BOM Tool before allowing an IFP merge. If any rule is violated, the merge is blocked and the user must fix the issues in PDM before proceeding.
 
+### Scope
+
+Validation rules apply **only on the IFP Merge tab** when loading XMLs for merge. Other tabs (Flat BOM, Comparison, Hierarchy) do not enforce these rules — they are viewing/comparing tools and should not block loading.
+
 ### Rule 0: GA Must Be Released
 
 **Rule:** The root assembly (GA) must have a Released state (IFP or IFU). A WIP GA blocks the merge.
@@ -121,6 +125,128 @@ Missing NS Item Type on {PartNumber} at {AncestorPath} — cannot validate witho
 
 **Fix action:** Update the part's NetSuite metadata in PDM to include the NS Item Type field, then re-export the BOM.
 
+## Metadata Validation Rules
+
+Metadata validation (Rules 3–9) runs on **every node** in the BOM tree before merge-level validation (Rules 0–2). These rules ensure that each item's metadata is complete, correctly formatted, and internally consistent before the merge engine processes the tree.
+
+All metadata rules are **hard blocks** — the same enforcement level as Rules 0–2. Invalid metadata blocks the merge.
+
+### Rule 3: Part Number Format
+
+**Rule:** Part Number must match one of these exact patterns:
+
+| Pattern | Example | Description |
+|---|---|---|
+| `1xxxxxx` | 1000123 | 7-digit starting with 1 |
+| `1xxxxxx-xx` | 1000123-01 | 7-digit with 2-digit suffix |
+| `1xxxxxx-xx-x` | 1000123-01-1 | 7-digit with 2-digit and 1-digit suffix |
+| `2xxxxx` | 251111 | 6-digit starting with 2 |
+| `3xxxxx` | 301111 | 6-digit starting with 3 |
+
+Where `x` = single digit (0–9), hyphens are literal.
+
+**Regex:** `^(1\d{6}(-\d{2}(-\d)?)?|[23]\d{5})$`
+
+**Error message format:**
+```
+{PartNumber} at {AncestorPath}: Part number does not match expected format (1xxxxxx, 2xxxxx, or 3xxxxx)
+```
+
+**Fix action:** Correct the part number in PDM to match the expected format, then re-export the BOM.
+
+### Rule 4: Description Required
+
+**Rule:** Description must not be empty or blank.
+
+**Error message format:**
+```
+{PartNumber} at {AncestorPath}: Description is empty — every part must have a description
+```
+
+**Fix action:** Add a description to the part in PDM, then re-export the BOM.
+
+### Rule 5: Revision Must Be Integer
+
+**Rule:** Revision must be a whole number (e.g., "1", "2", "15"). Non-numeric or decimal values are not allowed.
+
+**Error message format:**
+```
+{PartNumber} at {AncestorPath}: Revision '{Value}' is not a valid integer
+```
+
+**Fix action:** Correct the revision in PDM to a whole number, then re-export the BOM.
+
+### Rule 6: NS Item Type Whitelist
+
+**Rule:** NS Item Type must be exactly one of:
+- `Inventory`
+- `Lot Numbered Inventory`
+- `Assembly`
+
+This strengthens the existing missing-NS-Item-Type check to also reject unexpected values. A missing value is still caught separately; this rule catches values that are present but invalid.
+
+**Error message format:**
+```
+{PartNumber} at {AncestorPath}: NS Item Type '{Value}' is not a recognized type (expected Inventory, Lot Numbered Inventory, or Assembly)
+```
+
+**Fix action:** Update the NS Item Type in PDM to one of the recognized values, then re-export the BOM.
+
+### Rule 7: Component Type Whitelist
+
+**Rule:** Component Type must be exactly one of:
+- `Purchased`
+- `Manufactured`
+- `Raw Stock`
+- `Assembly`
+
+**Error message format:**
+```
+{PartNumber} at {AncestorPath}: Component Type '{Value}' is not a recognized type (expected Purchased, Manufactured, Raw Stock, or Assembly)
+```
+
+**Fix action:** Update the Component Type in PDM to one of the recognized values, then re-export the BOM.
+
+### Rule 8: Unit of Measure Whitelist
+
+**Rule:** Unit of Measure must be exactly one of:
+- `ea`
+- `in`
+- `sq in`
+
+**Error message format:**
+```
+{PartNumber} at {AncestorPath}: Unit of Measure '{Value}' is not recognized (expected ea, in, or sq in)
+```
+
+**Fix action:** Update the Unit of Measure in PDM to one of the recognized values, then re-export the BOM.
+
+### Rule 9: Cross-Field Consistency
+
+**Rule:** Certain field combinations must be consistent based on the NS Item Type value. These sub-rules catch metadata that passes individual field checks but is logically contradictory.
+
+**If NS Item Type = "Inventory":**
+- UoM must be `ea`
+- Length must be empty or `-`
+- Component Type must be `Purchased` or `Manufactured`
+
+**If NS Item Type = "Assembly":**
+- UoM must be `ea`
+- Length must be empty or `-`
+- Component Type must be `Assembly` or `Manufactured`
+
+**If NS Item Type = "Lot Numbered Inventory":**
+- UoM must be `in` or `sq in`
+- Length must be a decimal number, optionally with "in" suffix (e.g., "12", "12.01", "12.01in")
+- Component Type must be `Raw Stock`
+
+**Error message format:**
+```
+{PartNumber} at {AncestorPath}: {FieldName} '{Value}' is not valid for NS Item Type '{NSItemType}' (expected {ExpectedValues})
+```
+
+**Fix action:** Update the inconsistent field(s) in PDM to match the expected values for the item's NS Item Type, then re-export the BOM.
+
 ## Validation Logic Table
 
 This table summarizes how validation rules are applied based on parent state, child type, and child state.
@@ -135,6 +261,8 @@ This table summarizes how validation rules are applied based on parent state, ch
 
 **Note on WIP sub-assemblies (*):** A WIP sub-assembly under a Released parent is valid ONLY if the parent has at least one other Released child (non-assembly or sub-assembly). If ALL children are WIP sub-assemblies with NO non-assembly items, the parent violates Rule 2 and the merge is blocked.
 
+**Validation order:** Metadata validation (Rules 3–9) runs on every node first, before merge-level validation (Rules 0–2). This ensures all field values are valid before the merge engine evaluates tree structure and state relationships.
+
 ## Error Handling
 
 **Completeness:** The BOM Tool validation walks the entire tree and collects ALL errors before blocking. This allows users to see every issue at once and fix them all in a single PDM session, rather than discovering problems one at a time.
@@ -145,7 +273,7 @@ This table summarizes how validation rules are applied based on parent state, ch
 - **Rule violated:** Which validation rule was triggered (for debugging and learning)
 - **Suggested fix action:** Clear guidance on how to resolve the issue in PDM
 
-**Display format:** Multiple errors are shown as a flat numbered list in the BOM Tool UI, allowing users to address them systematically.
+**Display format:** Multiple errors are shown as a flat numbered list in the BOM Tool UI, allowing users to address them systematically. Metadata errors (Rules 3–9) are collected alongside merge errors (Rules 0–2) — the user sees all issues at once.
 
 **Validation timing:** Validation runs automatically when an XML file is loaded into the IFP Merge tab. Users see validation errors immediately, before attempting a merge. Loading a new file auto-clears previous errors and re-validates the new file.
 
@@ -194,6 +322,7 @@ The validation happens BEFORE the merge engine decides how to handle WIP assembl
 | Date | Change |
 |---|---|
 | 2026-02-12 | Initial version — captures rules as implemented in BOM Tool v2.2 |
+| 2026-02-14 | Added metadata validation rules (Rules 3–9) for Phase 14.1 implementation — Part Number format, Description required, Revision integer, NS Item Type/Component Type/UoM whitelists, cross-field consistency |
 
 ---
 
