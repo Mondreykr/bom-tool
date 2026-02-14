@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Accurate BOM processing that Operations can trust
-**Current focus:** Phase 14 - IFP Merge Tab UI
+**Current focus:** Phase 14 complete — Phase 15 next
 
 ## Current Position
 
 Phase: 14 of 15 (IFP Merge Tab UI)
-Plan: 1 of 2 (In Progress)
-Status: In Progress
-Last activity: 2026-02-13 — IFP Merge tab shell built with state-aware tree, validation display, and view controls (plan 14-01 complete)
+Plan: 2 of 2 (Complete)
+Status: Complete
+Last activity: 2026-02-13 — Phase 14 complete: IFP Merge tab with merge execution, grafted highlighting, summary stats, and B(n) export
 
-Progress: [█████████░░░░░░░░░░░] 93% (14 of 15 phases, 1 of 2 plans complete)
+Progress: [██████████████████░░] 95% (14 of 15 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
+- Total plans completed: 25
 - Average duration: 9 min
-- Total execution time: 3.6 hours
+- Total execution time: 3.7 hours
 
 **By Phase (v1.0 complete):**
 
@@ -40,11 +40,11 @@ Progress: [█████████░░░░░░░░░░░] 93% (14
 | 11 | 2 | 5 min | 3 min |
 | 12 | 2 | 5 min | 3 min |
 | 13 | 2 | 6 min | 3 min |
-| 14 | 1 | 4 min | 4 min |
+| 14 | 2 | 9 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 2, 3, 5, 1, 4 min
-- Trend: Fast execution continues for UI implementation
+- Last 5 plans: 3, 5, 1, 4, 5 min
+- Trend: Fast execution continues for UI and merge implementation
 
 *Updated after each plan completion*
 
@@ -60,7 +60,7 @@ Recent decisions affecting current work:
 - **Canonical JSON with sorted keys**: Ensures deterministic hashing across JS engines regardless of property insertion order
 - **formatVersion field in artifacts**: Enables future format evolution without breaking imports
 - **4th tab for IFP Merge**: Distinct workflow from existing 3 tabs; Engineering uses it, Operations ignores it
-- **State whitelist (IFP/IFU = Released)**: Only two approved states; everything else is WIP by exclusion; future-proof
+- **State whitelist (IFP/IFU/Released)**: Three approved states; everything else is WIP by exclusion; "Released" added for hardware parts
 - **WIP assembly node tagged as 'grafted'**: At graft points, the WIP assembly node itself is tagged grafted (not current), because its metadata comes from B(n-1)
 - **Empty placeholders for never-released WIP**: WIP assemblies with no prior release become empty nodes with zero children, preserving tree structure and making gaps visible
 - **Qty at graft point comes from X(n)**: At graft boundaries, qty is sourced from X(n) (parent's approved declaration), while all other fields and children come from B(n-1)
@@ -70,10 +70,11 @@ Recent decisions affecting current work:
 - [Phase 13]: Assembly identification uses NS Item Type field (not Component Type) as authoritative source
 - [Phase 14]: State pills on ALL nodes (assemblies and parts) for pure visual pattern recognition
 - [Phase 14]: Tree defaults to first level expanded to show immediate state landscape
+- [Phase 14]: "Released" PDM state added to whitelist for hardware parts
 
 ### Pending Todos
 
-None yet.
+User has notes from visual testing to share — may generate items for Phase 15 or gap closure.
 
 ### Blockers/Concerns
 
@@ -83,11 +84,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-13 (plan 14-01 execution)
-Stopped at: Completed 14-01-PLAN.md (IFP Merge Tab Shell) — Complete pre-merge UI with state-aware tree, validation blocking, and view controls
+Last session: 2026-02-13 (Phase 14 execution complete)
+Stopped at: Phase 14 fully executed and verified — IFP Merge tab operational
 Resume file: None
 
-Next action: Proceed to Plan 14-02 — Merge execution and artifact export
+Next action: Proceed to Phase 15 — Cross-Tab Integration
 
 ---
-*Last updated: 2026-02-13 after plan 14-01 completion*
+*Last updated: 2026-02-13 after Phase 14 execution complete*
