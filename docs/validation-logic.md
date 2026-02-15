@@ -165,16 +165,18 @@ Where `x` = single digit (0–9), hyphens are literal.
 
 **Fix action:** Add a description to the part in PDM, then re-export the BOM.
 
-### Rule 5: Revision Must Be Integer
+### Rule 5: Revision Must Be Integer — SUSPENDED
 
-**Rule:** Revision must be a whole number (e.g., "1", "2", "15"). Non-numeric or decimal values are not allowed.
+> **Status:** SUSPENDED — This rule is commented out in code and not enforced.
+>
+> **Reason:** Many BOM items (weldment cut-list items, hardware) have blank or non-integer revisions in SOLIDWORKS PDM exports, causing excessive false-positive validation errors. The rule code is preserved in validate.js and can be restored when PDM data quality improves.
 
-**Error message format:**
+**Rule (when active):** Revision must be a whole number (e.g., "1", "2", "15"). Non-numeric or decimal values are not allowed.
+
+**Error message format (when active):**
 ```
 {PartNumber} at {AncestorPath}: Revision '{Value}' is not a valid integer
 ```
-
-**Fix action:** Correct the revision in PDM to a whole number, then re-export the BOM.
 
 ### Rule 6: NS Item Type Whitelist
 

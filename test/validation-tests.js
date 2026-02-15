@@ -781,45 +781,50 @@ function test19_Rule4_EmptyDescriptionBlocked() {
     return errors;
 }
 
-function test20_Rule5_NonIntegerRevisionBlocked() {
-    console.log('  Testing: Rule 5 — Non-integer revision blocked');
-    const errors = [];
-
-    const invalidRevisions = ['A', '1.5', ''];
-
-    for (const rev of invalidRevisions) {
-        const node = makeNode({
-            partNumber: '1000123',
-            revision: rev,
-            nsItemType: 'Assembly'
-        });
-
-        const result = validateBOM(node);
-        const revisionError = result.errors.find(e => e.rule === 'invalid-revision');
-        if (!revisionError) {
-            errors.push(`Expected revision '${rev}' to fail validation`);
-        }
-    }
-
-    // Test valid revisions
-    const validRevisions = ['1', '15'];
-
-    for (const rev of validRevisions) {
-        const node = makeNode({
-            partNumber: '1000123',
-            revision: rev,
-            nsItemType: 'Assembly'
-        });
-
-        const result = validateBOM(node);
-        const revisionError = result.errors.find(e => e.rule === 'invalid-revision');
-        if (revisionError) {
-            errors.push(`Expected revision '${rev}' to pass validation, got error: ${revisionError.message}`);
-        }
-    }
-
-    return errors;
-}
+// --- RULE 5 TEST SUSPENDED ---
+// Reason: Rule 5 (Revision Must Be Integer) is suspended in validate.js.
+// Restore this test when Rule 5 is re-enabled.
+//
+// function test20_Rule5_NonIntegerRevisionBlocked() {
+//     console.log('  Testing: Rule 5 — Non-integer revision blocked');
+//     const errors = [];
+//
+//     const invalidRevisions = ['A', '1.5', ''];
+//
+//     for (const rev of invalidRevisions) {
+//         const node = makeNode({
+//             partNumber: '1000123',
+//             revision: rev,
+//             nsItemType: 'Assembly'
+//         });
+//
+//         const result = validateBOM(node);
+//         const revisionError = result.errors.find(e => e.rule === 'invalid-revision');
+//         if (!revisionError) {
+//             errors.push(`Expected revision '${rev}' to fail validation`);
+//         }
+//     }
+//
+//     // Test valid revisions
+//     const validRevisions = ['1', '15'];
+//
+//     for (const rev of validRevisions) {
+//         const node = makeNode({
+//             partNumber: '1000123',
+//             revision: rev,
+//             nsItemType: 'Assembly'
+//         });
+//
+//         const result = validateBOM(node);
+//         const revisionError = result.errors.find(e => e.rule === 'invalid-revision');
+//         if (revisionError) {
+//             errors.push(`Expected revision '${rev}' to pass validation, got error: ${revisionError.message}`);
+//         }
+//     }
+//
+//     return errors;
+// }
+// --- END RULE 5 TEST SUSPENDED ---
 
 function test21_Rule6_InvalidNsItemTypeBlocked() {
     console.log('  Testing: Rule 6 — Invalid NS Item Type blocked');
@@ -1179,7 +1184,8 @@ results.push(runTest('Test 18: Rule 3 — Part number error includes path', test
 results.push(runTest('Test 19: Rule 4 — Empty/blank description blocked', test19_Rule4_EmptyDescriptionBlocked));
 
 // Rule 5 (Revision Must Be Integer)
-results.push(runTest('Test 20: Rule 5 — Non-integer revision blocked', test20_Rule5_NonIntegerRevisionBlocked));
+// SUSPENDED: Rule 5 test disabled (see test function above)
+// results.push(runTest('Test 20: Rule 5 — Non-integer revision blocked', test20_Rule5_NonIntegerRevisionBlocked));
 
 // Rule 6 (NS Item Type Whitelist)
 results.push(runTest('Test 21: Rule 6 — Invalid NS Item Type blocked', test21_Rule6_InvalidNsItemTypeBlocked));
