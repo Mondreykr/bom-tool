@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 Phase: 14.1 of 15 (Metadata Validation Rules 3-9)
 Plan: 1 of 1 (Complete)
 Status: Complete
-Last activity: 2026-02-15 - Completed quick task 1: Suspend Rule 5 (revision validation) - comment out, keep code, update docs
+Last activity: 2026-02-15 - Completed quick task 2: Standardize validation error format to breadcrumb paths
 
 Progress: [███████████████████░] 96% (14.1 of 15 phases complete)
 
@@ -96,6 +96,7 @@ User has notes from visual testing to share — may generate items for Phase 15 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 1 | Suspend Rule 5 (revision validation) - comment out, keep code, update docs | 2026-02-15 | c7ec966 | [1-suspend-rule-5-revision-validation-comme](./quick/1-suspend-rule-5-revision-validation-comme/) |
+| 2 | Standardize validation error format to breadcrumb paths | 2026-02-15 | 9ce60d5 | [2-standardize-validation-error-format](./quick/2-standardize-validation-error-format/) |
 
 ## Session Continuity
 
