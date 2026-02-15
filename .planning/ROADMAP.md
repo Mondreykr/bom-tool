@@ -136,3 +136,21 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 
 ---
 *Last updated: 2026-02-13 after Phase 14 execution complete*
+
+### Phase 14.2: Test Suite Issue Fixes (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Depends on:** Phase 14
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 14.2 to break down)
+
+### Phase 14.1: Metadata Validation Rules 3-9 (INSERTED)
+
+**Goal:** Implement metadata validation Rules 3-9 as specified in validation-logic.md — part number format, description required, revision integer, NS Item Type/Component Type/UoM whitelists, cross-field consistency
+**Depends on:** Phase 14
+**Plans:** 1 plan
+
+Plans:
+- [ ] 14.1-01-PLAN.md — TDD: rawLength field, validateMetadata Rules 3-9, 15 new tests, integration into validateBOM
