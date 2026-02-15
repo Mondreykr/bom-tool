@@ -1,0 +1,141 @@
+{
+  "formatVersion": "1.0",
+  "metadata": {
+    "revision": 0,
+    "jobNumber": "1J250000",
+    "generatedDate": "2026-02-15T03:51:05.316Z",
+    "hash": "7cf022df1090a470fe217fcb8ee991c60c8a64392326a1142dbfb94287cd0685",
+    "sourceFiles": {
+      "xn": "1035704-Rev0-20260214.XML",
+      "bn1": null
+    },
+    "summary": {
+      "passedThrough": 3,
+      "grafted": 0,
+      "placeholders": 1
+    }
+  },
+  "bom": {
+    "partNumber": "1035704",
+    "componentType": "Assembly",
+    "description": "GA",
+    "material": "-",
+    "qty": 1,
+    "length": null,
+    "uofm": "ea",
+    "state": "Issued for Purchasing",
+    "purchaseDescription": "",
+    "nsItemType": "Assembly",
+    "revision": "0",
+    "children": [
+      {
+        "partNumber": "1035705",
+        "componentType": "Assembly",
+        "description": "A1",
+        "material": "-",
+        "qty": 1,
+        "length": null,
+        "uofm": "ea",
+        "state": "Issued for Purchasing",
+        "purchaseDescription": "",
+        "nsItemType": "Assembly",
+        "revision": "0",
+        "children": [
+          {
+            "partNumber": "1035709",
+            "componentType": "Manufactured",
+            "description": "C1",
+            "material": "",
+            "qty": 1,
+            "length": null,
+            "uofm": "ea",
+            "state": "Issued for Use",
+            "purchaseDescription": "",
+            "nsItemType": "Inventory",
+            "revision": "0",
+            "children": [],
+            "_source": "current"
+          },
+          {
+            "partNumber": "1035710",
+            "componentType": "Purchased",
+            "description": "C2",
+            "material": "",
+            "qty": 1,
+            "length": null,
+            "uofm": "ea",
+            "state": "Issued for Use",
+            "purchaseDescription": "",
+            "nsItemType": "Inventory",
+            "revision": "0",
+            "children": [],
+            "_source": "current"
+          }
+        ],
+        "_source": "current"
+      },
+      {
+        "partNumber": "1035706",
+        "componentType": "Assembly",
+        "description": "A2",
+        "material": "-",
+        "qty": 1,
+        "length": null,
+        "uofm": "ea",
+        "state": "Issued for Purchasing",
+        "purchaseDescription": "",
+        "nsItemType": "Assembly",
+        "revision": "0",
+        "children": [
+          {
+            "partNumber": "1035707",
+            "componentType": "Assembly",
+            "description": "A3 (Weldment)",
+            "material": "",
+            "qty": 1,
+            "length": null,
+            "uofm": "ea",
+            "state": "In Design",
+            "purchaseDescription": "",
+            "nsItemType": "Assembly",
+            "revision": "-",
+            "children": [],
+            "_source": "grafted"
+          },
+          {
+            "partNumber": "1035712",
+            "componentType": "Purchased",
+            "description": "C4",
+            "material": "",
+            "qty": 1,
+            "length": null,
+            "uofm": "ea",
+            "state": "Issued for Use",
+            "purchaseDescription": "",
+            "nsItemType": "Inventory",
+            "revision": "0",
+            "children": [],
+            "_source": "current"
+          }
+        ],
+        "_source": "current"
+      },
+      {
+        "partNumber": "1035713",
+        "componentType": "Purchased",
+        "description": "C5",
+        "material": "",
+        "qty": 1,
+        "length": null,
+        "uofm": "ea",
+        "state": "Issued for Use",
+        "purchaseDescription": "",
+        "nsItemType": "Inventory",
+        "revision": "0",
+        "children": [],
+        "_source": "current"
+      }
+    ],
+    "_source": "current"
+  }
+}
