@@ -32,13 +32,14 @@ export function isAssembly(node) {
 export function validateMetadata(node, ancestorPath) {
     const errors = [];
     const path = ancestorPath || node.partNumber;
+    const fullPath = (path === node.partNumber) ? node.partNumber : `${path} > ${node.partNumber}`;
 
     // Rule 3: Part Number Format
     const partNumberRegex = /^(1\d{6}(-\d{2}(-\d)?)?|[23]\d{5})$/;
     if (!partNumberRegex.test(node.partNumber)) {
         errors.push({
-            message: `${node.partNumber} at ${path}: Part number does not match expected format (1xxxxxx, 2xxxxx, or 3xxxxx)`,
-            path: path,
+            message: `At ${fullPath}: Part number does not match expected format (1xxxxxx, 2xxxxx, or 3xxxxx)`,
+            path: fullPath,
             rule: 'invalid-part-number'
         });
     }
@@ -46,8 +47,8 @@ export function validateMetadata(node, ancestorPath) {
     // Rule 4: Description Required
     if (!node.description || node.description.trim() === '') {
         errors.push({
-            message: `${node.partNumber} at ${path}: Description is empty — every part must have a description`,
-            path: path,
+            message: `At ${fullPath}: Description is empty — every part must have a description`,
+            path: fullPath,
             rule: 'missing-description'
         });
     }
@@ -71,8 +72,8 @@ export function validateMetadata(node, ancestorPath) {
     const validNsItemTypes = ['Inventory', 'Lot Numbered Inventory', 'Assembly'];
     if (node.nsItemType && node.nsItemType !== '' && !validNsItemTypes.includes(node.nsItemType)) {
         errors.push({
-            message: `${node.partNumber} at ${path}: NS Item Type '${node.nsItemType}' is not a recognized type (expected Inventory, Lot Numbered Inventory, or Assembly)`,
-            path: path,
+            message: `At ${fullPath}: NS Item Type '${node.nsItemType}' is not a recognized type (expected Inventory, Lot Numbered Inventory, or Assembly)`,
+            path: fullPath,
             rule: 'invalid-ns-item-type'
         });
     }
@@ -81,8 +82,8 @@ export function validateMetadata(node, ancestorPath) {
     const validComponentTypes = ['Purchased', 'Manufactured', 'Raw Stock', 'Assembly'];
     if (!validComponentTypes.includes(node.componentType)) {
         errors.push({
-            message: `${node.partNumber} at ${path}: Component Type '${node.componentType}' is not a recognized type (expected Purchased, Manufactured, Raw Stock, or Assembly)`,
-            path: path,
+            message: `At ${fullPath}: Component Type '${node.componentType}' is not a recognized type (expected Purchased, Manufactured, Raw Stock, or Assembly)`,
+            path: fullPath,
             rule: 'invalid-component-type'
         });
     }
@@ -91,8 +92,8 @@ export function validateMetadata(node, ancestorPath) {
     const validUoMs = ['ea', 'in', 'sq in'];
     if (!validUoMs.includes(node.uofm)) {
         errors.push({
-            message: `${node.partNumber} at ${path}: Unit of Measure '${node.uofm}' is not recognized (expected ea, in, or sq in)`,
-            path: path,
+            message: `At ${fullPath}: Unit of Measure '${node.uofm}' is not recognized (expected ea, in, or sq in)`,
+            path: fullPath,
             rule: 'invalid-uofm'
         });
     }
@@ -104,8 +105,8 @@ export function validateMetadata(node, ancestorPath) {
             // UoM must be 'ea'
             if (node.uofm !== 'ea') {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Inventory' (expected ea)`,
-                    path: path,
+                    message: `At ${fullPath}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Inventory' (expected ea)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
@@ -113,16 +114,16 @@ export function validateMetadata(node, ancestorPath) {
             const rawLength = node.rawLength.trim();
             if (rawLength !== '' && rawLength !== '-') {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Length '${node.rawLength}' is not valid for NS Item Type 'Inventory' (expected empty or -)`,
-                    path: path,
+                    message: `At ${fullPath}: Length '${node.rawLength}' is not valid for NS Item Type 'Inventory' (expected empty or -)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
             // Component Type must be 'Purchased' or 'Manufactured'
             if (node.componentType !== 'Purchased' && node.componentType !== 'Manufactured') {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Component Type '${node.componentType}' is not valid for NS Item Type 'Inventory' (expected Purchased or Manufactured)`,
-                    path: path,
+                    message: `At ${fullPath}: Component Type '${node.componentType}' is not valid for NS Item Type 'Inventory' (expected Purchased or Manufactured)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
@@ -130,8 +131,8 @@ export function validateMetadata(node, ancestorPath) {
             // UoM must be 'ea'
             if (node.uofm !== 'ea') {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Assembly' (expected ea)`,
-                    path: path,
+                    message: `At ${fullPath}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Assembly' (expected ea)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
@@ -139,16 +140,16 @@ export function validateMetadata(node, ancestorPath) {
             const rawLength = node.rawLength.trim();
             if (rawLength !== '' && rawLength !== '-') {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Length '${node.rawLength}' is not valid for NS Item Type 'Assembly' (expected empty or -)`,
-                    path: path,
+                    message: `At ${fullPath}: Length '${node.rawLength}' is not valid for NS Item Type 'Assembly' (expected empty or -)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
             // Component Type must be 'Assembly' or 'Manufactured'
             if (node.componentType !== 'Assembly' && node.componentType !== 'Manufactured') {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Component Type '${node.componentType}' is not valid for NS Item Type 'Assembly' (expected Assembly or Manufactured)`,
-                    path: path,
+                    message: `At ${fullPath}: Component Type '${node.componentType}' is not valid for NS Item Type 'Assembly' (expected Assembly or Manufactured)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
@@ -156,8 +157,8 @@ export function validateMetadata(node, ancestorPath) {
             // UoM must be 'in' or 'sq in'
             if (node.uofm !== 'in' && node.uofm !== 'sq in') {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected in or sq in)`,
-                    path: path,
+                    message: `At ${fullPath}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected in or sq in)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
@@ -165,16 +166,16 @@ export function validateMetadata(node, ancestorPath) {
             const lengthRegex = /^\d+(\.\d+)?(in)?$/;
             if (!lengthRegex.test(node.rawLength.trim())) {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Length '${node.rawLength}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected decimal number with optional 'in' suffix)`,
-                    path: path,
+                    message: `At ${fullPath}: Length '${node.rawLength}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected decimal number with optional 'in' suffix)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
             // Component Type must be 'Raw Stock'
             if (node.componentType !== 'Raw Stock') {
                 errors.push({
-                    message: `${node.partNumber} at ${path}: Component Type '${node.componentType}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected Raw Stock)`,
-                    path: path,
+                    message: `At ${fullPath}: Component Type '${node.componentType}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected Raw Stock)`,
+                    path: fullPath,
                     rule: 'cross-field-inconsistency'
                 });
             }
@@ -207,7 +208,7 @@ export function validateBOM(rootNode) {
     // Rule 0: Check root node (GA must be Released)
     if (!isReleased(rootNode.state)) {
         errors.push({
-            message: `GA root ${rootNode.partNumber} is WIP (${rootNode.state}) — Release GA ${rootNode.partNumber} in PDM before creating IFP artifact`,
+            message: `At ${rootNode.partNumber}: GA root is WIP (${rootNode.state}) — Release GA ${rootNode.partNumber} in PDM before creating IFP artifact`,
             path: rootNode.partNumber,
             rule: 'wip-ga'
         });
@@ -221,8 +222,8 @@ export function validateBOM(rootNode) {
         // Check for missing NS Item Type (applies to ALL nodes)
         if (!node.nsItemType || node.nsItemType === '') {
             errors.push({
-                message: `Missing NS Item Type on ${node.partNumber} at ${currentPath || 'root'} — cannot validate without knowing node type`,
-                path: currentPath || node.partNumber,
+                message: `At ${currentPath ? currentPath + ' > ' : ''}${node.partNumber}: Missing NS Item Type — cannot validate without knowing node type`,
+                path: currentPath ? `${currentPath} > ${node.partNumber}` : node.partNumber,
                 rule: 'missing-ns-item-type'
             });
             // Don't try to validate this node further, but DO recurse to find more missing types
@@ -247,8 +248,8 @@ export function validateBOM(rootNode) {
                 if (!child.nsItemType || child.nsItemType === '') {
                     const childPath = currentPath ? `${currentPath} > ${node.partNumber}` : node.partNumber;
                     errors.push({
-                        message: `Missing NS Item Type on ${child.partNumber} at ${childPath} — cannot validate without knowing node type`,
-                        path: childPath,
+                        message: `At ${childPath} > ${child.partNumber}: Missing NS Item Type — cannot validate without knowing node type`,
+                        path: `${childPath} > ${child.partNumber}`,
                         rule: 'missing-ns-item-type'
                     });
                     // Continue to next child (can't validate this child)
@@ -265,8 +266,8 @@ export function validateBOM(rootNode) {
                     if (!childIsReleased) {
                         const childPath = currentPath ? `${currentPath} > ${node.partNumber}` : node.partNumber;
                         errors.push({
-                            message: `${childPath} > ${child.partNumber}: WIP non-assembly item under released assembly — Release ${child.partNumber} in PDM before creating IFP artifact`,
-                            path: childPath,
+                            message: `At ${childPath} > ${child.partNumber}: WIP non-assembly item under released assembly — Release ${child.partNumber} in PDM before creating IFP artifact`,
+                            path: `${childPath} > ${child.partNumber}`,
                             rule: 'wip-non-assembly'
                         });
                     }
@@ -283,7 +284,7 @@ export function validateBOM(rootNode) {
             if (!hasNonAssemblyChildren && !hasReleasedChild && node.children.length > 0) {
                 const nodePath = currentPath ? `${currentPath} > ${node.partNumber}` : node.partNumber;
                 errors.push({
-                    message: `${nodePath}: Released assembly has no released content — all sub-assemblies are WIP`,
+                    message: `At ${nodePath}: Released assembly has no released content — all sub-assemblies are WIP`,
                     path: nodePath,
                     rule: 'no-released-content'
                 });
