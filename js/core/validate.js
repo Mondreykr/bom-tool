@@ -22,7 +22,7 @@ export function isAssembly(node) {
 }
 
 /**
- * Validates metadata for a single node (Rules 3-9).
+ * Validates metadata for a single node (Rules 3-4, 6-9; Rule 5 suspended).
  * Checks part number format, required fields, whitelisted values, and cross-field consistency.
  *
  * @param {BOMNode} node - Node to validate
@@ -52,14 +52,20 @@ export function validateMetadata(node, ancestorPath) {
         });
     }
 
-    // Rule 5: Revision Must Be Integer
-    if (!/^\d+$/.test(String(node.revision).trim())) {
-        errors.push({
-            message: `${node.partNumber} at ${path}: Revision '${node.revision}' is not a valid integer`,
-            path: path,
-            rule: 'invalid-revision'
-        });
-    }
+    // --- RULE 5 SUSPENDED ---
+    // Reason: Many BOM items (weldment cut-list items, hardware) have blank or
+    // non-integer revisions in SOLIDWORKS PDM. This caused excessive false-positive
+    // errors. Commenting out rather than deleting so it can be restored later.
+    //
+    // // Rule 5: Revision Must Be Integer
+    // if (!/^\d+$/.test(String(node.revision).trim())) {
+    //     errors.push({
+    //         message: `${node.partNumber} at ${path}: Revision '${node.revision}' is not a valid integer`,
+    //         path: path,
+    //         rule: 'invalid-revision'
+    //     });
+    // }
+    // --- END RULE 5 SUSPENDED ---
 
     // Rule 6: NS Item Type Whitelist
     const validNsItemTypes = ['Inventory', 'Lot Numbered Inventory', 'Assembly'];
