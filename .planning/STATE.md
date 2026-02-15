@@ -9,7 +9,7 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 
 ## Current Position
 
-Phase: 14 of 15 (IFP Merge Tab UI)
+Phase: 14 of 14 (IFP Merge Tab UI)
 Plan: 2 of 2 (Complete)
 Status: Complete
 Last activity: 2026-02-13 — Phase 14 complete: IFP Merge tab with merge execution, grafted highlighting, summary stats, and B(n) export
@@ -71,6 +71,10 @@ Recent decisions affecting current work:
 - [Phase 14]: State pills on ALL nodes (assemblies and parts) for pure visual pattern recognition
 - [Phase 14]: Tree defaults to first level expanded to show immediate state landscape
 - [Phase 14]: "Released" PDM state added to whitelist for hardware parts
+
+### Roadmap Evolution
+
+- Phase 14.1 inserted after Phase 14: add metadata rules and report issues from test suite for verification step (URGENT)
 
 ### Pending Todos
 
