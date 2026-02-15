@@ -150,7 +150,7 @@ Plans:
 
 **Goal:** Implement metadata validation Rules 3-9 as specified in validation-logic.md — part number format, description required, revision integer, NS Item Type/Component Type/UoM whitelists, cross-field consistency
 **Depends on:** Phase 14
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 14.1-01-PLAN.md — TDD: rawLength field, validateMetadata Rules 3-9, 15 new tests, integration into validateBOM
