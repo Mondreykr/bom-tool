@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 
 ## Current Position
 
-Phase: 14 of 14 (IFP Merge Tab UI)
-Plan: 2 of 2 (Complete)
+Phase: 14.1 of 15 (Metadata Validation Rules 3-9)
+Plan: 1 of 1 (Complete)
 Status: Complete
-Last activity: 2026-02-13 — Phase 14 complete: IFP Merge tab with merge execution, grafted highlighting, summary stats, and B(n) export
+Last activity: 2026-02-15 — Phase 14.1 complete: Metadata validation Rules 3-9 implemented with full test coverage
 
-Progress: [██████████████████░░] 95% (14 of 15 phases complete)
+Progress: [███████████████████░] 96% (14.1 of 15 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
+- Total plans completed: 26
 - Average duration: 9 min
-- Total execution time: 3.7 hours
+- Total execution time: 3.8 hours
 
 **By Phase (v1.0 complete):**
 
@@ -41,10 +41,11 @@ Progress: [██████████████████░░] 95% (14
 | 12 | 2 | 5 min | 3 min |
 | 13 | 2 | 6 min | 3 min |
 | 14 | 2 | 9 min | 5 min |
+| 14.1 | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 3, 5, 1, 4, 5 min
-- Trend: Fast execution continues for UI and merge implementation
+- Last 5 plans: 5, 1, 4, 5, 4 min
+- Trend: Fast execution continues for validation and testing
 
 *Updated after each plan completion*
 
@@ -71,10 +72,14 @@ Recent decisions affecting current work:
 - [Phase 14]: State pills on ALL nodes (assemblies and parts) for pure visual pattern recognition
 - [Phase 14]: Tree defaults to first level expanded to show immediate state landscape
 - [Phase 14]: "Released" PDM state added to whitelist for hardware parts
+- [Phase 14.1]: Metadata validation runs on EVERY node before merge-level validation (Rules 0-2)
+- [Phase 14.1]: rawLength field preserves raw string for cross-field validation (Rule 9)
+- [Phase 14.1]: All metadata rules (3-9) are hard blocks with traceable rule IDs
 
 ### Roadmap Evolution
 
-- Phase 14.1 inserted after Phase 14: add metadata rules and report issues from test suite for verification step (URGENT)
+- Phase 14.1 inserted after Phase 14: Metadata Validation Rules 3–9 — dedicated validation module with rule ID traceability (URGENT)
+- Phase 14.2 inserted after Phase 14: Test Suite Issue Fixes — UI/UX bugs from test-suite-1-20260215.md (URGENT)
 
 ### Pending Todos
 
@@ -88,11 +93,11 @@ User has notes from visual testing to share — may generate items for Phase 15 
 
 ## Session Continuity
 
-Last session: 2026-02-13 (Phase 14 execution complete)
-Stopped at: Phase 14 fully executed and verified — IFP Merge tab operational
+Last session: 2026-02-15 (Phase 14.1 execution complete)
+Stopped at: Phase 14.1 fully executed and verified — Metadata validation Rules 3-9 operational
 Resume file: None
 
-Next action: Proceed to Phase 15 — Cross-Tab Integration
+Next action: Proceed to Phase 14.2 (Test Suite Issue Fixes) or Phase 15 (Cross-Tab Integration)
 
 ---
-*Last updated: 2026-02-13 after Phase 14 execution complete*
+*Last updated: 2026-02-15 after Phase 14.1 execution complete*
