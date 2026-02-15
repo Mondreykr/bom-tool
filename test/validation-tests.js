@@ -1,5 +1,5 @@
 import { BOMNode } from '../js/core/tree.js';
-import { isAssembly, validateBOM } from '../js/core/validate.js';
+import { isAssembly, validateBOM, validateMetadata } from '../js/core/validate.js';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -20,8 +20,10 @@ function makeNode({
     nsItemType, // Explicit parameter for NS Item Type (no default)
     state = 'Issued for Purchasing',
     qty = 1,
-    description = '',
-    revision = 'A',
+    description = 'Test Description',
+    revision = '1',
+    uofm = 'ea',
+    length = '',
     children = []
 }) {
     // If nsItemType not provided at all (arguments doesn't include it), derive from componentType
@@ -39,8 +41,8 @@ function makeNode({
         Description: description,
         Material: '',
         Qty: String(qty),
-        Length: '',
-        UofM: '',
+        Length: length,
+        UofM: uofm,
         State: state,
         'Purchase Description': '',
         'NS Item Type': finalNsItemType,
@@ -96,7 +98,7 @@ function test1_isAssembly_ReturnsTrue_ForAssembly() {
     const errors = [];
 
     const node = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         nsItemType: 'Assembly'
     });
 
@@ -113,7 +115,7 @@ function test2_isAssembly_ReturnsFalse_ForInventory() {
 
     const node = makeNode({
         partNumber: 'P1',
-        componentType: 'Part',
+        componentType: 'Purchased',
         nsItemType: 'Inventory'
     });
 
@@ -130,7 +132,7 @@ function test3_isAssembly_ReturnsFalse_ForLotNumberedInventory() {
 
     const node = makeNode({
         partNumber: 'P2',
-        componentType: 'Part',
+        componentType: 'Purchased',
         nsItemType: 'Lot Numbered Inventory'
     });
 
@@ -215,12 +217,12 @@ function test6_Rule0_ReleasedGAValid() {
     const errors = [];
 
     const GA = makeNode({
-        partNumber: '12345-GA',
+        partNumber: '1000001',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [
             makeNode({
-                partNumber: 'A1',
+                partNumber: '1000002',
                 state: 'Issued for Purchasing',
                 nsItemType: 'Assembly'
             })
@@ -251,21 +253,21 @@ function test7_Rule1_WIPNonAssemblyUnderReleasedBlocked() {
     const errors = [];
 
     const C1 = makeNode({
-        partNumber: 'C1',
-        componentType: 'Part',
+        partNumber: '1000201',
+        componentType: 'Purchased',
         nsItemType: 'Inventory',
         state: 'Under Revision' // WIP
     });
 
     const A1 = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [C1]
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [A1]
@@ -284,12 +286,12 @@ function test7_Rule1_WIPNonAssemblyUnderReleasedBlocked() {
         errors.push('Expected to find error with rule="wip-non-assembly"');
     } else {
         // Check error includes full path
-        if (!wipPartError.path || !wipPartError.path.includes('GA') || !wipPartError.path.includes('A1')) {
+        if (!wipPartError.path || !wipPartError.path.includes('1000100') || !wipPartError.path.includes('1000101')) {
             errors.push(`Expected error path to include full ancestor chain, got: ${wipPartError.path}`);
         }
         // Check error message includes part number
-        if (!wipPartError.message.includes('C1')) {
-            errors.push('Expected error message to include part number C1');
+        if (!wipPartError.message.includes('1000201')) {
+            errors.push('Expected error message to include part number 1000201');
         }
         // Check error includes suggested fix
         if (!wipPartError.message.includes('Release') || !wipPartError.message.includes('PDM')) {
@@ -305,21 +307,21 @@ function test8_Rule1_ReleasedNonAssemblyValid() {
     const errors = [];
 
     const C1 = makeNode({
-        partNumber: 'C1',
-        componentType: 'Part',
+        partNumber: '1000201',
+        componentType: 'Purchased',
         nsItemType: 'Inventory',
         state: 'Issued for Purchasing' // Released
     });
 
     const A1 = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [C1]
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [A1]
@@ -340,35 +342,35 @@ function test9_Rule1_MultipleWIPPartsCollected() {
     const errors = [];
 
     const C1 = makeNode({
-        partNumber: 'C1',
-        componentType: 'Part',
+        partNumber: '1000201',
+        componentType: 'Purchased',
         nsItemType: 'Inventory',
         state: 'Under Revision' // WIP
     });
 
     const C2 = makeNode({
-        partNumber: 'C2',
-        componentType: 'Part',
+        partNumber: '1000202',
+        componentType: 'Purchased',
         nsItemType: 'Inventory',
         state: 'In Design' // WIP
     });
 
     const A1 = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [C1]
     });
 
     const A2 = makeNode({
-        partNumber: 'A2',
+        partNumber: '1000102',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [C2]
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [A1, A2]
@@ -399,19 +401,19 @@ function test10_Rule2_ReleasedAssemblyOnlyWIPSubAssembliesBlocked() {
     const errors = [];
 
     const A1 = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         state: 'Under Revision', // WIP
         nsItemType: 'Assembly'
     });
 
     const A2 = makeNode({
-        partNumber: 'A2',
+        partNumber: '1000102',
         state: 'In Design', // WIP
         nsItemType: 'Assembly'
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [A1, A2] // Only sub-assemblies, all WIP
@@ -430,7 +432,7 @@ function test10_Rule2_ReleasedAssemblyOnlyWIPSubAssembliesBlocked() {
         errors.push('Expected to find error with rule="no-released-content"');
     } else {
         // Check error includes parent assembly path
-        if (!noReleasedContentError.message.includes('GA')) {
+        if (!noReleasedContentError.message.includes('1000100')) {
             errors.push('Expected error message to include parent assembly');
         }
     }
@@ -443,19 +445,19 @@ function test11_Rule2_MixedWIPAndReleasedSubAssembliesValid() {
     const errors = [];
 
     const A1 = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         state: 'Under Revision', // WIP
         nsItemType: 'Assembly'
     });
 
     const A2 = makeNode({
-        partNumber: 'A2',
+        partNumber: '1000102',
         state: 'Issued for Purchasing', // Released
         nsItemType: 'Assembly'
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [A1, A2] // Mixed: one WIP, one Released
@@ -476,20 +478,20 @@ function test12_Rule2_WIPSubAssemblyWithReleasedPartValid() {
     const errors = [];
 
     const A1 = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         state: 'Under Revision', // WIP sub-assembly
         nsItemType: 'Assembly'
     });
 
     const C1 = makeNode({
-        partNumber: 'C1',
-        componentType: 'Part',
+        partNumber: '1000201',
+        componentType: 'Purchased',
         nsItemType: 'Inventory',
         state: 'Issued for Purchasing' // Released non-assembly
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [A1, C1] // Has released content (C1)
@@ -514,13 +516,13 @@ function test13_MissingNsItemTypeBlocked() {
     const errors = [];
 
     const C1 = makeNode({
-        partNumber: 'C1',
-        componentType: 'Part',
+        partNumber: '1000201',
+        componentType: 'Purchased',
         nsItemType: null // Missing NS Item Type
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [C1]
@@ -539,8 +541,8 @@ function test13_MissingNsItemTypeBlocked() {
         errors.push('Expected to find error with rule="missing-ns-item-type"');
     } else {
         // Check error includes part number
-        if (!missingTypeError.message.includes('C1')) {
-            errors.push('Expected error message to include part number C1');
+        if (!missingTypeError.message.includes('1000201')) {
+            errors.push('Expected error message to include part number 1000201');
         }
         // Check error includes path
         if (!missingTypeError.path) {
@@ -560,27 +562,27 @@ function test14_MultipleViolationsAllCollected() {
     const errors = [];
 
     const C1 = makeNode({
-        partNumber: 'C1',
-        componentType: 'Part',
+        partNumber: '1000201',
+        componentType: 'Purchased',
         nsItemType: 'Inventory',
         state: 'Under Revision' // WIP non-assembly
     });
 
     const C2 = makeNode({
-        partNumber: 'C2',
-        componentType: 'Part',
+        partNumber: '1000202',
+        componentType: 'Purchased',
         nsItemType: null // Missing NS Item Type
     });
 
     const A1 = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [C1, C2]
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Under Revision', // WIP GA
         nsItemType: 'Assembly',
         children: [A1]
@@ -621,28 +623,28 @@ function test15_DeepTreeWIPPartFullPath() {
     const errors = [];
 
     const C1 = makeNode({
-        partNumber: 'C1',
-        componentType: 'Part',
+        partNumber: '1000201',
+        componentType: 'Purchased',
         nsItemType: 'Inventory',
         state: 'Under Revision' // WIP
     });
 
     const A2 = makeNode({
-        partNumber: 'A2',
+        partNumber: '1000102',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [C1]
     });
 
     const A1 = makeNode({
-        partNumber: 'A1',
+        partNumber: '1000101',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [A2]
     });
 
     const GA = makeNode({
-        partNumber: 'GA',
+        partNumber: '1000100',
         state: 'Issued for Purchasing',
         nsItemType: 'Assembly',
         children: [A1]
@@ -661,12 +663,471 @@ function test15_DeepTreeWIPPartFullPath() {
         errors.push('Expected to find wip-non-assembly error');
     } else {
         // Check path includes all ancestors
-        const pathParts = ['GA', 'A1', 'A2'];
+        const pathParts = ['1000100', '1000101', '1000102'];
         for (const part of pathParts) {
             if (!wipPartError.path.includes(part)) {
                 errors.push(`Expected path to include ${part}, got: ${wipPartError.path}`);
             }
         }
+    }
+
+    return errors;
+}
+
+// ============================================================================
+// TEST CASES - validateMetadata Rules 3-9
+// ============================================================================
+
+function test16_Rule3_ValidPartNumbersPassed() {
+    console.log('  Testing: Rule 3 — Valid part numbers pass validation');
+    const errors = [];
+
+    const validPartNumbers = ['1000123', '1000123-01', '1000123-01-1', '200001', '300001'];
+
+    for (const pn of validPartNumbers) {
+        const node = makeNode({
+            partNumber: pn,
+            nsItemType: 'Assembly'
+        });
+
+        const result = validateBOM(node);
+        const partNumberError = result.errors.find(e => e.rule === 'invalid-part-number');
+        if (partNumberError) {
+            errors.push(`Expected ${pn} to pass validation, but got error: ${partNumberError.message}`);
+        }
+    }
+
+    return errors;
+}
+
+function test17_Rule3_InvalidPartNumbersBlocked() {
+    console.log('  Testing: Rule 3 — Invalid part numbers blocked');
+    const errors = [];
+
+    const invalidPartNumbers = ['ABC123', '400001', '10001', '1000123-1'];
+
+    for (const pn of invalidPartNumbers) {
+        const node = makeNode({
+            partNumber: pn,
+            nsItemType: 'Assembly'
+        });
+
+        const result = validateBOM(node);
+        const partNumberError = result.errors.find(e => e.rule === 'invalid-part-number');
+        if (!partNumberError) {
+            errors.push(`Expected ${pn} to fail validation`);
+        }
+    }
+
+    return errors;
+}
+
+function test18_Rule3_PartNumberErrorIncludesPath() {
+    console.log('  Testing: Rule 3 — Part number error includes path');
+    const errors = [];
+
+    const node = makeNode({
+        partNumber: 'INVALID',
+        nsItemType: 'Assembly'
+    });
+
+    const result = validateBOM(node);
+    const partNumberError = result.errors.find(e => e.rule === 'invalid-part-number');
+
+    if (!partNumberError) {
+        errors.push('Expected to find invalid-part-number error');
+    } else {
+        if (!partNumberError.path) {
+            errors.push('Expected error to include path');
+        }
+        if (!partNumberError.message.includes('INVALID')) {
+            errors.push('Expected error message to include part number');
+        }
+    }
+
+    return errors;
+}
+
+function test19_Rule4_EmptyDescriptionBlocked() {
+    console.log('  Testing: Rule 4 — Empty/blank description blocked');
+    const errors = [];
+
+    // Test empty string
+    const node1 = makeNode({
+        partNumber: '1000123',
+        description: '',
+        nsItemType: 'Assembly'
+    });
+
+    const result1 = validateBOM(node1);
+    const emptyDescError = result1.errors.find(e => e.rule === 'missing-description');
+    if (!emptyDescError) {
+        errors.push('Expected empty description to fail validation');
+    }
+
+    // Test whitespace only
+    const node2 = makeNode({
+        partNumber: '1000124',
+        description: '   ',
+        nsItemType: 'Assembly'
+    });
+
+    const result2 = validateBOM(node2);
+    const whitespaceDescError = result2.errors.find(e => e.rule === 'missing-description');
+    if (!whitespaceDescError) {
+        errors.push('Expected whitespace-only description to fail validation');
+    }
+
+    return errors;
+}
+
+function test20_Rule5_NonIntegerRevisionBlocked() {
+    console.log('  Testing: Rule 5 — Non-integer revision blocked');
+    const errors = [];
+
+    const invalidRevisions = ['A', '1.5', ''];
+
+    for (const rev of invalidRevisions) {
+        const node = makeNode({
+            partNumber: '1000123',
+            revision: rev,
+            nsItemType: 'Assembly'
+        });
+
+        const result = validateBOM(node);
+        const revisionError = result.errors.find(e => e.rule === 'invalid-revision');
+        if (!revisionError) {
+            errors.push(`Expected revision '${rev}' to fail validation`);
+        }
+    }
+
+    // Test valid revisions
+    const validRevisions = ['1', '15'];
+
+    for (const rev of validRevisions) {
+        const node = makeNode({
+            partNumber: '1000123',
+            revision: rev,
+            nsItemType: 'Assembly'
+        });
+
+        const result = validateBOM(node);
+        const revisionError = result.errors.find(e => e.rule === 'invalid-revision');
+        if (revisionError) {
+            errors.push(`Expected revision '${rev}' to pass validation, got error: ${revisionError.message}`);
+        }
+    }
+
+    return errors;
+}
+
+function test21_Rule6_InvalidNsItemTypeBlocked() {
+    console.log('  Testing: Rule 6 — Invalid NS Item Type blocked');
+    const errors = [];
+
+    const node = makeNode({
+        partNumber: '1000123',
+        nsItemType: 'Widget'
+    });
+
+    const result = validateBOM(node);
+    const nsItemTypeError = result.errors.find(e => e.rule === 'invalid-ns-item-type');
+
+    if (!nsItemTypeError) {
+        errors.push('Expected invalid NS Item Type "Widget" to fail validation');
+    }
+
+    // Test valid values
+    const validTypes = ['Inventory', 'Lot Numbered Inventory', 'Assembly'];
+
+    for (const type of validTypes) {
+        const validNode = makeNode({
+            partNumber: '1000123',
+            nsItemType: type,
+            componentType: type === 'Assembly' ? 'Assembly' : 'Purchased'
+        });
+
+        const validResult = validateBOM(validNode);
+        const validError = validResult.errors.find(e => e.rule === 'invalid-ns-item-type');
+        if (validError) {
+            errors.push(`Expected NS Item Type '${type}' to pass validation, got error: ${validError.message}`);
+        }
+    }
+
+    return errors;
+}
+
+function test22_Rule7_InvalidComponentTypeBlocked() {
+    console.log('  Testing: Rule 7 — Invalid Component Type blocked');
+    const errors = [];
+
+    const node = makeNode({
+        partNumber: '1000123',
+        componentType: 'Custom',
+        nsItemType: 'Assembly'
+    });
+
+    const result = validateBOM(node);
+    const componentTypeError = result.errors.find(e => e.rule === 'invalid-component-type');
+
+    if (!componentTypeError) {
+        errors.push('Expected invalid Component Type "Custom" to fail validation');
+    }
+
+    // Test valid values
+    const validTypes = ['Purchased', 'Manufactured', 'Raw Stock', 'Assembly'];
+
+    for (const type of validTypes) {
+        const validNode = makeNode({
+            partNumber: '1000123',
+            componentType: type,
+            nsItemType: 'Assembly'
+        });
+
+        const validResult = validateBOM(validNode);
+        const validError = validResult.errors.find(e => e.rule === 'invalid-component-type');
+        if (validError) {
+            errors.push(`Expected Component Type '${type}' to pass validation, got error: ${validError.message}`);
+        }
+    }
+
+    return errors;
+}
+
+function test23_Rule8_InvalidUoMBlocked() {
+    console.log('  Testing: Rule 8 — Invalid Unit of Measure blocked');
+    const errors = [];
+
+    const node = makeNode({
+        partNumber: '1000123',
+        uofm: 'ft',
+        nsItemType: 'Assembly'
+    });
+
+    const result = validateBOM(node);
+    const uofmError = result.errors.find(e => e.rule === 'invalid-uofm');
+
+    if (!uofmError) {
+        errors.push('Expected invalid UoM "ft" to fail validation');
+    }
+
+    // Test valid values
+    const validUoMs = ['ea', 'in', 'sq in'];
+
+    for (const uom of validUoMs) {
+        const validNode = makeNode({
+            partNumber: '1000123',
+            uofm: uom,
+            nsItemType: 'Assembly'
+        });
+
+        const validResult = validateBOM(validNode);
+        const validError = validResult.errors.find(e => e.rule === 'invalid-uofm');
+        if (validError) {
+            errors.push(`Expected UoM '${uom}' to pass validation, got error: ${validError.message}`);
+        }
+    }
+
+    return errors;
+}
+
+function test24_Rule9_InventoryWithInvalidUoMBlocked() {
+    console.log('  Testing: Rule 9 — Inventory with UoM="in" blocked (expected "ea")');
+    const errors = [];
+
+    const node = makeNode({
+        partNumber: '1000123',
+        nsItemType: 'Inventory',
+        componentType: 'Purchased',
+        uofm: 'in',
+        length: ''
+    });
+
+    const result = validateBOM(node);
+    const crossFieldError = result.errors.find(e => e.rule === 'cross-field-inconsistency' && e.message.includes('Unit of Measure'));
+
+    if (!crossFieldError) {
+        errors.push('Expected Inventory with UoM="in" to fail cross-field validation');
+    }
+
+    return errors;
+}
+
+function test25_Rule9_InventoryWithLengthBlocked() {
+    console.log('  Testing: Rule 9 — Inventory with non-empty Length blocked');
+    const errors = [];
+
+    const node = makeNode({
+        partNumber: '1000123',
+        nsItemType: 'Inventory',
+        componentType: 'Purchased',
+        uofm: 'ea',
+        length: '12.5'
+    });
+
+    const result = validateBOM(node);
+    const crossFieldError = result.errors.find(e => e.rule === 'cross-field-inconsistency' && e.message.includes('Length'));
+
+    if (!crossFieldError) {
+        errors.push('Expected Inventory with Length="12.5" to fail cross-field validation');
+    }
+
+    return errors;
+}
+
+function test26_Rule9_LotNumberedInventoryWithInvalidUoMBlocked() {
+    console.log('  Testing: Rule 9 — Lot Numbered Inventory with UoM="ea" blocked (expected "in" or "sq in")');
+    const errors = [];
+
+    const node = makeNode({
+        partNumber: '1000123',
+        nsItemType: 'Lot Numbered Inventory',
+        componentType: 'Raw Stock',
+        uofm: 'ea',
+        length: '12.5in'
+    });
+
+    const result = validateBOM(node);
+    const crossFieldError = result.errors.find(e => e.rule === 'cross-field-inconsistency' && e.message.includes('Unit of Measure'));
+
+    if (!crossFieldError) {
+        errors.push('Expected Lot Numbered Inventory with UoM="ea" to fail cross-field validation');
+    }
+
+    return errors;
+}
+
+function test27_Rule9_LotNumberedInventoryWithValidFieldsPasses() {
+    console.log('  Testing: Rule 9 — Lot Numbered Inventory with valid fields passes');
+    const errors = [];
+
+    const node = makeNode({
+        partNumber: '1000123',
+        nsItemType: 'Lot Numbered Inventory',
+        componentType: 'Raw Stock',
+        uofm: 'in',
+        length: '12.5in'
+    });
+
+    const result = validateBOM(node);
+    const crossFieldErrors = result.errors.filter(e => e.rule === 'cross-field-inconsistency');
+
+    if (crossFieldErrors.length > 0) {
+        errors.push(`Expected valid Lot Numbered Inventory to pass, got errors: ${JSON.stringify(crossFieldErrors)}`);
+    }
+
+    return errors;
+}
+
+function test28_MetadataErrorsCollectedWithMergeErrors() {
+    console.log('  Testing: Metadata errors collected alongside merge errors');
+    const errors = [];
+
+    const child = makeNode({
+        partNumber: 'INVALID',
+        nsItemType: 'Assembly',
+        state: 'Issued for Purchasing'
+    });
+
+    const GA = makeNode({
+        partNumber: '1000123',
+        state: 'Under Revision', // WIP GA (Rule 0 violation)
+        nsItemType: 'Assembly',
+        children: [child]
+    });
+
+    const result = validateBOM(GA);
+
+    // Should have both WIP GA error and invalid part number error
+    const wipGAError = result.errors.find(e => e.rule === 'wip-ga');
+    const partNumberError = result.errors.find(e => e.rule === 'invalid-part-number');
+
+    if (!wipGAError) {
+        errors.push('Expected to find wip-ga error');
+    }
+    if (!partNumberError) {
+        errors.push('Expected to find invalid-part-number error');
+    }
+
+    return errors;
+}
+
+function test29_MetadataCheckedOnEveryNode() {
+    console.log('  Testing: Metadata validation runs on every node');
+    const errors = [];
+
+    const child1 = makeNode({
+        partNumber: 'INVALID1',
+        nsItemType: 'Inventory',
+        componentType: 'Purchased',
+        state: 'Issued for Purchasing'
+    });
+
+    const child2 = makeNode({
+        partNumber: '1000124',
+        nsItemType: 'Inventory',
+        componentType: 'Purchased',
+        description: '', // Missing description
+        state: 'Issued for Purchasing'
+    });
+
+    const GA = makeNode({
+        partNumber: '1000123',
+        state: 'Issued for Purchasing',
+        nsItemType: 'Assembly',
+        children: [child1, child2]
+    });
+
+    const result = validateBOM(GA);
+
+    // Should have errors for both children
+    const partNumberError = result.errors.find(e => e.rule === 'invalid-part-number' && e.message.includes('INVALID1'));
+    const descriptionError = result.errors.find(e => e.rule === 'missing-description' && e.message.includes('1000124'));
+
+    if (!partNumberError) {
+        errors.push('Expected to find invalid-part-number error for child1');
+    }
+    if (!descriptionError) {
+        errors.push('Expected to find missing-description error for child2');
+    }
+
+    return errors;
+}
+
+function test30_ValidMetadataWithValidMergePasses() {
+    console.log('  Testing: Valid metadata with valid merge passes');
+    const errors = [];
+
+    const child = makeNode({
+        partNumber: '1000124',
+        nsItemType: 'Inventory',
+        componentType: 'Purchased',
+        state: 'Issued for Purchasing',
+        description: 'Valid Part',
+        revision: '1',
+        uofm: 'ea',
+        length: ''
+    });
+
+    const GA = makeNode({
+        partNumber: '1000123',
+        state: 'Issued for Purchasing',
+        nsItemType: 'Assembly',
+        description: 'Valid Assembly',
+        revision: '1',
+        uofm: 'ea',
+        length: '',
+        children: [child]
+    });
+
+    const result = validateBOM(GA);
+
+    if (!result.valid) {
+        errors.push(`Expected validation to pass, got errors: ${JSON.stringify(result.errors)}`);
+    }
+
+    if (result.errors.length !== 0) {
+        errors.push(`Expected zero errors, got ${result.errors.length}: ${JSON.stringify(result.errors)}`);
     }
 
     return errors;
@@ -708,6 +1169,37 @@ results.push(runTest('Test 13: Missing NS Item Type blocked', test13_MissingNsIt
 // Completeness
 results.push(runTest('Test 14: Multiple violations all collected', test14_MultipleViolationsAllCollected));
 results.push(runTest('Test 15: Deep tree WIP part full path', test15_DeepTreeWIPPartFullPath));
+
+// Rule 3 (Part Number Format)
+results.push(runTest('Test 16: Rule 3 — Valid part numbers pass', test16_Rule3_ValidPartNumbersPassed));
+results.push(runTest('Test 17: Rule 3 — Invalid part numbers blocked', test17_Rule3_InvalidPartNumbersBlocked));
+results.push(runTest('Test 18: Rule 3 — Part number error includes path', test18_Rule3_PartNumberErrorIncludesPath));
+
+// Rule 4 (Description Required)
+results.push(runTest('Test 19: Rule 4 — Empty/blank description blocked', test19_Rule4_EmptyDescriptionBlocked));
+
+// Rule 5 (Revision Must Be Integer)
+results.push(runTest('Test 20: Rule 5 — Non-integer revision blocked', test20_Rule5_NonIntegerRevisionBlocked));
+
+// Rule 6 (NS Item Type Whitelist)
+results.push(runTest('Test 21: Rule 6 — Invalid NS Item Type blocked', test21_Rule6_InvalidNsItemTypeBlocked));
+
+// Rule 7 (Component Type Whitelist)
+results.push(runTest('Test 22: Rule 7 — Invalid Component Type blocked', test22_Rule7_InvalidComponentTypeBlocked));
+
+// Rule 8 (Unit of Measure Whitelist)
+results.push(runTest('Test 23: Rule 8 — Invalid UoM blocked', test23_Rule8_InvalidUoMBlocked));
+
+// Rule 9 (Cross-Field Consistency)
+results.push(runTest('Test 24: Rule 9 — Inventory with invalid UoM blocked', test24_Rule9_InventoryWithInvalidUoMBlocked));
+results.push(runTest('Test 25: Rule 9 — Inventory with Length blocked', test25_Rule9_InventoryWithLengthBlocked));
+results.push(runTest('Test 26: Rule 9 — Lot Numbered Inventory with invalid UoM blocked', test26_Rule9_LotNumberedInventoryWithInvalidUoMBlocked));
+results.push(runTest('Test 27: Rule 9 — Lot Numbered Inventory with valid fields passes', test27_Rule9_LotNumberedInventoryWithValidFieldsPasses));
+
+// Integration tests
+results.push(runTest('Test 28: Metadata errors collected with merge errors', test28_MetadataErrorsCollectedWithMergeErrors));
+results.push(runTest('Test 29: Metadata checked on every node', test29_MetadataCheckedOnEveryNode));
+results.push(runTest('Test 30: Valid metadata with valid merge passes', test30_ValidMetadataWithValidMergePasses));
 
 // Summary
 console.log('\n' + '='.repeat(60));

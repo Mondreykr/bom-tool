@@ -283,9 +283,9 @@ export function validateBOM(rootNode) {
                 });
             }
 
-            // Recurse into Released assembly children to continue validation
+            // Recurse into ALL children for metadata validation and merge rules
             for (const child of node.children) {
-                if (child.nsItemType && isAssembly(child) && isReleased(child.state)) {
+                if (child.nsItemType) {
                     walkAndValidate(child, [...ancestors, node]);
                 }
             }
