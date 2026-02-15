@@ -98,6 +98,24 @@ Plans:
 - [x] 14-01-PLAN.md — Tab shell, uploads, state-aware tree rendering with state pills, validation display, view controls
 - [x] 14-02-PLAN.md — Merge execution, grafted highlighting, summary stats, export B(n), visual verification
 
+#### Phase 14.1: Metadata Validation Rules 3-9 (INSERTED)
+
+**Goal:** Implement metadata validation Rules 3-9 as specified in validation-logic.md — part number format, description required, revision integer, NS Item Type/Component Type/UoM whitelists, cross-field consistency
+**Depends on:** Phase 14
+**Plans:** 1/1 plans complete
+
+Plans:
+- [x] 14.1-01-PLAN.md — TDD: rawLength field, validateMetadata Rules 3-9, 15 new tests, integration into validateBOM
+
+#### Phase 14.2: Test Suite Issue Fixes (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Depends on:** Phase 14
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 14.2 to break down)
+
 #### Phase 15: Cross-Tab Integration
 **Goal**: JSON files work across all tabs, B(n) auto-loads after merge for evaluation
 **Depends on**: Phase 14
@@ -114,7 +132,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
+Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 14.1 -> 14.2 -> 15
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -132,25 +150,9 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 12. JSON Artifact Format | v2.0 | 2/2 | Complete | 2026-02-12 |
 | 13. Validation System | v2.0 | 2/2 | Complete | 2026-02-12 |
 | 14. IFP Merge Tab UI | v2.0 | 2/2 | Complete | 2026-02-13 |
+| 14.1. Metadata Validation Rules 3-9 | v2.0 | 1/1 | Complete | 2026-02-15 |
+| 14.2. Test Suite Issue Fixes | v2.0 | 0/? | Not started | - |
 | 15. Cross-Tab Integration | v2.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-02-13 after Phase 14 execution complete*
-
-### Phase 14.2: Test Suite Issue Fixes (INSERTED)
-
-**Goal:** [Urgent work - to be planned]
-**Depends on:** Phase 14
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 14.2 to break down)
-
-### Phase 14.1: Metadata Validation Rules 3-9 (INSERTED)
-
-**Goal:** Implement metadata validation Rules 3-9 as specified in validation-logic.md — part number format, description required, revision integer, NS Item Type/Component Type/UoM whitelists, cross-field consistency
-**Depends on:** Phase 14
-**Plans:** 1/1 plans complete
-
-Plans:
-- [ ] 14.1-01-PLAN.md — TDD: rawLength field, validateMetadata Rules 3-9, 15 new tests, integration into validateBOM
+*Last updated: 2026-02-15 after ROADMAP cleanup*
