@@ -22,6 +22,163 @@ export function isAssembly(node) {
 }
 
 /**
+ * Validates metadata for a single node (Rules 3-9).
+ * Checks part number format, required fields, whitelisted values, and cross-field consistency.
+ *
+ * @param {BOMNode} node - Node to validate
+ * @param {string} ancestorPath - Ancestor path for error messages
+ * @returns {Array<{message: string, path: string, rule: string}>} - Array of error objects
+ */
+export function validateMetadata(node, ancestorPath) {
+    const errors = [];
+    const path = ancestorPath || node.partNumber;
+
+    // Rule 3: Part Number Format
+    const partNumberRegex = /^(1\d{6}(-\d{2}(-\d)?)?|[23]\d{5})$/;
+    if (!partNumberRegex.test(node.partNumber)) {
+        errors.push({
+            message: `${node.partNumber} at ${path}: Part number does not match expected format (1xxxxxx, 2xxxxx, or 3xxxxx)`,
+            path: path,
+            rule: 'invalid-part-number'
+        });
+    }
+
+    // Rule 4: Description Required
+    if (!node.description || node.description.trim() === '') {
+        errors.push({
+            message: `${node.partNumber} at ${path}: Description is empty — every part must have a description`,
+            path: path,
+            rule: 'missing-description'
+        });
+    }
+
+    // Rule 5: Revision Must Be Integer
+    if (!/^\d+$/.test(String(node.revision).trim())) {
+        errors.push({
+            message: `${node.partNumber} at ${path}: Revision '${node.revision}' is not a valid integer`,
+            path: path,
+            rule: 'invalid-revision'
+        });
+    }
+
+    // Rule 6: NS Item Type Whitelist
+    const validNsItemTypes = ['Inventory', 'Lot Numbered Inventory', 'Assembly'];
+    if (node.nsItemType && node.nsItemType !== '' && !validNsItemTypes.includes(node.nsItemType)) {
+        errors.push({
+            message: `${node.partNumber} at ${path}: NS Item Type '${node.nsItemType}' is not a recognized type (expected Inventory, Lot Numbered Inventory, or Assembly)`,
+            path: path,
+            rule: 'invalid-ns-item-type'
+        });
+    }
+
+    // Rule 7: Component Type Whitelist
+    const validComponentTypes = ['Purchased', 'Manufactured', 'Raw Stock', 'Assembly'];
+    if (!validComponentTypes.includes(node.componentType)) {
+        errors.push({
+            message: `${node.partNumber} at ${path}: Component Type '${node.componentType}' is not a recognized type (expected Purchased, Manufactured, Raw Stock, or Assembly)`,
+            path: path,
+            rule: 'invalid-component-type'
+        });
+    }
+
+    // Rule 8: Unit of Measure Whitelist
+    const validUoMs = ['ea', 'in', 'sq in'];
+    if (!validUoMs.includes(node.uofm)) {
+        errors.push({
+            message: `${node.partNumber} at ${path}: Unit of Measure '${node.uofm}' is not recognized (expected ea, in, or sq in)`,
+            path: path,
+            rule: 'invalid-uofm'
+        });
+    }
+
+    // Rule 9: Cross-Field Consistency
+    // Only run if NS Item Type is valid (passed Rule 6)
+    if (validNsItemTypes.includes(node.nsItemType)) {
+        if (node.nsItemType === 'Inventory') {
+            // UoM must be 'ea'
+            if (node.uofm !== 'ea') {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Inventory' (expected ea)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+            // Length must be empty, blank, or '-'
+            const rawLength = node.rawLength.trim();
+            if (rawLength !== '' && rawLength !== '-') {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Length '${node.rawLength}' is not valid for NS Item Type 'Inventory' (expected empty or -)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+            // Component Type must be 'Purchased' or 'Manufactured'
+            if (node.componentType !== 'Purchased' && node.componentType !== 'Manufactured') {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Component Type '${node.componentType}' is not valid for NS Item Type 'Inventory' (expected Purchased or Manufactured)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+        } else if (node.nsItemType === 'Assembly') {
+            // UoM must be 'ea'
+            if (node.uofm !== 'ea') {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Assembly' (expected ea)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+            // Length must be empty, blank, or '-'
+            const rawLength = node.rawLength.trim();
+            if (rawLength !== '' && rawLength !== '-') {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Length '${node.rawLength}' is not valid for NS Item Type 'Assembly' (expected empty or -)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+            // Component Type must be 'Assembly' or 'Manufactured'
+            if (node.componentType !== 'Assembly' && node.componentType !== 'Manufactured') {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Component Type '${node.componentType}' is not valid for NS Item Type 'Assembly' (expected Assembly or Manufactured)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+        } else if (node.nsItemType === 'Lot Numbered Inventory') {
+            // UoM must be 'in' or 'sq in'
+            if (node.uofm !== 'in' && node.uofm !== 'sq in') {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Unit of Measure '${node.uofm}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected in or sq in)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+            // Length must be a decimal number, optionally with "in" suffix
+            const lengthRegex = /^\d+(\.\d+)?(in)?$/;
+            if (!lengthRegex.test(node.rawLength.trim())) {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Length '${node.rawLength}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected decimal number with optional 'in' suffix)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+            // Component Type must be 'Raw Stock'
+            if (node.componentType !== 'Raw Stock') {
+                errors.push({
+                    message: `${node.partNumber} at ${path}: Component Type '${node.componentType}' is not valid for NS Item Type 'Lot Numbered Inventory' (expected Raw Stock)`,
+                    path: path,
+                    rule: 'cross-field-inconsistency'
+                });
+            }
+        }
+    }
+
+    return errors;
+}
+
+/**
  * Validates a BOM tree before merge, checking all validation rules.
  *
  * Walks the entire tree recursively, collecting ALL errors before returning.
@@ -68,6 +225,10 @@ export function validateBOM(rootNode) {
             }
             return;
         }
+
+        // Metadata validation (Rules 3-9) — runs on every node
+        const metadataErrors = validateMetadata(node, currentPath || node.partNumber);
+        errors.push(...metadataErrors);
 
         // If this is a Released assembly, apply validation rules to children
         if (isAssembly(node) && isReleased(node.state)) {

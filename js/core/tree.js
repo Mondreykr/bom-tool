@@ -28,6 +28,7 @@ export class BOMNode {
         this.description = rowData.Description;
         this.material = rowData.Material;
         this.qty = parseInt(rowData.Qty) || 0;
+        this.rawLength = rowData.Length || '';
         this.length = parseLength(rowData.Length);
         this.uofm = rowData.UofM;
         this.state = rowData.State;
