@@ -620,14 +620,7 @@ export function init() {
         if (isActive) {
             // Hide all grafted rows AND their children
             // A grafted assembly row and everything beneath it until we return to the same or shallower depth
-            const graftedRows = document.querySelectorAll('#ifpTreeBody tr[data-source="grafted"]');
-            console.log(`[DEBUG] Hide grafted: found ${graftedRows.length} rows with data-source="grafted"`);
-            // Also log all data-source values for diagnosis
-            const allRows = document.querySelectorAll('#ifpTreeBody tr');
-            const sourceCounts = {};
-            allRows.forEach(r => { const s = r.dataset.source || 'none'; sourceCounts[s] = (sourceCounts[s] || 0) + 1; });
-            console.log('[DEBUG] All data-source values:', sourceCounts);
-            graftedRows.forEach(row => {
+            document.querySelectorAll('#ifpTreeBody tr[data-source="grafted"]').forEach(row => {
                 row.classList.add('grafted-hidden');
                 // Also hide all descendant rows (children of grafted assemblies)
                 const graftedDepth = parseInt(row.dataset.depth);
