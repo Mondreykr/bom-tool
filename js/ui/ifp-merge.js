@@ -79,7 +79,8 @@ export function init() {
             // Auto-suggest REV0 values if source tree exists
             if (state.ifpSourceTree) {
                 ifpRevisionInput.value = 0;
-                ifpJobNumber.value = '1J' + state.ifpSourceTree.partNumber;
+                ifpJobNumber.value = suggestJobNumber(null, state.ifpSourceTree.partNumber);
+                updateExportReadiness();
             }
         } else {
             // Normal mode: enable prior artifact upload
@@ -156,7 +157,8 @@ export function init() {
                 // Auto-suggest revision if REV0
                 if (state.ifpIsRev0) {
                     ifpRevisionInput.value = 0;
-                    ifpJobNumber.value = '1J' + state.ifpSourceTree.partNumber;
+                    ifpJobNumber.value = suggestJobNumber(null, state.ifpSourceTree.partNumber);
+                    updateExportReadiness();
                 }
 
                 updateMergeReadiness();
@@ -231,11 +233,14 @@ export function init() {
                     showMessage(`Artifact loaded with warnings: ${result.warnings.join('; ')}`, 'success');
                 }
 
-                // Auto-suggest revision and job number
+                // Auto-suggest revision (always set when prior artifact loads, even before XML)
+                ifpRevisionInput.value = suggestRevision(state.ifpPriorArtifact);
+
+                // Auto-suggest job number (needs source tree for part number)
                 if (state.ifpSourceTree) {
-                    ifpRevisionInput.value = suggestRevision(state.ifpPriorArtifact);
                     ifpJobNumber.value = suggestJobNumber(state.ifpPriorArtifact, state.ifpSourceTree.partNumber);
                 }
+                updateExportReadiness();
 
                 // Update UI
                 ifpPriorZone.classList.add('has-file');
@@ -397,16 +402,31 @@ export function init() {
         }
         stateCell.appendChild(pill);
 
-        // Source cell (show "B(n-1)" for grafted, blank for current)
+        // Source cell — show resolved labels (e.g., "X(2)", "B(1)", "New (WIP)")
         const sourceCell = document.createElement('td');
-        if (node._source === 'grafted') {
+        sourceCell.style.fontSize = '0.8125rem';
+
+        if (node._source && node._source.startsWith('B(')) {
+            // Grafted from prior artifact
+            sourceCell.textContent = node._source;
+            sourceCell.style.color = '#78716c'; // Subtle grey
+            row.classList.add('ifp-row-grafted');
+            row.dataset.source = 'grafted';
+        } else if (node._source === 'New (WIP)') {
+            // Placeholder — WIP with no prior release
+            sourceCell.textContent = 'New (WIP)';
+            sourceCell.style.color = '#d97706'; // Orange
+            row.dataset.source = 'placeholder';
+        } else if (node._source === 'grafted') {
+            // Legacy fallback (shouldn't happen after merge.js update)
             sourceCell.textContent = 'B(n-1)';
-            sourceCell.style.color = '#78716c'; // Subtle grey text
-            sourceCell.style.fontSize = '0.8125rem';
+            sourceCell.style.color = '#78716c';
             row.classList.add('ifp-row-grafted');
             row.dataset.source = 'grafted';
         } else {
-            sourceCell.textContent = ''; // Current is default, keep blank for cleaner display
+            // Current — from X(n)
+            sourceCell.textContent = node._source || '';
+            sourceCell.style.color = '#a8a29e'; // Very subtle
             row.dataset.source = 'current';
         }
 
@@ -523,6 +543,32 @@ export function init() {
     }
 
     // ========================================
+    // JOB NUMBER VALIDATION & EXPORT READINESS
+    // ========================================
+
+    const jobNumberPattern = /^1J\d{6}$/;
+
+    function updateExportReadiness() {
+        const hasMergedTree = state.ifpMergedTree !== null;
+        const jobValid = jobNumberPattern.test(ifpJobNumber.value.trim());
+
+        // Visual validation indicator on job number field
+        if (ifpJobNumber.value.trim() === '') {
+            ifpJobNumber.style.borderColor = '';
+        } else if (jobValid) {
+            ifpJobNumber.style.borderColor = '#22c55e'; // Green
+        } else {
+            ifpJobNumber.style.borderColor = '#ef4444'; // Red
+        }
+
+        ifpExportBtn.disabled = !(hasMergedTree && jobValid);
+    }
+
+    ifpJobNumber.addEventListener('input', () => {
+        updateExportReadiness();
+    });
+
+    // ========================================
     // EXPAND/COLLAPSE ALL
     // ========================================
 
@@ -620,8 +666,15 @@ export function init() {
                 priorRoot = state.ifpPriorArtifact.bom;
             }
 
-            // Execute merge
-            const { mergedTree, warnings, summary } = mergeBOM(state.ifpSourceTree, priorRoot);
+            // Determine resolved revision numbers for source labels
+            const sourceRevision = parseInt(ifpRevisionInput.value) || 0;
+            const priorRevision = state.ifpPriorArtifact ? state.ifpPriorArtifact.metadata.revision : null;
+
+            // Execute merge with resolved revision options
+            const { mergedTree, warnings, summary } = mergeBOM(state.ifpSourceTree, priorRoot, {
+                sourceRevision,
+                priorRevision
+            });
 
             // Store results
             state.ifpMergedTree = mergedTree;
@@ -637,8 +690,8 @@ export function init() {
             // Display warnings if any
             displayMergeWarnings(warnings);
 
-            // Enable export button
-            ifpExportBtn.disabled = false;
+            // Update export readiness (checks job number pattern too)
+            updateExportReadiness();
 
             // Show success message
             const warningNote = warnings.length > 0 ? ` (${warnings.length} warning${warnings.length > 1 ? 's' : ''})` : '';
@@ -755,6 +808,7 @@ export function init() {
         // Reset inputs
         ifpRevisionInput.value = 0;
         ifpJobNumber.value = '';
+        ifpJobNumber.style.borderColor = '';
 
         // Hide WIP and grafted toggles off
         ifpHideWipToggle.classList.remove('active');

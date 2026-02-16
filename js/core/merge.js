@@ -133,18 +133,20 @@ function computeChanges(sourceNode, priorNode) {
 }
 
 /**
- * Collect all assembly part numbers in a tree.
- * Used to detect missing assemblies.
+ * Collect all assembly part numbers in a tree with their descriptions.
+ * Used to detect missing assemblies and include descriptions in warnings.
  *
  * @param {BOMNode} rootNode - Root of tree to walk
- * @returns {Set<string>} - Set of assembly part numbers
+ * @returns {Map<string, {description: string}>} - Map of PN -> {description}
  */
 function collectAllAssemblyPNs(rootNode) {
-    const assemblyPNs = new Set();
+    const assemblyPNs = new Map();
 
     function walk(node) {
         if (isAssembly(node)) {
-            assemblyPNs.add(node.partNumber);
+            if (!assemblyPNs.has(node.partNumber)) {
+                assemblyPNs.set(node.partNumber, { description: node.description });
+            }
         }
         node.children.forEach(child => walk(child));
     }
@@ -177,9 +179,12 @@ function tagSource(node, source) {
  *
  * @param {BOMNode} sourceRoot - Root of X(n) (current/new BOM)
  * @param {BOMNode|null} priorRoot - Root of B(n-1) (prior IFP artifact), or null for REV0
+ * @param {Object} [options] - Merge options
+ * @param {number} [options.sourceRevision] - Actual revision number of X(n) (e.g., 2)
+ * @param {number} [options.priorRevision] - Actual revision number of B(n-1) (e.g., 1), null for REV0
  * @returns {{mergedTree: Object, warnings: string[], summary: Object}} - Merged tree, warnings, and summary
  */
-export function mergeBOM(sourceRoot, priorRoot) {
+export function mergeBOM(sourceRoot, priorRoot, options = {}) {
     // Build PN index from B(n-1) for O(1) graft lookups
     const priorIndex = priorRoot ? buildPNIndex(priorRoot) : new Map();
     const warnings = [];
@@ -216,8 +221,9 @@ export function mergeBOM(sourceRoot, priorRoot) {
                 // All other fields (description, revision, children) stay from B(n-1)
                 grafted.qty = sourceNode.qty;
 
-                // Tag entire grafted subtree
-                tagSource(grafted, 'grafted');
+                // Tag entire grafted subtree with resolved label
+                const graftedLabel = options.priorRevision != null ? `B(${options.priorRevision})` : 'B(n-1)';
+                tagSource(grafted, graftedLabel);
 
                 graftedCount++;
 
@@ -225,10 +231,10 @@ export function mergeBOM(sourceRoot, priorRoot) {
             } else {
                 // PLACEHOLDER: WIP assembly with no prior release
                 const placeholder = createPlaceholder(sourceNode);
-                placeholder._source = 'grafted'; // Per locked decision
+                placeholder._source = 'New (WIP)';
 
                 warnings.push(
-                    `${sourceNode.partNumber} [${sourceNode.state}] has no prior released BOM — included as empty placeholder`
+                    `${sourceNode.partNumber} (${sourceNode.description}) [${sourceNode.state}] has no prior released BOM — included as empty placeholder`
                 );
 
                 placeholderCount++;
@@ -239,7 +245,8 @@ export function mergeBOM(sourceRoot, priorRoot) {
 
         // RELEASED ASSEMBLY or PART: Include from current (X(n))
         const result = shallowCopy(sourceNode);
-        result._source = 'current';
+        const currentLabel = options.sourceRevision != null ? `X(${options.sourceRevision})` : 'current';
+        result._source = currentLabel;
 
         // Count Released assemblies
         if (isAssembly(sourceNode)) {
@@ -254,7 +261,7 @@ export function mergeBOM(sourceRoot, priorRoot) {
             } else {
                 // Parts pass through directly
                 const childCopy = shallowCopy(child);
-                childCopy._source = 'current';
+                childCopy._source = currentLabel;
                 return childCopy;
             }
         });
@@ -270,10 +277,13 @@ export function mergeBOM(sourceRoot, priorRoot) {
         const priorAssemblies = collectAllAssemblyPNs(priorRoot);
         const sourceAssemblies = collectAllAssemblyPNs(sourceRoot);
 
-        for (const priorPN of priorAssemblies) {
+        const priorLabel = options.priorRevision != null ? `B(${options.priorRevision})` : 'B(n-1)';
+        const sourceLabel = options.sourceRevision != null ? `X(${options.sourceRevision})` : 'X(n)';
+
+        for (const [priorPN, priorInfo] of priorAssemblies) {
             if (!sourceAssemblies.has(priorPN)) {
                 warnings.push(
-                    `Assembly ${priorPN} exists in B(n-1) but is absent from X(n) — may be deleted or suppressed`
+                    `${priorPN} (${priorInfo.description}) was in ${priorLabel} but not found in ${sourceLabel} — may be deleted or suppressed`
                 );
             }
         }
