@@ -1110,8 +1110,13 @@ tr.child-row.collapsed {
 }
 
 .ifp-upload-preview .numeric {
-    text-align: right;
+    text-align: center;
+    width: 3rem;
     font-family: 'JetBrains Mono', monospace;
+}
+
+.ifp-upload-preview th.numeric {
+    text-align: center;
 }
 
 .ifp-upload-preview .preview-toggle {

@@ -39,7 +39,6 @@ export function init() {
     const ifpTreeBody = document.getElementById('ifpTreeBody');
     const ifpExpandAllBtn = document.getElementById('ifpExpandAllBtn');
     const ifpCollapseAllBtn = document.getElementById('ifpCollapseAllBtn');
-    const ifpHideWipToggle = document.getElementById('ifpHideWipToggle');
     const ifpHideGraftedToggle = document.getElementById('ifpHideGraftedToggle');
 
     // Stats and info
@@ -157,12 +156,15 @@ export function init() {
                 ifpSourceMeta.textContent = `${state.ifpSourceData.length} rows • ${(file.size / 1024).toFixed(1)} KB`;
                 ifpSourceInfo.classList.add('show');
 
-                // Auto-suggest revision if REV0
+                // Auto-suggest revision and job number
                 if (state.ifpIsRev0) {
                     ifpRevisionInput.value = 0;
                     ifpJobNumber.value = suggestJobNumber(null, state.ifpSourceTree.partNumber);
-                    updateExportReadiness();
+                } else if (state.ifpPriorArtifact) {
+                    // Prior artifact already loaded — suggest job number from it
+                    ifpJobNumber.value = suggestJobNumber(state.ifpPriorArtifact, state.ifpSourceTree.partNumber);
                 }
+                updateExportReadiness();
 
                 updateMergeReadiness();
                 showMessage(`XML loaded successfully: ${state.ifpSourceData.length} rows`, 'success');
@@ -607,38 +609,6 @@ export function init() {
     });
 
     // ========================================
-    // HIDE WIP CONTENT TOGGLE
-    // ========================================
-
-    ifpHideWipToggle.addEventListener('click', () => {
-        ifpHideWipToggle.classList.toggle('active');
-
-        const isActive = ifpHideWipToggle.classList.contains('active');
-
-        if (isActive) {
-            // Hide children of WIP assemblies
-            document.querySelectorAll('#ifpTreeBody tr[data-wip-assembly="true"]').forEach(wipRow => {
-                const wipDepth = parseInt(wipRow.dataset.depth);
-                let nextRow = wipRow.nextElementSibling;
-
-                while (nextRow) {
-                    const nextDepth = parseInt(nextRow.dataset.depth);
-                    if (nextDepth <= wipDepth) break;
-
-                    // Hide all descendants
-                    nextRow.classList.add('wip-hidden');
-                    nextRow = nextRow.nextElementSibling;
-                }
-            });
-        } else {
-            // Show all WIP content
-            document.querySelectorAll('#ifpTreeBody .wip-hidden').forEach(row => {
-                row.classList.remove('wip-hidden');
-            });
-        }
-    });
-
-    // ========================================
     // HIDE B(n-1) SUBSTITUTIONS TOGGLE
     // ========================================
 
@@ -648,9 +618,19 @@ export function init() {
         const isActive = ifpHideGraftedToggle.classList.contains('active');
 
         if (isActive) {
-            // Hide all grafted rows
+            // Hide all grafted rows AND their children
+            // A grafted assembly row and everything beneath it until we return to the same or shallower depth
             document.querySelectorAll('#ifpTreeBody tr[data-source="grafted"]').forEach(row => {
                 row.classList.add('grafted-hidden');
+                // Also hide all descendant rows (children of grafted assemblies)
+                const graftedDepth = parseInt(row.dataset.depth);
+                let nextRow = row.nextElementSibling;
+                while (nextRow) {
+                    const nextDepth = parseInt(nextRow.dataset.depth);
+                    if (nextDepth <= graftedDepth) break;
+                    nextRow.classList.add('grafted-hidden');
+                    nextRow = nextRow.nextElementSibling;
+                }
             });
         } else {
             // Show all grafted rows
@@ -673,7 +653,8 @@ export function init() {
             }
 
             // Determine resolved revision numbers for source labels
-            const sourceRevision = parseInt(ifpRevisionInput.value) || 0;
+            // sourceRevision comes from the XML's actual revision field, NOT the IFP output revision
+            const sourceRevision = state.ifpSourceTree.revision || ifpRevisionInput.value;
             const priorRevision = state.ifpPriorArtifact ? state.ifpPriorArtifact.metadata.revision : null;
 
             // Execute merge with resolved revision options
@@ -691,10 +672,6 @@ export function init() {
             displayIfpTree(state.ifpMergedTree);
 
             // Reapply toggle states if active (tree re-render clears hidden classes)
-            if (ifpHideWipToggle.classList.contains('active')) {
-                ifpHideWipToggle.click(); // Toggle off
-                ifpHideWipToggle.click(); // Toggle back on to reapply
-            }
             if (ifpHideGraftedToggle.classList.contains('active')) {
                 ifpHideGraftedToggle.click();
                 ifpHideGraftedToggle.click();
@@ -808,9 +785,16 @@ export function init() {
         const table = document.createElement('table');
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
-        ['Part Number', 'Qty', 'Description', 'State'].forEach(text => {
+        const columns = [
+            { text: 'Part Number', className: '' },
+            { text: 'Qty', className: 'numeric' },
+            { text: 'Description', className: '' },
+            { text: 'State', className: '' }
+        ];
+        columns.forEach(col => {
             const th = document.createElement('th');
-            th.textContent = text;
+            th.textContent = col.text;
+            if (col.className) th.className = col.className;
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
@@ -984,8 +968,7 @@ export function init() {
         ifpJobNumber.value = '';
         ifpJobNumber.style.borderColor = '';
 
-        // Hide WIP and grafted toggles off
-        ifpHideWipToggle.classList.remove('active');
+        // Grafted toggle off
         ifpHideGraftedToggle.classList.remove('active');
 
         // Clear summary and warnings
