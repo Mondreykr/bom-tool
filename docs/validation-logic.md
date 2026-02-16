@@ -110,6 +110,21 @@ GA-12345 > ASSY-A-100 > PART-X-200: WIP non-assembly item under released assembl
 
 **Fix action:** Release at least one of the WIP sub-assemblies in PDM, OR add at least one Released non-assembly part to the assembly.
 
+### Empty Part Number
+
+**Rule:** If any node in the BOM tree has an empty Part Number, the merge is blocked.
+
+**Applies to:** All nodes at all depths
+
+**Rationale:** PDM exports can contain nodes with empty Part Numbers, empty Descriptions, and empty ID fields — indicating corrupt or incomplete data in the vault. These nodes cannot be validated or merged. The error path displays `[empty PN]` to identify these nodes since they have no Part Number to reference.
+
+**Error message format:**
+```
+At {AncestorPath} > [empty PN]: Node has empty Part Number — PDM export contains a node with no Part Number (empty ID, Description, and Revision fields suggest corrupt or incomplete data)
+```
+
+**Fix action:** Investigate the node in PDM (identifiable by its position in the BOM tree). Either populate the missing metadata fields or remove the corrupt node from the assembly, then re-export the BOM.
+
 ### Missing NS Item Type
 
 **Rule:** If any node in the BOM tree is missing the NS Item Type field, the merge is blocked.
@@ -120,7 +135,7 @@ GA-12345 > ASSY-A-100 > PART-X-200: WIP non-assembly item under released assembl
 
 **Error message format:**
 ```
-Missing NS Item Type on {PartNumber} at {AncestorPath} — cannot validate without knowing node type
+At {AncestorPath} > {PartNumber}: Missing NS Item Type — cannot validate without knowing node type
 ```
 
 **Fix action:** Update the part's NetSuite metadata in PDM to include the NS Item Type field, then re-export the BOM.
@@ -325,6 +340,7 @@ The validation happens BEFORE the merge engine decides how to handle WIP assembl
 |---|---|
 | 2026-02-12 | Initial version — captures rules as implemented in BOM Tool v2.2 |
 | 2026-02-14 | Added metadata validation rules (Rules 3–9) for Phase 14.1 implementation — Part Number format, Description required, Revision integer, NS Item Type/Component Type/UoM whitelists, cross-field consistency |
+| 2026-02-15 | Added Empty Part Number rule — flags nodes with missing Part Numbers instead of silently skipping them; updated Missing NS Item Type error message format to use "At {path}" prefix |
 
 ---
 

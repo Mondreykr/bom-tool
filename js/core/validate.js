@@ -216,12 +216,24 @@ export function validateBOM(rootNode) {
 
     // Recursive validation walk
     // Track ancestor path for error messages
-    function walkAndValidate(node, ancestors = []) {
-        const currentPath = ancestors.map(a => a.partNumber).join(' > ');
+    // Uses partNumber where available, falls back to [empty PN] for nodes with missing Part Numbers
+    function buildPath(ancestors) {
+        return ancestors.map(a => a.partNumber || '[empty PN]').join(' > ');
+    }
 
-        // Skip nodes with empty Part Number (e.g., parent XML wrapper nodes in 258758)
-        // These are structural nodes without real BOM data — still recurse into children
+    function walkAndValidate(node, ancestors = []) {
+        const currentPath = buildPath(ancestors);
+        const nodeLabel = node.partNumber || '[empty PN]';
+
+        // Check for empty Part Number — flag it, then still recurse into children
         if (!node.partNumber || node.partNumber.trim() === '') {
+            const fullPath = currentPath ? `${currentPath} > ${nodeLabel}` : nodeLabel;
+            errors.push({
+                message: `At ${fullPath}: Node has empty Part Number — PDM export contains a node with no Part Number (empty ID, Description, and Revision fields suggest corrupt or incomplete data)`,
+                path: fullPath,
+                rule: 'empty-part-number'
+            });
+            // Still recurse — children may have their own issues
             for (const child of node.children) {
                 walkAndValidate(child, [...ancestors, node]);
             }
@@ -230,9 +242,10 @@ export function validateBOM(rootNode) {
 
         // Check for missing NS Item Type (applies to ALL nodes)
         if (!node.nsItemType || node.nsItemType === '') {
+            const fullPath = currentPath ? `${currentPath} > ${node.partNumber}` : node.partNumber;
             errors.push({
-                message: `At ${currentPath ? currentPath + ' > ' : ''}${node.partNumber}: Missing NS Item Type — cannot validate without knowing node type`,
-                path: currentPath ? `${currentPath} > ${node.partNumber}` : node.partNumber,
+                message: `At ${fullPath}: Missing NS Item Type — cannot validate without knowing node type`,
+                path: fullPath,
                 rule: 'missing-ns-item-type'
             });
             // Don't try to validate this node further, but DO recurse to find more missing types
@@ -253,12 +266,19 @@ export function validateBOM(rootNode) {
             let hasReleasedChild = false;
 
             for (const child of node.children) {
+                // Skip empty-PN children from Rule 1/2 counting — they get flagged
+                // during their own walkAndValidate call for having empty Part Numbers
+                if (!child.partNumber || child.partNumber.trim() === '') {
+                    continue;
+                }
+
                 // Check child for missing NS Item Type first
                 if (!child.nsItemType || child.nsItemType === '') {
+                    const childLabel = child.partNumber || '[empty PN]';
                     const childPath = currentPath ? `${currentPath} > ${node.partNumber}` : node.partNumber;
                     errors.push({
-                        message: `At ${childPath} > ${child.partNumber}: Missing NS Item Type — cannot validate without knowing node type`,
-                        path: `${childPath} > ${child.partNumber}`,
+                        message: `At ${childPath} > ${childLabel}: Missing NS Item Type — cannot validate without knowing node type`,
+                        path: `${childPath} > ${childLabel}`,
                         rule: 'missing-ns-item-type'
                     });
                     // Continue to next child (can't validate this child)
@@ -301,9 +321,7 @@ export function validateBOM(rootNode) {
 
             // Recurse into ALL children for metadata validation and merge rules
             for (const child of node.children) {
-                if (child.nsItemType) {
-                    walkAndValidate(child, [...ancestors, node]);
-                }
+                walkAndValidate(child, [...ancestors, node]);
             }
         } else if (isAssembly(node)) {
             // WIP assembly: still recurse to find missing NS Item Types and validate Released children
