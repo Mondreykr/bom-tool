@@ -219,6 +219,15 @@ export function validateBOM(rootNode) {
     function walkAndValidate(node, ancestors = []) {
         const currentPath = ancestors.map(a => a.partNumber).join(' > ');
 
+        // Skip nodes with empty Part Number (e.g., parent XML wrapper nodes in 258758)
+        // These are structural nodes without real BOM data — still recurse into children
+        if (!node.partNumber || node.partNumber.trim() === '') {
+            for (const child of node.children) {
+                walkAndValidate(child, [...ancestors, node]);
+            }
+            return;
+        }
+
         // Check for missing NS Item Type (applies to ALL nodes)
         if (!node.nsItemType || node.nsItemType === '') {
             errors.push({
@@ -266,7 +275,7 @@ export function validateBOM(rootNode) {
                     if (!childIsReleased) {
                         const childPath = currentPath ? `${currentPath} > ${node.partNumber}` : node.partNumber;
                         errors.push({
-                            message: `At ${childPath} > ${child.partNumber}: WIP non-assembly item under released assembly — Release ${child.partNumber} in PDM before creating IFP artifact`,
+                            message: `At ${childPath} > ${child.partNumber}: WIP non-assembly item [${child.state}] under released assembly — Release ${child.partNumber} in PDM before creating IFP artifact`,
                             path: `${childPath} > ${child.partNumber}`,
                             rule: 'wip-non-assembly'
                         });
