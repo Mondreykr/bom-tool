@@ -179,7 +179,8 @@ export function suggestRevision(priorArtifact) {
 
 /**
  * Suggest job number based on prior artifact and root part number.
- * REV0: returns "1J" + rootPartNumber
+ * REV0 with GA starting with '1': returns just "1J" (user types 6 more digits)
+ * REV0 with GA NOT starting with '1': returns "1J" + rootPartNumber (full prepopulation)
  * REV1+: returns prior artifact's job number
  *
  * @param {Object|null} priorArtifact - Prior artifact (B(n-1)), or null/undefined for REV0
@@ -188,7 +189,11 @@ export function suggestRevision(priorArtifact) {
  */
 export function suggestJobNumber(priorArtifact, rootPartNumber) {
     if (!priorArtifact) {
-        return '1J' + rootPartNumber; // REV0 default
+        // Conditional logic based on GA PN first digit
+        if (rootPartNumber && rootPartNumber.startsWith('1')) {
+            return '1J'; // User must type 6 more digits
+        }
+        return '1J' + rootPartNumber; // Full prepopulation for non-1 PNs
     }
     return priorArtifact.metadata.jobNumber;
 }
