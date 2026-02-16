@@ -148,6 +148,9 @@ export function init() {
                 // Display validation errors if any
                 displayValidationErrors(state.ifpValidationResult);
 
+                // Render source tree preview
+                renderUploadPreview(state.ifpSourceTree, 'ifpSourcePreview');
+
                 // Update UI
                 ifpSourceZone.classList.add('has-file');
                 ifpSourceName.textContent = file.name;
@@ -241,6 +244,9 @@ export function init() {
                     ifpJobNumber.value = suggestJobNumber(state.ifpPriorArtifact, state.ifpSourceTree.partNumber);
                 }
                 updateExportReadiness();
+
+                // Render prior tree preview
+                renderUploadPreview(state.ifpPriorArtifact.bom, 'ifpPriorPreview');
 
                 // Update UI
                 ifpPriorZone.classList.add('has-file');
@@ -684,6 +690,16 @@ export function init() {
             // Re-render tree with merged data
             displayIfpTree(state.ifpMergedTree);
 
+            // Reapply toggle states if active (tree re-render clears hidden classes)
+            if (ifpHideWipToggle.classList.contains('active')) {
+                ifpHideWipToggle.click(); // Toggle off
+                ifpHideWipToggle.click(); // Toggle back on to reapply
+            }
+            if (ifpHideGraftedToggle.classList.contains('active')) {
+                ifpHideGraftedToggle.click();
+                ifpHideGraftedToggle.click();
+            }
+
             // Display merge summary stat cards
             displayMergeSummary(summary);
 
@@ -772,6 +788,158 @@ export function init() {
     // RESET/START OVER
     // ========================================
 
+    // ========================================
+    // UPLOAD TREE PREVIEW
+    // ========================================
+
+    /**
+     * Render a compact read-only tree preview into the specified container.
+     * Shows Part Number, Qty, Description, and State pill.
+     * First level expanded, deeper levels collapsed.
+     *
+     * @param {BOMNode} rootNode - Root of the BOM tree to preview
+     * @param {string} containerId - ID of the preview container element
+     */
+    function renderUploadPreview(rootNode, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Build table
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        ['Part Number', 'Qty', 'Description', 'State'].forEach(text => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+
+        function renderPreviewNode(node, depth, isLastChild, parentExpanded) {
+            const row = document.createElement('tr');
+            row.dataset.previewDepth = depth;
+            const hasChildren = node.children && node.children.length > 0;
+
+            // Part Number cell with indentation
+            const partCell = document.createElement('td');
+            partCell.className = 'tree-cell';
+            partCell.style.paddingLeft = `${0.5 + depth * 1}rem`;
+
+            // Toggle or spacer
+            if (hasChildren) {
+                const toggle = document.createElement('span');
+                toggle.className = 'preview-toggle';
+                if (depth === 0) {
+                    toggle.textContent = '-';
+                    row.classList.add('preview-expanded');
+                } else {
+                    toggle.textContent = '+';
+                }
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    togglePreviewChildren(row, toggle);
+                });
+                partCell.appendChild(toggle);
+            } else {
+                const spacer = document.createElement('span');
+                spacer.style.display = 'inline-block';
+                spacer.style.width = '12px';
+                spacer.style.marginRight = '4px';
+                partCell.appendChild(spacer);
+            }
+
+            partCell.appendChild(document.createTextNode(node.partNumber || ''));
+            row.appendChild(partCell);
+
+            // Qty cell
+            const qtyCell = document.createElement('td');
+            qtyCell.className = 'numeric';
+            qtyCell.textContent = node.qty || '';
+            row.appendChild(qtyCell);
+
+            // Description cell
+            const descCell = document.createElement('td');
+            descCell.textContent = node.description || '';
+            row.appendChild(descCell);
+
+            // State pill cell
+            const stateCell = document.createElement('td');
+            const pill = document.createElement('span');
+            pill.className = 'state-pill';
+            if (isReleased(node.state)) {
+                pill.classList.add('released');
+                pill.textContent = 'Released';
+            } else {
+                pill.classList.add('wip');
+                pill.textContent = 'WIP';
+            }
+            stateCell.appendChild(pill);
+            row.appendChild(stateCell);
+
+            // Collapse rows deeper than depth 0
+            if (depth > 0 && !parentExpanded) {
+                row.classList.add('preview-collapsed');
+            }
+
+            tbody.appendChild(row);
+
+            // Render children
+            if (hasChildren) {
+                const childrenExpanded = (depth === 0); // Only root's children are expanded
+                node.children.forEach(child => {
+                    renderPreviewNode(child, depth + 1, false, childrenExpanded);
+                });
+            }
+        }
+
+        function togglePreviewChildren(parentRow, toggle) {
+            const parentDepth = parseInt(parentRow.dataset.previewDepth);
+            const isExpanded = parentRow.classList.contains('preview-expanded');
+
+            let nextRow = parentRow.nextElementSibling;
+            while (nextRow) {
+                const nextDepth = parseInt(nextRow.dataset.previewDepth);
+                if (nextDepth <= parentDepth) break;
+
+                if (isExpanded) {
+                    // Collapsing — hide all descendants
+                    nextRow.classList.add('preview-collapsed');
+                    nextRow.classList.remove('preview-expanded');
+                    const childToggle = nextRow.querySelector('.preview-toggle');
+                    if (childToggle) childToggle.textContent = '+';
+                } else {
+                    // Expanding — show only direct children
+                    if (nextDepth === parentDepth + 1) {
+                        nextRow.classList.remove('preview-collapsed');
+                    }
+                }
+                nextRow = nextRow.nextElementSibling;
+            }
+
+            if (isExpanded) {
+                parentRow.classList.remove('preview-expanded');
+                toggle.textContent = '+';
+            } else {
+                parentRow.classList.add('preview-expanded');
+                toggle.textContent = '-';
+            }
+        }
+
+        renderPreviewNode(rootNode, 0, false, true);
+        table.appendChild(tbody);
+
+        container.innerHTML = '';
+        container.appendChild(table);
+        container.classList.add('show');
+    }
+
+    // ========================================
+    // RESET/START OVER
+    // ========================================
+
     ifpResetBtn.addEventListener('click', () => {
         // Clear all state
         state.ifpSourceData = null;
@@ -804,6 +972,12 @@ export function init() {
 
         // Clear tree
         ifpTreeBody.innerHTML = '';
+
+        // Clear upload previews
+        const sourcePreview = document.getElementById('ifpSourcePreview');
+        const priorPreview = document.getElementById('ifpPriorPreview');
+        if (sourcePreview) { sourcePreview.innerHTML = ''; sourcePreview.classList.remove('show'); }
+        if (priorPreview) { priorPreview.innerHTML = ''; priorPreview.classList.remove('show'); }
 
         // Reset inputs
         ifpRevisionInput.value = 0;
