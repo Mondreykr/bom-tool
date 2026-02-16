@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Accurate BOM processing that Operations can trust
-**Current focus:** Phase 14 complete — Phase 15 next
+**Current focus:** Phase 14.2 complete — Phase 15 next
 
 ## Current Position
 
-Phase: 14.2 of 15 (Test Suite Issue Fixes)
-Plan: 2 of 2 (14.2-01 + 14.2-02 complete, checkpoint pending)
-Status: In progress — awaiting human verification
-Last activity: 2026-02-15 - Completed Plan 14.2-02: UI/layout fixes (panels swapped, tree previews, toggle buttons)
+Phase: 15 of 15 (Cross-Tab Integration)
+Plan: 0 of ? (not started)
+Status: Ready to plan
+Last activity: 2026-02-15 - Phase 14.2 complete (test suite issue fixes verified)
 
-Progress: [███████████████████░] 96% (14.1 of 15 phases complete)
+Progress: [███████████████████░] 96% (14.2 of 15 phases complete)
 
 ## Performance Metrics
 
@@ -83,7 +83,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-User has notes from visual testing to share — may generate items for Phase 15 or gap closure.
+- "Hide B(n-1) Substitutions" toggle button not working — needs investigation (button click fires but rows don't hide; data-source="grafted" should be set but unconfirmed in browser)
+- User has notes from visual testing to share — may generate items for Phase 15 or gap closure.
 
 ### Blockers/Concerns
 
@@ -100,11 +101,11 @@ User has notes from visual testing to share — may generate items for Phase 15 
 
 ## Session Continuity
 
-Last session: 2026-02-15 (Phase 14.2 execution)
-Stopped at: Both plans complete, human verification checkpoint pending
-Resume file: .planning/phases/14.2-test-suite-issue-fixes/14.2-02-SUMMARY.md
+Last session: 2026-02-15 (Phase 14.2 closed out)
+Stopped at: Phase 14.2 complete, Phase 15 ready to plan
+Resume file: none
 
-Next action: Human verification checkpoint — deploy to GitHub Pages and verify fixes
+Next action: Plan Phase 15 (Cross-Tab Integration) or address pending todos (toggle button bug)
 
 ---
-*Last updated: 2026-02-15 after Phase 14.2 context gathered*
+*Last updated: 2026-02-15 after Phase 14.2 closed out*

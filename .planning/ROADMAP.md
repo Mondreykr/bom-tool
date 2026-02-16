@@ -114,8 +114,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 14.2-01-PLAN.md — Core logic fixes: resolved source labels, warning descriptions, PDM state in errors, job number logic, revision auto-increment, 258758 XML fix
-- [ ] 14.2-02-PLAN.md — UI/layout fixes: swap upload panels, JSON/XML tree previews with state pills, fix toggle buttons, visual verification
+- [x] 14.2-01-PLAN.md — Core logic fixes: resolved source labels, warning descriptions, PDM state in errors, job number logic, revision auto-increment, 258758 XML fix
+- [x] 14.2-02-PLAN.md — UI/layout fixes: swap upload panels, JSON/XML tree previews with state pills, fix toggle buttons, visual verification
 
 #### Phase 15: Cross-Tab Integration
 **Goal**: JSON files work across all tabs, B(n) auto-loads after merge for evaluation
@@ -152,8 +152,8 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 14.1 -> 14.2 -> 15
 | 13. Validation System | v2.0 | 2/2 | Complete | 2026-02-12 |
 | 14. IFP Merge Tab UI | v2.0 | 2/2 | Complete | 2026-02-13 |
 | 14.1. Metadata Validation Rules 3-9 | v2.0 | 1/1 | Complete | 2026-02-15 |
-| 14.2. Test Suite Issue Fixes | v2.0 | 0/2 | Not started | - |
+| 14.2. Test Suite Issue Fixes | v2.0 | 2/2 | Complete | 2026-02-15 |
 | 15. Cross-Tab Integration | v2.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-02-15 after Phase 14.2 planning*
+*Last updated: 2026-02-15 after Phase 14.2 complete*
