@@ -402,9 +402,28 @@
                 <label for="ifpRev0Toggle">First IFP (REV0)</label>
             </div>
 
-            <!-- Upload Grid -->
+            <!-- Upload Grid (Prior LEFT, Source RIGHT — old to new reading order) -->
             <div class="upload-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
-                <!-- X(n) Source Export Upload -->
+                <!-- B(n-1) Prior Artifact Upload (LEFT) -->
+                <div id="ifpPriorContainer">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">Prior IFP B(n-1)</label>
+                    <input type="file" id="ifpPriorFile" accept=".json" style="display: none;">
+                    <div class="upload-zone" id="ifpPriorZone">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Click or drag file here</div>
+                        <div class="upload-hint">Previously exported IFP JSON</div>
+                    </div>
+                    <div class="file-info" id="ifpPriorInfo">
+                        <div class="file-info-icon">✓</div>
+                        <div class="file-info-details">
+                            <div class="file-info-name" id="ifpPriorName"></div>
+                            <div class="file-info-meta" id="ifpPriorMeta"></div>
+                        </div>
+                    </div>
+                    <div class="ifp-upload-preview" id="ifpPriorPreview"></div>
+                </div>
+
+                <!-- X(n) Source Export Upload (RIGHT) -->
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">Source Export X(n)</label>
                     <input type="file" id="ifpSourceFile" accept=".xml" style="display: none;">
@@ -420,24 +439,7 @@
                             <div class="file-info-meta" id="ifpSourceMeta"></div>
                         </div>
                     </div>
-                </div>
-
-                <!-- B(n-1) Prior Artifact Upload -->
-                <div id="ifpPriorContainer">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">Prior IFP Artifact B(n-1)</label>
-                    <input type="file" id="ifpPriorFile" accept=".json" style="display: none;">
-                    <div class="upload-zone" id="ifpPriorZone">
-                        <div class="upload-icon">📁</div>
-                        <div class="upload-text">Click or drag file here</div>
-                        <div class="upload-hint">Previously exported IFP JSON</div>
-                    </div>
-                    <div class="file-info" id="ifpPriorInfo">
-                        <div class="file-info-icon">✓</div>
-                        <div class="file-info-details">
-                            <div class="file-info-name" id="ifpPriorName"></div>
-                            <div class="file-info-meta" id="ifpPriorMeta"></div>
-                        </div>
-                    </div>
+                    <div class="ifp-upload-preview" id="ifpSourcePreview"></div>
                 </div>
             </div>
 

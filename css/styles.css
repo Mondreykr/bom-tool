@@ -995,12 +995,12 @@ tr.child-row.collapsed {
 
 /* WIP Hidden Rows */
 .wip-hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Grafted Hidden Rows */
 .grafted-hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Stat Card Colors */
@@ -1060,5 +1060,72 @@ tr.child-row.collapsed {
     padding-left: 1rem;
     border-left: 2px solid #fcd34d;
     margin-bottom: 0.25rem;
+}
+
+/* Upload Tree Preview */
+.ifp-upload-preview {
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 0.75rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    font-size: 0.8125rem;
+}
+
+.ifp-upload-preview.show {
+    display: block;
+}
+
+.ifp-upload-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+}
+
+.ifp-upload-preview th {
+    position: sticky;
+    top: 0;
+    background: var(--gray-100);
+    padding: 0.375rem 0.5rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.ifp-upload-preview td {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-800);
+}
+
+.ifp-upload-preview .tree-cell {
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
+}
+
+.ifp-upload-preview .numeric {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.ifp-upload-preview .preview-toggle {
+    cursor: pointer;
+    display: inline-block;
+    width: 12px;
+    margin-right: 4px;
+    font-family: monospace;
+    font-size: 0.6875rem;
+    color: var(--gray-500);
+    user-select: none;
+}
+
+.ifp-upload-preview tr.preview-collapsed {
+    display: none;
 }
 
